@@ -11,6 +11,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // ShortcutsManager.shared.loadSavedShortcut()
+        // ShortcutsManager.sAhared.loadSavedShortcut()
+        // startMonitoringMouseMovements()
     }
 }

@@ -2,8 +2,12 @@ import SwiftUI
 import ShortcutRecorder
 
 struct ContentView: View {
-    @State private var shortcut: Shortcut?
-
+    @State private var shortcut: Shortcut? {
+        didSet {
+            ShortcutsManager.shared.shortcut = shortcut
+        }
+    }
+    
     var body: some View {
         VStack {
             Text("Swift Shift").font(.title)

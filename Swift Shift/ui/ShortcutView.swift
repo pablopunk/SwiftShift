@@ -27,10 +27,7 @@ struct ShortcutView: NSViewRepresentable {
         }
 
         func shortcutRecorderDidEndRecording(_ recorder: RecorderControl) {
-            if let shortcut = recorder.objectValue as? Shortcut {
-                // Use ShortcutsManager to handle the shortcut
-                ShortcutsManager.shared.shortcut = shortcut
-            }
+            parent.shortcut = recorder.objectValue as? Shortcut
         }
     }
 }

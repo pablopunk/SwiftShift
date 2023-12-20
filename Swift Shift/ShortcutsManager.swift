@@ -39,11 +39,16 @@ class ShortcutsManager {
         AppDelegate.shared.shortcutMonitor?.removeAllActions()
 
         if let newShortcut = newShortcut {
-            let action = ShortcutAction(shortcut: newShortcut) { _ in
-                print("Shortcut activated")
+            let keydownAction = ShortcutAction(shortcut: newShortcut) { _ in
+                MouseTracker.shared.startTracking()
                 return true
             }
-            AppDelegate.shared.shortcutMonitor?.addAction(action, forKeyEvent: .down)
+            let keyupAction = ShortcutAction(shortcut: newShortcut) { _ in
+                MouseTracker.shared.stopTracking()
+                return true
+            }
+            AppDelegate.shared.shortcutMonitor?.addAction(keydownAction, forKeyEvent: .down)
+            AppDelegate.shared.shortcutMonitor?.addAction(keyupAction, forKeyEvent: .up)
         }
     }
 

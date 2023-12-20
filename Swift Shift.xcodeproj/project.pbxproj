@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		172E0BD52B32F36300D5CDA7 /* MouseTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 172E0BD42B32F36300D5CDA7 /* MouseTracker.swift */; };
+		174652CE2B33345200241CE6 /* WindowManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 174652CD2B33345200241CE6 /* WindowManager.swift */; };
 		177FB23F2B31F97800B11BA3 /* Permissions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 177FB23E2B31F97800B11BA3 /* Permissions.swift */; };
 		177FB2412B31F9B900B11BA3 /* PermissionsRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 177FB2402B31F9B900B11BA3 /* PermissionsRequestView.swift */; };
 		177FB2482B31FE7F00B11BA3 /* ShortcutRecorder in Frameworks */ = {isa = PBXBuildFile; productRef = 177FB2472B31FE7F00B11BA3 /* ShortcutRecorder */; };
@@ -21,6 +23,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		172E0BD42B32F36300D5CDA7 /* MouseTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MouseTracker.swift; sourceTree = "<group>"; };
+		174652CD2B33345200241CE6 /* WindowManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowManager.swift; sourceTree = "<group>"; };
 		177FB23E2B31F97800B11BA3 /* Permissions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Permissions.swift; sourceTree = "<group>"; };
 		177FB2402B31F9B900B11BA3 /* PermissionsRequestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsRequestView.swift; sourceTree = "<group>"; };
 		177FB24B2B31FF1E00B11BA3 /* ShortcutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutView.swift; sourceTree = "<group>"; };
@@ -80,6 +84,8 @@
 				177FB2502B32160B00B11BA3 /* AppDelegate.swift */,
 				1781A5E12B31EE4A00F27910 /* Swift_ShiftApp.swift */,
 				177FB2522B321D0500B11BA3 /* ShortcutsManager.swift */,
+				172E0BD42B32F36300D5CDA7 /* MouseTracker.swift */,
+				174652CD2B33345200241CE6 /* WindowManager.swift */,
 				177FB24F2B32142B00B11BA3 /* ui */,
 				1781A5E52B31EE4B00F27910 /* Assets.xcassets */,
 				1781A5EA2B31EE4B00F27910 /* Swift_Shift.entitlements */,
@@ -175,8 +181,10 @@
 			files = (
 				177FB2512B32160B00B11BA3 /* AppDelegate.swift in Sources */,
 				177FB24C2B31FF1E00B11BA3 /* ShortcutView.swift in Sources */,
+				172E0BD52B32F36300D5CDA7 /* MouseTracker.swift in Sources */,
 				1781A5E42B31EE4A00F27910 /* ContentView.swift in Sources */,
 				177FB2532B321D0500B11BA3 /* ShortcutsManager.swift in Sources */,
+				174652CE2B33345200241CE6 /* WindowManager.swift in Sources */,
 				177FB23F2B31F97800B11BA3 /* Permissions.swift in Sources */,
 				1781A5E22B31EE4A00F27910 /* Swift_ShiftApp.swift in Sources */,
 				177FB2412B31F9B900B11BA3 /* PermissionsRequestView.swift in Sources */,
@@ -310,6 +318,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "Swift Shift/Swift_Shift.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -318,6 +327,8 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Swift Shift";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -338,6 +349,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "Swift Shift/Swift_Shift.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -346,6 +358,8 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Swift Shift";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
