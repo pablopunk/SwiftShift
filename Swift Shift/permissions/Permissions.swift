@@ -1,6 +1,6 @@
 import Cocoa
 
-class Permissions {
+class PermissionsManager {
     static func hasAccessibilityPermission() -> Bool {
         // Check if the app has accessibility permissions
         // Note: This is a simplified check, and more robust methods may be needed

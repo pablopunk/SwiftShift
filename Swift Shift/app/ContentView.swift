@@ -11,7 +11,7 @@ struct ContentView: View {
     var body: some View {
         VStack {
             Text("Swift Shift").font(.title)
-            if Permissions.hasAccessibilityPermission() {
+            if PermissionsManager.hasAccessibilityPermission() {
                 HStack {
                     Text("Move a window")
                     ShortcutView(shortcut: $shortcut)

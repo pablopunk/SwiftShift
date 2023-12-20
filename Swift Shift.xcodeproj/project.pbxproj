@@ -51,14 +51,48 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		177FB24F2B32142B00B11BA3 /* ui */ = {
+		17550A652B3351000058A94F /* windows */ = {
 			isa = PBXGroup;
 			children = (
-				1781A5E32B31EE4A00F27910 /* ContentView.swift */,
+				174652CD2B33345200241CE6 /* WindowManager.swift */,
+			);
+			path = windows;
+			sourceTree = "<group>";
+		};
+		17550A662B3351080058A94F /* mouse */ = {
+			isa = PBXGroup;
+			children = (
+				172E0BD42B32F36300D5CDA7 /* MouseTracker.swift */,
+			);
+			path = mouse;
+			sourceTree = "<group>";
+		};
+		17550A672B3351120058A94F /* permissions */ = {
+			isa = PBXGroup;
+			children = (
+				177FB23E2B31F97800B11BA3 /* Permissions.swift */,
 				177FB2402B31F9B900B11BA3 /* PermissionsRequestView.swift */,
+			);
+			path = permissions;
+			sourceTree = "<group>";
+		};
+		17550A682B33513E0058A94F /* shortchuts */ = {
+			isa = PBXGroup;
+			children = (
+				177FB2522B321D0500B11BA3 /* ShortcutsManager.swift */,
 				177FB24B2B31FF1E00B11BA3 /* ShortcutView.swift */,
 			);
-			path = ui;
+			path = shortchuts;
+			sourceTree = "<group>";
+		};
+		17550A692B3351600058A94F /* app */ = {
+			isa = PBXGroup;
+			children = (
+				177FB2502B32160B00B11BA3 /* AppDelegate.swift */,
+				1781A5E12B31EE4A00F27910 /* Swift_ShiftApp.swift */,
+				1781A5E32B31EE4A00F27910 /* ContentView.swift */,
+			);
+			path = app;
 			sourceTree = "<group>";
 		};
 		1781A5D52B31EE4900F27910 = {
@@ -80,13 +114,11 @@
 		1781A5E02B31EE4A00F27910 /* Swift Shift */ = {
 			isa = PBXGroup;
 			children = (
-				177FB23E2B31F97800B11BA3 /* Permissions.swift */,
-				177FB2502B32160B00B11BA3 /* AppDelegate.swift */,
-				1781A5E12B31EE4A00F27910 /* Swift_ShiftApp.swift */,
-				177FB2522B321D0500B11BA3 /* ShortcutsManager.swift */,
-				172E0BD42B32F36300D5CDA7 /* MouseTracker.swift */,
-				174652CD2B33345200241CE6 /* WindowManager.swift */,
-				177FB24F2B32142B00B11BA3 /* ui */,
+				17550A692B3351600058A94F /* app */,
+				17550A682B33513E0058A94F /* shortchuts */,
+				17550A672B3351120058A94F /* permissions */,
+				17550A662B3351080058A94F /* mouse */,
+				17550A652B3351000058A94F /* windows */,
 				1781A5E52B31EE4B00F27910 /* Assets.xcassets */,
 				1781A5EA2B31EE4B00F27910 /* Swift_Shift.entitlements */,
 				1781A5E72B31EE4B00F27910 /* Preview Content */,
