@@ -2,12 +2,12 @@ import SwiftUI
 import ShortcutRecorder
 
 @main
-struct Swift_ShiftApp: App {
+struct SwiftShiftApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            AppView()
         }
     }
 }

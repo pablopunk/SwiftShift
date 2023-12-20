@@ -1,7 +1,7 @@
 import SwiftUI
 import ShortcutRecorder
 
-struct ContentView: View {
+struct AppView: View {
     @State private var shortcut: Shortcut? {
         didSet {
             ShortcutsManager.shared.shortcut = shortcut
@@ -38,5 +38,5 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
+    AppView()
 }
