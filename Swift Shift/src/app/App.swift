@@ -8,7 +8,6 @@ struct SwiftShiftApp: App {
     var body: some Scene {
         WindowGroup {
             AppView()
-        }
+        }.windowResizability(.contentSize)
     }
 }
-

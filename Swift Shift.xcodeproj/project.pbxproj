@@ -16,8 +16,8 @@
 		177FB24E2B32131600B11BA3 /* ShortcutRecorder in Frameworks */ = {isa = PBXBuildFile; productRef = 177FB24D2B32131600B11BA3 /* ShortcutRecorder */; };
 		177FB2512B32160B00B11BA3 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 177FB2502B32160B00B11BA3 /* AppDelegate.swift */; };
 		177FB2532B321D0500B11BA3 /* ShortcutsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 177FB2522B321D0500B11BA3 /* ShortcutsManager.swift */; };
-		1781A5E22B31EE4A00F27910 /* Swift_ShiftApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1781A5E12B31EE4A00F27910 /* Swift_ShiftApp.swift */; };
-		1781A5E42B31EE4A00F27910 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1781A5E32B31EE4A00F27910 /* ContentView.swift */; };
+		1781A5E22B31EE4A00F27910 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1781A5E12B31EE4A00F27910 /* App.swift */; };
+		1781A5E42B31EE4A00F27910 /* AppView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1781A5E32B31EE4A00F27910 /* AppView.swift */; };
 		1781A5E62B31EE4B00F27910 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1781A5E52B31EE4B00F27910 /* Assets.xcassets */; };
 		1781A5E92B31EE4B00F27910 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1781A5E82B31EE4B00F27910 /* Preview Assets.xcassets */; };
 /* End PBXBuildFile section */
@@ -31,8 +31,8 @@
 		177FB2502B32160B00B11BA3 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		177FB2522B321D0500B11BA3 /* ShortcutsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutsManager.swift; sourceTree = "<group>"; };
 		1781A5DE2B31EE4900F27910 /* Swift Shift.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Swift Shift.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		1781A5E12B31EE4A00F27910 /* Swift_ShiftApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Swift_ShiftApp.swift; sourceTree = "<group>"; };
-		1781A5E32B31EE4A00F27910 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		1781A5E12B31EE4A00F27910 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
+		1781A5E32B31EE4A00F27910 /* AppView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppView.swift; sourceTree = "<group>"; };
 		1781A5E52B31EE4B00F27910 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1781A5E82B31EE4B00F27910 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		1781A5EA2B31EE4B00F27910 /* Swift_Shift.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Swift_Shift.entitlements; sourceTree = "<group>"; };
@@ -89,8 +89,8 @@
 			isa = PBXGroup;
 			children = (
 				177FB2502B32160B00B11BA3 /* AppDelegate.swift */,
-				1781A5E12B31EE4A00F27910 /* Swift_ShiftApp.swift */,
-				1781A5E32B31EE4A00F27910 /* ContentView.swift */,
+				1781A5E12B31EE4A00F27910 /* App.swift */,
+				1781A5E32B31EE4A00F27910 /* AppView.swift */,
 			);
 			path = app;
 			sourceTree = "<group>";
@@ -222,11 +222,11 @@
 				177FB2512B32160B00B11BA3 /* AppDelegate.swift in Sources */,
 				177FB24C2B31FF1E00B11BA3 /* ShortcutView.swift in Sources */,
 				172E0BD52B32F36300D5CDA7 /* MouseTracker.swift in Sources */,
-				1781A5E42B31EE4A00F27910 /* ContentView.swift in Sources */,
+				1781A5E42B31EE4A00F27910 /* AppView.swift in Sources */,
 				177FB2532B321D0500B11BA3 /* ShortcutsManager.swift in Sources */,
 				174652CE2B33345200241CE6 /* WindowManager.swift in Sources */,
 				177FB23F2B31F97800B11BA3 /* Permissions.swift in Sources */,
-				1781A5E22B31EE4A00F27910 /* Swift_ShiftApp.swift in Sources */,
+				1781A5E22B31EE4A00F27910 /* App.swift in Sources */,
 				177FB2412B31F9B900B11BA3 /* PermissionsRequestView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
