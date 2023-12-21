@@ -9,9 +9,4 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         AppDelegate.shared = self
         self.shortcutMonitor = GlobalShortcutMonitor.shared
     }
-
-    func applicationDidFinishLaunching(_ notification: Notification) {
-        // ShortcutsManager.sAhared.loadSavedShortcut()
-        // startMonitoringMouseMovements()
-    }
 }

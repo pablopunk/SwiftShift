@@ -1,58 +1,65 @@
 import Foundation
 import ShortcutRecorder
 
+enum ShortcutType: String, CaseIterable {
+    case move = "Move"
+    case resize = "Resize"
+}
+
+struct UserShortcut {
+    var type: ShortcutType
+    var shortcut: Shortcut?
+}
+
 class ShortcutsManager {
     static let shared = ShortcutsManager()
-    private let userDefaultsKey = "userShortcut"
-
-    var shortcut: Shortcut? {
-        didSet {
-            if let shortcut = shortcut {
-                saveShortcut(shortcut)
-            } else {
-                UserDefaults.standard.removeObject(forKey: userDefaultsKey)
-            }
-            updateGlobalShortcut(shortcut)
-        }
-    }
-
+    
     private init() {
-        loadSavedShortcut()
+        updateGlobalShortcuts()
     }
-
-    private func saveShortcut(_ shortcut: Shortcut) {
-        if let data = try? NSKeyedArchiver.archivedData(withRootObject: shortcut, requiringSecureCoding: false) {
-            UserDefaults.standard.set(data, forKey: userDefaultsKey)
+    
+    func save(_ shortcut: UserShortcut) {
+        do {
+            let data = try NSKeyedArchiver.archivedData(withRootObject: shortcut.shortcut, requiringSecureCoding: false)
+            UserDefaults.standard.set(data, forKey: shortcut.type.rawValue)
+        } catch {
+            print("Error: \(error)")
         }
+        updateGlobalShortcuts()
     }
-
-    private func loadSavedShortcut() {
-        guard let data = UserDefaults.standard.data(forKey: userDefaultsKey),
+    
+    func load(for type: ShortcutType) -> UserShortcut? {
+        guard let data = UserDefaults.standard.data(forKey: type.rawValue),
               let shortcut = try? NSKeyedUnarchiver.unarchiveTopLevelObjectWithData(data) as? Shortcut else {
-            self.shortcut = nil
-            return
+            return nil
         }
-        self.shortcut = shortcut
+        return UserShortcut(type: type, shortcut: shortcut)
     }
-
-    private func updateGlobalShortcut(_ newShortcut: Shortcut?) {
+    
+    func delete(for type: ShortcutType) {
+        UserDefaults.standard.removeObject(forKey: type.rawValue)
+        updateGlobalShortcuts()
+    }
+    
+    private func updateGlobalShortcuts() {
         AppDelegate.shared.shortcutMonitor?.removeAllActions()
-
-        if let newShortcut = newShortcut {
-            let keydownAction = ShortcutAction(shortcut: newShortcut) { _ in
-                MouseTracker.shared.startTracking()
-                return true
+        
+        for type in ShortcutType.allCases {
+            let userShortcut = load(for: type)
+            if let shortcut = userShortcut?.shortcut {
+                let actionType = type == .move ? MouseAction.move : MouseAction.resize
+                
+                let keydownAction = ShortcutAction(shortcut: shortcut) { _ in
+                    MouseTracker.shared.startTracking(for: actionType)
+                    return true
+                }
+                let keyupAction = ShortcutAction(shortcut: shortcut) { _ in
+                    MouseTracker.shared.stopTracking()
+                    return true
+                }
+                AppDelegate.shared.shortcutMonitor?.addAction(keydownAction, forKeyEvent: .down)
+                AppDelegate.shared.shortcutMonitor?.addAction(keyupAction, forKeyEvent: .up)
             }
-            let keyupAction = ShortcutAction(shortcut: newShortcut) { _ in
-                MouseTracker.shared.stopTracking()
-                return true
-            }
-            AppDelegate.shared.shortcutMonitor?.addAction(keydownAction, forKeyEvent: .down)
-            AppDelegate.shared.shortcutMonitor?.addAction(keyupAction, forKeyEvent: .up)
         }
-    }
-
-    func clearShortcut() {
-        self.shortcut = nil
     }
 }
