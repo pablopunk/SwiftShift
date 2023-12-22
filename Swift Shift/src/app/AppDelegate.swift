@@ -2,11 +2,11 @@ import ShortcutRecorder
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     static var shared: AppDelegate!
-    var shortcutMonitor: GlobalShortcutMonitor?
+    var shortcutMonitor: AXGlobalShortcutMonitor?
 
     override init() {
         super.init()
         AppDelegate.shared = self
-        self.shortcutMonitor = GlobalShortcutMonitor.shared
+        self.shortcutMonitor = AXGlobalShortcutMonitor()
     }
 }
