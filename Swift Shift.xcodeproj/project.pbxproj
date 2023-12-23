@@ -25,6 +25,7 @@
 
 /* Begin PBXFileReference section */
 		172E0BD42B32F36300D5CDA7 /* MouseTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MouseTracker.swift; sourceTree = "<group>"; };
+		1741716E2B37992D00908E9F /* Swift-Shift-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Swift-Shift-Info.plist"; sourceTree = SOURCE_ROOT; };
 		174652CD2B33345200241CE6 /* WindowManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowManager.swift; sourceTree = "<group>"; };
 		177FB23E2B31F97800B11BA3 /* PermissionsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsManager.swift; sourceTree = "<group>"; };
 		177FB2402B31F9B900B11BA3 /* PermissionsRequestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsRequestView.swift; sourceTree = "<group>"; };
@@ -128,6 +129,7 @@
 		1781A5E02B31EE4A00F27910 /* Swift Shift */ = {
 			isa = PBXGroup;
 			children = (
+				1741716E2B37992D00908E9F /* Swift-Shift-Info.plist */,
 				17550A6A2B3351A80058A94F /* src */,
 				1781A5E52B31EE4B00F27910 /* Assets.xcassets */,
 				1781A5EA2B31EE4B00F27910 /* Swift_Shift.entitlements */,
@@ -372,6 +374,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Swift-Shift-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Swift Shift";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSUIElement = YES;
@@ -380,7 +383,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.pablopunk.Swift-Shift";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -404,6 +407,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Swift-Shift-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Swift Shift";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSUIElement = YES;
@@ -412,7 +416,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.pablopunk.Swift-Shift";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
