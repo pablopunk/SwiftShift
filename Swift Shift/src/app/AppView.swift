@@ -57,6 +57,6 @@ struct AppView: View {
     }
 }
 
-// #Preview {
-//     AppView()
-// }
+#Preview {
+    AppView()
+}
