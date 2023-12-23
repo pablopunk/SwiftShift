@@ -20,6 +20,7 @@
 		1781A5E42B31EE4A00F27910 /* AppView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1781A5E32B31EE4A00F27910 /* AppView.swift */; };
 		1781A5E62B31EE4B00F27910 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1781A5E52B31EE4B00F27910 /* Assets.xcassets */; };
 		1781A5E92B31EE4B00F27910 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1781A5E82B31EE4B00F27910 /* Preview Assets.xcassets */; };
+		17F33F2A2B37026400F85E01 /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = 17F33F292B37026400F85E01 /* LaunchAtLogin */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,6 +44,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				17F33F2A2B37026400F85E01 /* LaunchAtLogin in Frameworks */,
 				177FB24E2B32131600B11BA3 /* ShortcutRecorder in Frameworks */,
 				177FB2482B31FE7F00B11BA3 /* ShortcutRecorder in Frameworks */,
 			);
@@ -161,6 +163,7 @@
 			packageProductDependencies = (
 				177FB2472B31FE7F00B11BA3 /* ShortcutRecorder */,
 				177FB24D2B32131600B11BA3 /* ShortcutRecorder */,
+				17F33F292B37026400F85E01 /* LaunchAtLogin */,
 			);
 			productName = "Swift Shift";
 			productReference = 1781A5DE2B31EE4900F27910 /* Swift Shift.app */;
@@ -192,6 +195,7 @@
 			mainGroup = 1781A5D52B31EE4900F27910;
 			packageReferences = (
 				177FB2462B31FE7F00B11BA3 /* XCRemoteSwiftPackageReference "ShortcutRecorder" */,
+				17F33F282B37026400F85E01 /* XCRemoteSwiftPackageReference "LaunchAtLogin-Modern" */,
 			);
 			productRefGroup = 1781A5DF2B31EE4900F27910 /* Products */;
 			projectDirPath = "";
@@ -448,6 +452,14 @@
 				minimumVersion = 3.4.0;
 			};
 		};
+		17F33F282B37026400F85E01 /* XCRemoteSwiftPackageReference "LaunchAtLogin-Modern" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/LaunchAtLogin-Modern";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -460,6 +472,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 177FB2462B31FE7F00B11BA3 /* XCRemoteSwiftPackageReference "ShortcutRecorder" */;
 			productName = ShortcutRecorder;
+		};
+		17F33F292B37026400F85E01 /* LaunchAtLogin */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 17F33F282B37026400F85E01 /* XCRemoteSwiftPackageReference "LaunchAtLogin-Modern" */;
+			productName = LaunchAtLogin;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
