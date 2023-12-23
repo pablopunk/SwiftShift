@@ -84,10 +84,12 @@ class ShortcutsManager {
     }
     
     private static func handleFlagsChanged(_ shortcut: Shortcut, _ event: NSEvent, _ action: MouseAction) {
-        if event.modifierFlags.contains(shortcut.modifierFlags) {
-            MouseTracker.shared.startTracking(for: action)
-        } else {
+        if event.modifierFlags.isDisjoint(with: shortcut.modifierFlags) {
+            print("stop", action)
             MouseTracker.shared.stopTracking()
+        } else if event.modifierFlags.contains(shortcut.modifierFlags) {
+            print("resume", action)
+            MouseTracker.shared.startTracking(for: action)
         }
     }
 }
