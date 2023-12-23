@@ -5,8 +5,10 @@ import AppKit
 struct SwiftShiftApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     var body: some Scene {
-        MenuBarExtra("⌘") {
+        MenuBarExtra {
             AppView()
+        } label: {
+            Image("MenuBarIcon").renderingMode(.template).resizable()
         }
         .menuBarExtraStyle(.window)
         .windowResizability(.contentMinSize)
