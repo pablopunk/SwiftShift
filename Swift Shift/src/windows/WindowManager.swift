@@ -10,6 +10,7 @@ class WindowManager {
     }
     
     // Function to get the window under the cursor (even if it's not focused)
+    // It won't return the window if it's from this app
     static func getCurrentWindow() -> AXUIElement? {
         // Get the current mouse location
         let mouseLocation = NSEvent.mouseLocation
@@ -25,8 +26,17 @@ class WindowManager {
         let error = AXUIElementCopyElementAtPosition(systemWideElement, Float(point.x), Float(point.y), &element)
         
         if error == .success, let element = element {
-            // Check if the found element is a window, or find the window that contains it
-            return getWindowFromElement(element as! AXUIElement)
+            // Get the window from the found element
+            if let window = getWindowFromElement(element as! AXUIElement) {
+                // Check if the window belongs to the current application
+                var pid: pid_t = 0
+                AXUIElementGetPid(window, &pid)
+                
+                // Compare with the current application's PID
+                if pid != NSRunningApplication.current.processIdentifier {
+                    return window
+                }
+            }
         }
         return nil
     }

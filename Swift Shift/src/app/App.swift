@@ -1,13 +1,15 @@
 import SwiftUI
-import ShortcutRecorder
+import AppKit
 
 @main
 struct SwiftShiftApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-
     var body: some Scene {
-        WindowGroup {
+        MenuBarExtra("⌘") {
             AppView()
-        }.windowResizability(.contentSize)
+        }
+        .menuBarExtraStyle(.window)
+        .windowResizability(.contentMinSize)
+        .defaultSize(width: 400, height: 400)
     }
 }
