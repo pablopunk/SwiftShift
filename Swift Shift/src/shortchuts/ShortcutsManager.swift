@@ -18,10 +18,12 @@ class ShortcutsManager {
         updateGlobalShortcuts()
     }
     
-    func save(_ shortcut: UserShortcut) {
+    func save(_ userShortcut: UserShortcut) {
         do {
-            let data = try NSKeyedArchiver.archivedData(withRootObject: shortcut.shortcut, requiringSecureCoding: false)
-            UserDefaults.standard.set(data, forKey: shortcut.type.rawValue)
+            if let shortcut = userShortcut.shortcut {
+                let data = try NSKeyedArchiver.archivedData(withRootObject: shortcut, requiringSecureCoding: false)
+                UserDefaults.standard.set(data, forKey: userShortcut.type.rawValue)
+            }
         } catch {
             print("Error: \(error)")
         }
@@ -29,11 +31,14 @@ class ShortcutsManager {
     }
     
     func load(for type: ShortcutType) -> UserShortcut? {
-        guard let data = UserDefaults.standard.data(forKey: type.rawValue),
-              let shortcut = try? NSKeyedUnarchiver.unarchiveTopLevelObjectWithData(data) as? Shortcut else {
+        guard let data = UserDefaults.standard.data(forKey: type.rawValue) else { return nil }
+        do {
+            let shortcut = try NSKeyedUnarchiver.unarchivedObject(ofClass: Shortcut.self, from: data)
+            return UserShortcut(type: type, shortcut: shortcut)
+        } catch {
+            print("Error unarchiving data: \(error.localizedDescription)")
             return nil
         }
-        return UserShortcut(type: type, shortcut: shortcut)
     }
     
     func delete(for type: ShortcutType) {
