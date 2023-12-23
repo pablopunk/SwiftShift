@@ -44,7 +44,7 @@ struct ShortcutView: View {
     
     var body: some View {
         HStack {
-            Text(shortcut.type.rawValue).frame(width: 60, alignment: .leading)
+            Text(shortcut.type.rawValue).frame(width: 45, alignment: .leading)
             ShortcutNSView(shortcut: $shortcut.shortcut)
                 .frame(width: 150, alignment: .leading).onChange(of: shortcut.shortcut) { oldValue, newValue in
                     ShortcutsManager.shared.save(shortcut)

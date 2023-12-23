@@ -4,9 +4,11 @@ import AppKit
 @main
 struct SwiftShiftApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @AppStorage("showMenuBarIcon") var showMenuBarIcon = true
+    
     var body: some Scene {
-        MenuBarExtra {
-            AppView()
+        MenuBarExtra(isInserted: $showMenuBarIcon) {
+            AppView(showMenuBarIcon: $showMenuBarIcon)
         } label: {
             Image("MenuBarIcon").renderingMode(.template).resizable()
         }
