@@ -28,7 +28,14 @@ struct AppView: View {
                 PermissionRequestView()
             }
             
-            Button("Quit ⌘+Q") { NSApplication.shared.terminate(0) }
+            Button(action: {
+                NSApplication.shared.terminate(0)
+            }, label: {
+                HStack {
+                    Text("Quit")
+                    Text("⌘+Q").foregroundStyle(.gray).font(.subheadline)
+                }
+            })
                 .keyboardShortcut("Q", modifiers: .command).padding([.bottom, .horizontal])
         }
     }
