@@ -5,6 +5,13 @@ import LaunchAtLogin
 struct AppView: View {
     @State var hasPermissions = false
     @AppStorage("showMenuBarIcon") var showMenuBarIcon = true
+    private var version: String? = nil
+    
+    init(hasPermissions: Bool = false, showMenuBarIcon: Bool = true, version: String? = nil) {
+        self.hasPermissions = hasPermissions
+        self.showMenuBarIcon = showMenuBarIcon
+        self.version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+    }
     
     private func refreshPermissions() {
         hasPermissions =  PermissionsManager.hasAccessibilityPermission()
@@ -12,9 +19,18 @@ struct AppView: View {
     
     var body: some View {
         VStack(alignment: .leading) {
-            Text("⌘ Swift Shift")
-                .font(.headline)
-                .padding(.horizontal)
+            HStack(alignment: .center) {
+                Text("⌘ Swift Shift")
+                    .font(.headline)
+                
+                Spacer()
+                
+                if (version != nil) {
+                    Text("version " + version!)
+                        .font(.subheadline)
+                        .foregroundStyle(.gray)
+                }
+            }.padding(.horizontal)
                 .padding(.top, 6)
             
             Divider()
