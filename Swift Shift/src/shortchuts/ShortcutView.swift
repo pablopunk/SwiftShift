@@ -14,6 +14,12 @@ struct ShortcutNSView: NSViewRepresentable {
     
     func updateNSView(_ nsView: RecorderControl, context: Context) {
         nsView.objectValue = shortcut
+        nsView.translatesAutoresizingMaskIntoConstraints = false
+
+            NSLayoutConstraint.activate([
+                nsView.widthAnchor.constraint(equalToConstant: 100),
+                nsView.heightAnchor.constraint(equalToConstant: 20)
+            ])
     }
     
     func makeCoordinator() -> Coordinator {
@@ -28,7 +34,7 @@ struct ShortcutNSView: NSViewRepresentable {
         }
         
         func shortcutRecorderDidEndRecording(_ recorder: RecorderControl) {
-            parent.shortcut = recorder.objectValue as? Shortcut
+            parent.shortcut = recorder.objectValue
         }
     }
 }
@@ -44,9 +50,9 @@ struct ShortcutView: View {
     
     var body: some View {
         HStack {
-            Text(shortcut.type.rawValue).frame(width: 45, alignment: .leading)
+            Text(shortcut.type.rawValue).frame(width: 60, alignment: .leading)
             ShortcutNSView(shortcut: $shortcut.shortcut)
-                .frame(width: 150, alignment: .leading).onChange(of: shortcut.shortcut) { oldValue, newValue in
+                .onChange(of: shortcut.shortcut) { oldValue, newValue in
                     ShortcutsManager.shared.save(shortcut)
                 }
             Button("Clear") {

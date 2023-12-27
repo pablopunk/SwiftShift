@@ -1,19 +1,23 @@
 import SwiftUI
 
 struct PermissionRequestView: View {
-    @State var key = UUID() // To force view refresh
-
     var body: some View {
         VStack {
-            Text("Accessibility Permission Required")
-            Button("Open System Preferences") {
-                if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
-                    NSWorkspace.shared.open(url)
+            Text("Permissions Required").font(.headline).foregroundStyle(.orange)
+            Text("This app requires the following permissions to function properly")
+                .padding(.top, 1)
+                .padding(.bottom, 12)
+            HStack {
+                Text("Accessibility").font(.subheadline)
+                Spacer()
+                Button("Open Preferences") {
+                    PermissionsManager.openPreferences(at: .accessibility)
                 }
             }
-            Button("Refresh") {
-                self.key = UUID() // Change key to force ContentView to re-render
-            }
-        }
+        }.frame(width: 230)
     }
+}
+
+#Preview {
+    PermissionRequestView()
 }
