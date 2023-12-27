@@ -4,7 +4,7 @@ import LaunchAtLogin
 
 struct AppView: View {
     @State var hasPermissions = false
-    @Binding var showMenuBarIcon: Bool
+    @AppStorage("showMenuBarIcon") var showMenuBarIcon = true
     
     private func refreshPermissions() {
         hasPermissions =  PermissionsManager.hasAccessibilityPermission()
@@ -16,6 +16,7 @@ struct AppView: View {
                 .font(.headline)
                 .padding(.horizontal)
                 .padding(.top, 6)
+            
             Divider()
             
             VStack(alignment: .leading) {
@@ -54,6 +55,7 @@ struct AppView: View {
                     }
                 })
                 .keyboardShortcut("Q", modifiers: .command)
+                
                 if !hasPermissions {
                     Button("Refresh permissions") {
                         refreshPermissions()
@@ -73,6 +75,6 @@ struct AppView: View {
 // Preview
 struct AppView_Previews: PreviewProvider {
     static var previews: some View {
-        AppView(showMenuBarIcon: .constant(true))
+        AppView()
     }
 }
