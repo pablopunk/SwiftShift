@@ -3,14 +3,14 @@ import Accessibility
 
 class WindowManager {
     // Function to move a specified window to a new location
-    static func moveWindow(window: AXUIElement, to point: NSPoint) {
+    static func move(window: AXUIElement, to point: NSPoint) {
         var mutablePoint = point
         var pointValue = AXValueCreate(AXValueType.cgPoint, &mutablePoint)!
         AXUIElementSetAttributeValue(window, kAXPositionAttribute as CFString, pointValue)
     }
     
     // Function to resize a specified window to a new size
-    static func resizeWindow(window: AXUIElement, deltaX: CGFloat, deltaY: CGFloat) {
+    static func resize(window: AXUIElement, deltaX: CGFloat, deltaY: CGFloat) {
         // Get the current window size
         var sizeRef: CFTypeRef?
         AXUIElementCopyAttributeValue(window, kAXSizeAttribute as CFString, &sizeRef)
@@ -47,7 +47,7 @@ class WindowManager {
         
         if error == .success, let element = element {
             // Get the window from the found element
-            if let window = getWindowFromElement(element) {
+            if let window = getWindow(from: element) {
                 // Check if the window belongs to the current application
                 var pid: pid_t = 0
                 AXUIElementGetPid(window, &pid)
@@ -62,7 +62,7 @@ class WindowManager {
     }
     
     // Helper function to find the window containing a given accessibility element
-    private static func getWindowFromElement(_ element: AXUIElement) -> AXUIElement? {
+    private static func getWindow(from element: AXUIElement) -> AXUIElement? {
         var role: AnyObject?
         AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &role)
         if role as? String == kAXWindowRole {
@@ -71,9 +71,28 @@ class WindowManager {
             var parent: AnyObject?
             AXUIElementCopyAttributeValue(element, kAXParentAttribute as CFString, &parent)
             if let parent = parent {
-                return getWindowFromElement(parent as! AXUIElement)
+                return getWindow(from: parent as! AXUIElement)
             }
         }
         return nil
+    }
+    
+    static func focus(window: AXUIElement) {
+        // Bring the window to the foreground
+        let result = AXUIElementPerformAction(window, kAXRaiseAction as CFString)
+        if result != .success {
+            print("Error: Unable to focus window")
+        }
+        
+        // Get the PID of the application that owns the window
+        var pid: pid_t = 0
+        AXUIElementGetPid(window, &pid)
+        
+        // Activate the application with the obtained PID
+        if let app = NSRunningApplication(processIdentifier: pid) {
+            app.activate(options: [.activateIgnoringOtherApps])
+        } else {
+            print("Error: Unable to find running application for PID \(pid)")
+        }
     }
 }
