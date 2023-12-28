@@ -9,6 +9,26 @@ class WindowManager {
         AXUIElementSetAttributeValue(window, kAXPositionAttribute as CFString, pointValue)
     }
     
+    // Function to resize a specified window to a new size
+    static func resizeWindow(window: AXUIElement, deltaX: CGFloat, deltaY: CGFloat) {
+        // Get the current window size
+        var sizeRef: CFTypeRef?
+        AXUIElementCopyAttributeValue(window, kAXSizeAttribute as CFString, &sizeRef)
+        var windowSize: CGSize = .zero
+        AXValueGetValue(sizeRef as! AXValue, AXValueType.cgSize, &windowSize)
+        
+        // Calculate the new size based on mouse movement
+        // Adjust these calculations if you want different resize behavior
+        let newWidth = max(windowSize.width + deltaX, 0) // Ensure new width is not negative
+        let newHeight = max(windowSize.height - deltaY, 0) // Ensure new height is not negative
+        var newSize = CGSize(width: newWidth, height: newHeight)
+        
+        // Create an AXValue representing the new size
+        if let newSizeValue = AXValueCreate(AXValueType.cgSize, &newSize) {
+            AXUIElementSetAttributeValue(window , kAXSizeAttribute as CFString, newSizeValue)
+        }
+    }
+    
     // Function to get the window under the cursor (even if it's not focused)
     // It won't return the window if it's from this app
     static func getCurrentWindow() -> AXUIElement? {
@@ -27,7 +47,7 @@ class WindowManager {
         
         if error == .success, let element = element {
             // Get the window from the found element
-            if let window = getWindowFromElement(element as! AXUIElement) {
+            if let window = getWindowFromElement(element) {
                 // Check if the window belongs to the current application
                 var pid: pid_t = 0
                 AXUIElementGetPid(window, &pid)

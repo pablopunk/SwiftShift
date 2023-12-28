@@ -74,22 +74,7 @@ class MouseTracker {
         let deltaX = currentMouseLocation.x - initialMouseLocation!.x
         let deltaY = currentMouseLocation.y - initialMouseLocation!.y
         
-        // Get the current window size
-        var sizeRef: CFTypeRef?
-        AXUIElementCopyAttributeValue(trackedWindow!, kAXSizeAttribute as CFString, &sizeRef)
-        var windowSize: CGSize = .zero
-        AXValueGetValue(sizeRef as! AXValue, AXValueType.cgSize, &windowSize)
-        
-        // Calculate the new size based on mouse movement
-        // Adjust these calculations if you want different resize behavior
-        let newWidth = max(windowSize.width + deltaX, 0) // Ensure new width is not negative
-        let newHeight = max(windowSize.height - deltaY, 0) // Ensure new height is not negative
-        var newSize = CGSize(width: newWidth, height: newHeight)
-        
-        // Create an AXValue representing the new size
-        if let newSizeValue = AXValueCreate(AXValueType.cgSize, &newSize) {
-            AXUIElementSetAttributeValue(trackedWindow!, kAXSizeAttribute as CFString, newSizeValue)
-        }
+        WindowManager.resizeWindow(window: trackedWindow!, deltaX: deltaX, deltaY: deltaY)
         
         // Update initial mouse location for the next event
         initialMouseLocation = currentMouseLocation
