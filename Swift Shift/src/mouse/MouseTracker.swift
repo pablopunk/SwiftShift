@@ -26,7 +26,7 @@ class MouseTracker {
         initialMouseLocation = NSEvent.mouseLocation
         if let currentWindow = WindowManager.getCurrentWindow() {
             trackedWindow = currentWindow
-            initialWindowLocation = getWindowPosition(window: currentWindow)
+            initialWindowLocation = WindowManager.getPosition(window: currentWindow)
             WindowManager.focus(window: trackedWindow!)
         }
     }
@@ -79,20 +79,5 @@ class MouseTracker {
         
         // Update initial mouse location for the next event
         initialMouseLocation = currentMouseLocation
-    }
-    
-    
-    func getWindowPosition(window: AXUIElement) -> NSPoint? {
-        var positionRef: CFTypeRef?
-        
-        let result = AXUIElementCopyAttributeValue(window, kAXPositionAttribute as CFString, &positionRef)
-        guard result == .success else {
-            return nil
-        }
-        
-        var windowPosition: CGPoint = .zero
-        AXValueGetValue(positionRef as! AXValue, AXValueType.cgPoint, &windowPosition)
-        
-        return NSPoint(x: windowPosition.x, y: windowPosition.y)
     }
 }

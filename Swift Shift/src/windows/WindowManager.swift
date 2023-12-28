@@ -45,19 +45,43 @@ class WindowManager {
         var element: AXUIElement?
         let error = AXUIElementCopyElementAtPosition(systemWideElement, Float(point.x), Float(point.y), &element)
         
-        if error == .success, let element = element {
-            // Get the window from the found element
-            if let window = getWindow(from: element) {
-                // Check if the window belongs to the current application
-                var pid: pid_t = 0
-                AXUIElementGetPid(window, &pid)
+        if error == .success, let element = element, let window = getWindow(from: element) {
+            var pid: pid_t = 0
+            AXUIElementGetPid(window, &pid)
+            if pid != NSRunningApplication.current.processIdentifier {
+                return window
+            }
+        } else if error == .notImplemented {
+            // Fallback using CGWindowListCopyWindowInfo
+            return getTopWindowAtCursorUsingCGWindowList(mouseLocation: mouseLocation)
+        }
+        
+        return nil
+    }
+    
+    // Fallback function using CGWindowListCopyWindowInfo
+    private static func getTopWindowAtCursorUsingCGWindowList(mouseLocation: NSPoint) -> AXUIElement? {
+        let windowListInfo = CGWindowListCopyWindowInfo(.optionOnScreenOnly, kCGNullWindowID) as NSArray? as? [[String: AnyObject]]
+        
+        guard let windowList = windowListInfo else { return nil }
+        
+        for entry in windowList {
+            if let boundsDict = entry[kCGWindowBounds as String] as? [String: CGFloat],
+               let windowBounds = CGRect(dictionaryRepresentation: boundsDict as CFDictionary),
+               windowBounds.contains(mouseLocation),
+               let pid = entry[kCGWindowOwnerPID as String] as? pid_t {
                 
-                // Compare with the current application's PID
-                if pid != NSRunningApplication.current.processIdentifier {
+                let appRef = AXUIElementCreateApplication(pid)
+                var value: AnyObject?
+                
+                if AXUIElementCopyAttributeValue(appRef, kAXWindowsAttribute as CFString, &value) == .success,
+                   let windowList = value as? [AXUIElement],
+                   let window = windowList.first {
                     return window
                 }
             }
         }
+        
         return nil
     }
     
@@ -94,5 +118,19 @@ class WindowManager {
         } else {
             print("Error: Unable to find running application for PID \(pid)")
         }
+    }
+    
+    static func getPosition(window: AXUIElement) -> NSPoint? {
+        var positionRef: CFTypeRef?
+        
+        let result = AXUIElementCopyAttributeValue(window, kAXPositionAttribute as CFString, &positionRef)
+        guard result == .success else {
+            return nil
+        }
+        
+        var windowPosition: CGPoint = .zero
+        AXValueGetValue(positionRef as! AXValue, AXValueType.cgPoint, &windowPosition)
+        
+        return NSPoint(x: windowPosition.x, y: windowPosition.y)
     }
 }
