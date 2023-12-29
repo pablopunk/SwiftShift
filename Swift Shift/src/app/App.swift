@@ -10,10 +10,7 @@ struct SwiftShiftApp: App {
         MenuBarExtra(isInserted: $showMenuBarIcon) {
             AppView()
         } label: {
-            Image(showMenuBarIcon /* This ternary is not necessary but somehow it allows AppStorage to refresh showMenuBarIcon and hide the icon when it's false */
-                  ? "MenuBarIcon"
-                  : ""
-            ).renderingMode(.template).resizable()
+            Image("MenuBarIcon").renderingMode(.template).resizable()
         }
         .menuBarExtraStyle(.window)
         .windowResizability(.contentMinSize)
