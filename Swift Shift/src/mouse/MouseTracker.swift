@@ -14,6 +14,8 @@ class MouseTracker {
     private var initialWindowLocation: NSPoint?
     private var trackedWindow: AXUIElement?
     private var currentAction: MouseAction = .none
+    private var trackingTimer: Timer?
+    private let trackingTimeout: TimeInterval = 6 // in seconds
     
     private init() {}
     
@@ -34,12 +36,20 @@ class MouseTracker {
             mouseEventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { [weak self] event in
                 self?.handleMouseMoved(event)
             }
+            // Start the tracking timer
+            trackingTimer?.invalidate() // Invalidate any existing timer
+            trackingTimer = Timer.scheduledTimer(withTimeInterval: trackingTimeout, repeats: false) { [weak self] _ in
+                self?.stopTracking()
+            }
         } else {
             trackedWindow = nil
         }
     }
     
     func stopTracking() {
+        // Invalidate the timer when tracking stops
+        trackingTimer?.invalidate()
+        trackingTimer = nil
         if let monitor = mouseEventMonitor {
             NSEvent.removeMonitor(monitor)
             mouseEventMonitor = nil
