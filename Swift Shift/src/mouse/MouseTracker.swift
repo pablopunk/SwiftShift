@@ -18,16 +18,24 @@ class MouseTracker {
     private init() {}
     
     func startTracking(for action: MouseAction) {
-        currentAction = action
-        mouseEventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { [weak self] event in
-            self?.handleMouseMoved(event)
-        }
-        
-        initialMouseLocation = NSEvent.mouseLocation
         if let currentWindow = WindowManager.getCurrentWindow() {
+            if let app = WindowManager.getNSApplication(from: currentWindow) {
+                if IGNORE_APP_BUNDLE_ID.contains(app.bundleIdentifier!) {
+                    print("ignoring", app.bundleIdentifier!)
+                    trackedWindow = nil
+                    return
+                }
+            }
+            currentAction = action
+            initialMouseLocation = NSEvent.mouseLocation
             trackedWindow = currentWindow
             initialWindowLocation = WindowManager.getPosition(window: currentWindow)
             WindowManager.focus(window: trackedWindow!)
+            mouseEventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { [weak self] event in
+                self?.handleMouseMoved(event)
+            }
+        } else {
+            trackedWindow = nil
         }
     }
     

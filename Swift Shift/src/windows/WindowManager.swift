@@ -5,7 +5,7 @@ class WindowManager {
     // Function to move a specified window to a new location
     static func move(window: AXUIElement, to point: NSPoint) {
         var mutablePoint = point
-        var pointValue = AXValueCreate(AXValueType.cgPoint, &mutablePoint)!
+        let pointValue = AXValueCreate(AXValueType.cgPoint, &mutablePoint)!
         AXUIElementSetAttributeValue(window, kAXPositionAttribute as CFString, pointValue)
     }
     
@@ -48,6 +48,7 @@ class WindowManager {
         if error == .success, let element = element, let window = getWindow(from: element) {
             var pid: pid_t = 0
             AXUIElementGetPid(window, &pid)
+            // Don't move the window of this app
             if pid != NSRunningApplication.current.processIdentifier {
                 return window
             }
@@ -61,23 +62,41 @@ class WindowManager {
     
     // Fallback function using CGWindowListCopyWindowInfo
     private static func getTopWindowAtCursorUsingCGWindowList(mouseLocation: NSPoint) -> AXUIElement? {
-        let windowListInfo = CGWindowListCopyWindowInfo(.optionOnScreenOnly, kCGNullWindowID) as NSArray? as? [[String: AnyObject]]
+        let windowListInfo = CGWindowListCopyWindowInfo([.excludeDesktopElements, .optionOnScreenOnly], kCGNullWindowID) as NSArray? as? [[String: AnyObject]]
         
         guard let windowList = windowListInfo else { return nil }
         
-        for entry in windowList {
+        // Sort the windows based on their layer. Lower layer numbers are closer to the front
+        let sortedWindows = windowList.sorted {
+            ($0[kCGWindowLayer as String] as? Int ?? 0) < ($1[kCGWindowLayer as String] as? Int ?? 0)
+        }
+        
+        for entry in sortedWindows {
             if let boundsDict = entry[kCGWindowBounds as String] as? [String: CGFloat],
-               let windowBounds = CGRect(dictionaryRepresentation: boundsDict as CFDictionary),
-               windowBounds.contains(mouseLocation),
-               let pid = entry[kCGWindowOwnerPID as String] as? pid_t {
+               let windowBounds = CGRect(dictionaryRepresentation: boundsDict as CFDictionary) {
                 
-                let appRef = AXUIElementCreateApplication(pid)
-                var value: AnyObject?
+                // Adjust the Y-coordinate of the mouse location
+                // TODO: Is this needed?
+                let adjustedMouseLocation = NSPoint(x: mouseLocation.x, y: NSScreen.main!.frame.height - mouseLocation.y)
                 
-                if AXUIElementCopyAttributeValue(appRef, kAXWindowsAttribute as CFString, &value) == .success,
-                   let windowList = value as? [AXUIElement],
-                   let window = windowList.first {
-                    return window
+                if windowBounds.contains(adjustedMouseLocation),
+                   let pid = entry[kCGWindowOwnerPID as String] as? pid_t {
+                    let appAXUIElement = AXUIElementCreateApplication(pid)
+                    var value: AnyObject?
+                    
+                    if let app = getNSApplication(from: appAXUIElement) {
+                        print(app.bundleIdentifier!)
+                        if (IGNORE_APP_BUNDLE_ID.contains(app.bundleIdentifier!)) {
+                            print("ignoring", app.bundleIdentifier! as String)
+                            continue
+                        }
+                    }
+                    
+                    if AXUIElementCopyAttributeValue(appAXUIElement, kAXWindowsAttribute as CFString, &value) == .success,
+                       let windowList = value as? [AXUIElement],
+                       let window = windowList.first {
+                        return window
+                    }
                 }
             }
         }
@@ -108,15 +127,22 @@ class WindowManager {
             print("Error: Unable to focus window")
         }
         
+        if let app = getNSApplication(from: window) {
+            app.activate()
+        }
+    }
+    
+    static func getNSApplication(from element: AXUIElement) -> NSRunningApplication? {
         // Get the PID of the application that owns the window
         var pid: pid_t = 0
-        AXUIElementGetPid(window, &pid)
+        AXUIElementGetPid(element, &pid)
         
         // Activate the application with the obtained PID
         if let app = NSRunningApplication(processIdentifier: pid) {
-            app.activate(options: [.activateIgnoringOtherApps])
+            return app
         } else {
             print("Error: Unable to find running application for PID \(pid)")
+            return nil
         }
     }
     
