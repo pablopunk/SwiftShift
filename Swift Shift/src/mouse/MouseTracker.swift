@@ -61,9 +61,9 @@ class MouseTracker {
     }
     
     private func handleMouseMoved(_ event: NSEvent) {
-        guard let initialMouseLocation = initialMouseLocation,
-              let initialWindowLocation = initialWindowLocation,
-              let trackedWindow = trackedWindow else {
+        guard let _ = initialMouseLocation,
+              let _ = initialWindowLocation,
+              let _ = trackedWindow else {
             return
         }
         
