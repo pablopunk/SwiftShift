@@ -100,7 +100,6 @@ class ShortcutsManager {
         
         for type in ShortcutType.allCases {
             let userShortcut = load(for: type)
-            print(type, userShortcut?.shortcut as Any)
             if let shortcut = userShortcut?.shortcut {
                 let mouseAction = type == .move ? MouseAction.move : MouseAction.resize
                 addActions(mouseAction: mouseAction, for: shortcut)
@@ -111,13 +110,9 @@ class ShortcutsManager {
     
     private func handleFlagsChanged(_ shortcut: Shortcut, _ event: NSEvent, _ action: MouseAction) {
         if event.modifierFlags.isDisjoint(with: shortcut.modifierFlags) {
-            print("stop")
             MouseTracker.shared.stopTracking()
         } else if event.modifierFlags.contains(shortcut.modifierFlags) {
-            print("start")
             MouseTracker.shared.startTracking(for: action)
-        }else {
-            print("none")
         }
     }
 }
