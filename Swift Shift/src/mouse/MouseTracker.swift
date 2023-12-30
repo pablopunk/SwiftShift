@@ -15,7 +15,7 @@ class MouseTracker {
     private var trackedWindow: AXUIElement?
     private var currentAction: MouseAction = .none
     private var trackingTimer: Timer?
-    private let trackingTimeout: TimeInterval = 6 // in seconds
+    private let trackingTimeout: TimeInterval = 8 // in seconds
     
     private init() {}
     

@@ -46,6 +46,15 @@ class ShortcutsManager {
         updateGlobalShortcuts()
     }
     
+    private func clearActionsAndMonitors() {
+        removeAllActions()
+        removeGlobalMonitors()
+    }
+    
+    private func removeAllActions() {
+        AppDelegate.shared.shortcutMonitor?.removeAllActions()
+    }
+    
     private func removeGlobalMonitors() {
         for monitor in self.globalMonitors {
             NSEvent.removeMonitor(monitor)
@@ -53,41 +62,62 @@ class ShortcutsManager {
         self.globalMonitors = []
     }
     
+    // Regular shortcuts that should work fine except for modifier-only shortcuts on key-up
+    private func addActions(mouseAction: MouseAction, for shortcut: Shortcut) {
+        let keydownAction = ShortcutAction(shortcut: shortcut) { _ in
+            MouseTracker.shared.startTracking(for: mouseAction)
+            return true
+        }
+        let keyupAction = ShortcutAction(shortcut: shortcut) { _ in
+            MouseTracker.shared.stopTracking()
+            return true
+        }
+        
+        AppDelegate.shared.shortcutMonitor?.addAction(keydownAction, forKeyEvent: .down)
+        AppDelegate.shared.shortcutMonitor?.addAction(keyupAction, forKeyEvent: .up)
+    }
+    
+    // Workaround to get those f**kers to work on key-up
+    private func addGlobalMonitors(mouseAction: MouseAction, for shortcut: Shortcut) {
+        // Global events
+        if let eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged, handler: { (event) in
+            self.handleFlagsChanged(shortcut, event, mouseAction)
+        }) {
+            self.globalMonitors.append(eventMonitor)
+        }
+        // Local events (https://github.com/pablopunk/SwiftShift/issues/10#issuecomment-1872524489)
+        if let eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged, handler: {(event) in
+            self.handleFlagsChanged(shortcut, event, mouseAction)
+            return event
+        }) {
+            self.globalMonitors.append(eventMonitor)
+        }
+        
+    }
+    
     private func updateGlobalShortcuts() {
-        AppDelegate.shared.shortcutMonitor?.removeAllActions()
-        removeGlobalMonitors()
+        clearActionsAndMonitors()
         
         for type in ShortcutType.allCases {
             let userShortcut = load(for: type)
+            print(type, userShortcut?.shortcut as Any)
             if let shortcut = userShortcut?.shortcut {
                 let mouseAction = type == .move ? MouseAction.move : MouseAction.resize
-                
-                let keydownAction = ShortcutAction(shortcut: shortcut) { _ in
-                    MouseTracker.shared.startTracking(for: mouseAction)
-                    return true
-                }
-                let keyupAction = ShortcutAction(shortcut: shortcut) { _ in
-                    MouseTracker.shared.stopTracking()
-                    return true
-                }
-                // Regular shortcuts that should work fine except for modifier-only shortcuts on key-up
-                AppDelegate.shared.shortcutMonitor?.addAction(keydownAction, forKeyEvent: .down)
-                AppDelegate.shared.shortcutMonitor?.addAction(keyupAction, forKeyEvent: .up)
-                // Workaround to get those f**kers to work on key-up
-                if let eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged, handler: { (event) in
-                    ShortcutsManager.handleFlagsChanged(shortcut, event, mouseAction)
-                }) {
-                    self.globalMonitors.append(eventMonitor)
-                }
+                addActions(mouseAction: mouseAction, for: shortcut)
+                addGlobalMonitors(mouseAction: mouseAction, for: shortcut)
             }
         }
     }
     
-    private static func handleFlagsChanged(_ shortcut: Shortcut, _ event: NSEvent, _ action: MouseAction) {
+    private func handleFlagsChanged(_ shortcut: Shortcut, _ event: NSEvent, _ action: MouseAction) {
         if event.modifierFlags.isDisjoint(with: shortcut.modifierFlags) {
+            print("stop")
             MouseTracker.shared.stopTracking()
         } else if event.modifierFlags.contains(shortcut.modifierFlags) {
+            print("start")
             MouseTracker.shared.startTracking(for: action)
+        }else {
+            print("none")
         }
     }
 }

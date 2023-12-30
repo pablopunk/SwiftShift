@@ -53,11 +53,14 @@ struct ShortcutView: View {
             Text(shortcut.type.rawValue).frame(width: 60, alignment: .leading)
             ShortcutNSView(shortcut: $shortcut.shortcut)
                 .onChange(of: shortcut.shortcut) { oldValue, newValue in
-                    ShortcutsManager.shared.save(shortcut)
+                    if (newValue == nil) {
+                        ShortcutsManager.shared.delete(for: shortcut.type)
+                    } else {
+                        ShortcutsManager.shared.save(shortcut)
+                    }
                 }
             Button("Clear") {
                 shortcut.shortcut = nil
-                ShortcutsManager.shared.delete(for: shortcut.type)
             }
         }
     }
