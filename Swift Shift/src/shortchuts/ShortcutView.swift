@@ -15,11 +15,11 @@ struct ShortcutNSView: NSViewRepresentable {
     func updateNSView(_ nsView: RecorderControl, context: Context) {
         nsView.objectValue = shortcut
         nsView.translatesAutoresizingMaskIntoConstraints = false
-
-            NSLayoutConstraint.activate([
-                nsView.widthAnchor.constraint(equalToConstant: 100),
-                nsView.heightAnchor.constraint(equalToConstant: 20)
-            ])
+        
+        NSLayoutConstraint.activate([
+            nsView.widthAnchor.constraint(equalToConstant: 100),
+            nsView.heightAnchor.constraint(equalToConstant: 20)
+        ])
     }
     
     func makeCoordinator() -> Coordinator {
@@ -52,13 +52,14 @@ struct ShortcutView: View {
         HStack {
             Text(shortcut.type.rawValue).frame(width: 60, alignment: .leading)
             ShortcutNSView(shortcut: $shortcut.shortcut)
-                .onChange(of: shortcut.shortcut) { oldValue, newValue in
+                .onChange(of: shortcut.shortcut, perform: {
+                    newValue in
                     if (newValue == nil) {
                         ShortcutsManager.shared.delete(for: shortcut.type)
                     } else {
                         ShortcutsManager.shared.save(shortcut)
                     }
-                }
+                })
             Button("Clear") {
                 shortcut.shortcut = nil
             }
