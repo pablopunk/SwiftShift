@@ -20,6 +20,8 @@
 		1781A5E62B31EE4B00F27910 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1781A5E52B31EE4B00F27910 /* Assets.xcassets */; };
 		1781A5E92B31EE4B00F27910 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1781A5E82B31EE4B00F27910 /* Preview Assets.xcassets */; };
 		17F33F2A2B37026400F85E01 /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = 17F33F292B37026400F85E01 /* LaunchAtLogin */; };
+		E236331E2B44669200C0E61F /* Preferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = E236331D2B44669200C0E61F /* Preferences.swift */; };
+		E23633202B4466F800C0E61F /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E236331F2B4466F800C0E61F /* PreferencesView.swift */; };
 		E2D8CFB92B3C3B9B00EBB047 /* PermissionsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D8CFB82B3C3B9B00EBB047 /* PermissionsManager.swift */; };
 		E2E6F5EA2B3EF03C005B0D96 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2E6F5E92B3EF03C005B0D96 /* Constants.swift */; };
 /* End PBXBuildFile section */
@@ -37,6 +39,8 @@
 		1781A5E52B31EE4B00F27910 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1781A5E82B31EE4B00F27910 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		1781A5EA2B31EE4B00F27910 /* Swift_Shift.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Swift_Shift.entitlements; sourceTree = "<group>"; };
+		E236331D2B44669200C0E61F /* Preferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preferences.swift; sourceTree = "<group>"; };
+		E236331F2B4466F800C0E61F /* PreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
 		E2D8CFB82B3C3B9B00EBB047 /* PermissionsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsManager.swift; sourceTree = "<group>"; };
 		E2E6F5E92B3EF03C005B0D96 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -102,6 +106,7 @@
 		17550A6A2B3351A80058A94F /* src */ = {
 			isa = PBXGroup;
 			children = (
+				E236331C2B44668300C0E61F /* preferences */,
 				17550A692B3351600058A94F /* app */,
 				17550A682B33513E0058A94F /* shortchuts */,
 				17550A672B3351120058A94F /* permissions */,
@@ -145,6 +150,15 @@
 				1781A5E82B31EE4B00F27910 /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		E236331C2B44668300C0E61F /* preferences */ = {
+			isa = PBXGroup;
+			children = (
+				E236331D2B44669200C0E61F /* Preferences.swift */,
+				E236331F2B4466F800C0E61F /* PreferencesView.swift */,
+			);
+			path = preferences;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -227,12 +241,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				177FB2512B32160B00B11BA3 /* AppDelegate.swift in Sources */,
+				E23633202B4466F800C0E61F /* PreferencesView.swift in Sources */,
 				177FB24C2B31FF1E00B11BA3 /* ShortcutView.swift in Sources */,
 				172E0BD52B32F36300D5CDA7 /* MouseTracker.swift in Sources */,
 				1781A5E42B31EE4A00F27910 /* AppView.swift in Sources */,
 				177FB2532B321D0500B11BA3 /* ShortcutsManager.swift in Sources */,
 				E2E6F5EA2B3EF03C005B0D96 /* Constants.swift in Sources */,
 				174652CE2B33345200241CE6 /* WindowManager.swift in Sources */,
+				E236331E2B44669200C0E61F /* Preferences.swift in Sources */,
 				1781A5E22B31EE4A00F27910 /* App.swift in Sources */,
 				177FB2412B31F9B900B11BA3 /* PermissionsRequestView.swift in Sources */,
 				E2D8CFB92B3C3B9B00EBB047 /* PermissionsManager.swift in Sources */,

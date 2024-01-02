@@ -1,15 +1,12 @@
 import SwiftUI
 import ShortcutRecorder
-import LaunchAtLogin
 
 struct AppView: View {
     @State var hasPermissions = false
-    @AppStorage("showMenuBarIcon") var showMenuBarIcon = true
     private var version: String? = nil
     
-    init(hasPermissions: Bool = false, showMenuBarIcon: Bool = true, version: String? = nil) {
+    init(hasPermissions: Bool = false) {
         self.hasPermissions = hasPermissions
-        self.showMenuBarIcon = showMenuBarIcon
         self.version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
     }
     
@@ -26,7 +23,7 @@ struct AppView: View {
                 Spacer()
                 
                 if (version != nil) {
-                    Text("version " + version!)
+                    Text("v" + version!)
                         .font(.subheadline)
                         .foregroundStyle(.gray)
                 }
@@ -36,28 +33,26 @@ struct AppView: View {
             Divider()
             
             VStack(alignment: .leading) {
+                Text("Preferences").font(.title2).bold()
                 
-                LaunchAtLogin.Toggle()
-                
-                Toggle(isOn: $showMenuBarIcon) {
-                    Text("Show menu bar icon")
-                }
+                PreferencesView()
             }.padding(.horizontal)
             
             Divider()
             
-            if hasPermissions {
-                VStack {
-                    ForEach(Array(ShortcutType.allCases), id: \.self) { type in
-                        ShortcutView(type: type)
+            VStack(alignment: .leading) {
+                Text("Shortcuts").font(.title2).bold()
+                
+                if hasPermissions {
+                    VStack {
+                        ForEach(Array(ShortcutType.allCases), id: \.self) { type in
+                            ShortcutView(type: type)
+                        }
                     }
+                } else {
+                    PermissionRequestView().padding(.vertical, 5)
                 }
-                .padding(.horizontal)
-                .padding(.vertical, 3)
-            } else {
-                PermissionRequestView()
-                    .padding(.horizontal)
-            }
+            }.padding(.horizontal)
             
             Divider()
             
@@ -81,7 +76,7 @@ struct AppView: View {
             .padding([.bottom, .horizontal])
             .padding(.top, 5)
         }
-        .frame(width: 260)
+        .frame(width: 320)
         .onAppear {
             refreshPermissions()
         }

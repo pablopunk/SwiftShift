@@ -16,10 +16,11 @@ struct ShortcutNSView: NSViewRepresentable {
         nsView.objectValue = shortcut
         nsView.translatesAutoresizingMaskIntoConstraints = false
         
-        NSLayoutConstraint.activate([
-            nsView.widthAnchor.constraint(equalToConstant: 100),
-            nsView.heightAnchor.constraint(equalToConstant: 20)
-        ])
+        // Force width/height 
+        //        NSLayoutConstraint.activate([
+        //            nsView.widthAnchor.constraint(equalToConstant: 100),
+        //            nsView.heightAnchor.constraint(equalToConstant: 20)
+        //        ])
     }
     
     func makeCoordinator() -> Coordinator {

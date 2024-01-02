@@ -32,7 +32,9 @@ class MouseTracker {
             initialMouseLocation = NSEvent.mouseLocation
             trackedWindow = currentWindow
             initialWindowLocation = WindowManager.getPosition(window: currentWindow)
-            WindowManager.focus(window: trackedWindow!)
+            if PreferencesManager.loadBool(for: .focusOnApp) == true {
+                WindowManager.focus(window: trackedWindow!)
+            }
             mouseEventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { [weak self] event in
                 self?.handleMouseMoved(event)
             }
