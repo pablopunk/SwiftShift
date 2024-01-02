@@ -39,14 +39,18 @@ class MouseTracker {
             // Start the tracking timer
             trackingTimer?.invalidate() // Invalidate any existing timer
             trackingTimer = Timer.scheduledTimer(withTimeInterval: trackingTimeout, repeats: false) { [weak self] _ in
-                self?.stopTracking()
+                self?.stopTracking(for: self!.currentAction)
             }
         } else {
             trackedWindow = nil
         }
     }
     
-    func stopTracking() {
+    func stopTracking(for action: MouseAction) {
+        if currentAction != action {
+            return
+        }
+        
         // Invalidate the timer when tracking stops
         trackingTimer?.invalidate()
         trackingTimer = nil

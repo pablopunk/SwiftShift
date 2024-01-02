@@ -69,7 +69,7 @@ class ShortcutsManager {
             return true
         }
         let keyupAction = ShortcutAction(shortcut: shortcut) { _ in
-            MouseTracker.shared.stopTracking()
+            MouseTracker.shared.stopTracking(for: mouseAction)
             return true
         }
         
@@ -110,7 +110,7 @@ class ShortcutsManager {
     
     private func handleFlagsChanged(_ shortcut: Shortcut, _ event: NSEvent, _ action: MouseAction) {
         if event.modifierFlags.isDisjoint(with: shortcut.modifierFlags) {
-            MouseTracker.shared.stopTracking()
+            MouseTracker.shared.stopTracking(for: action)
         } else if event.modifierFlags.contains(shortcut.modifierFlags) {
             MouseTracker.shared.startTracking(for: action)
         }
