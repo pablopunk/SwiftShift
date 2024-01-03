@@ -8,6 +8,9 @@ if [ -z "$export_folder" ]; then
 fi
 
 datetime=$(date +%Y-%m-%d-%H-%M-%S)
-mkdir -p "$export_folder"
+
+cp ./appcast.xml $export_folder
 
 ~/Library/Developer/Xcode/DerivedData/Swift_Shift-bndpbztptwctfnfyomhnqxdebrcp/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_appcast $export_folder
+
+cp $export_folder/appcast.xml .
