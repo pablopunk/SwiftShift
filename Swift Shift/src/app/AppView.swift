@@ -1,5 +1,6 @@
 import SwiftUI
 import ShortcutRecorder
+import Sparkle
 
 struct AppView: View {
     @State var hasPermissions = false
@@ -27,6 +28,8 @@ struct AppView: View {
                         .font(.subheadline)
                         .foregroundStyle(.gray)
                 }
+                
+                CheckUpdatesButton()
             }.padding(.horizontal)
                 .padding(.top, 6)
             
