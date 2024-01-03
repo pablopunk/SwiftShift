@@ -7,7 +7,7 @@
 	<key>SUEnableInstallerLauncherService</key>
 	<true/>
 	<key>SUFeedURL</key>
-	<string>https://swiftshift.app/appcast.xml</string>
+	<string>https://github.com/pablopunk/SwiftShift/releases/latest/download/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>Di/Wqy2rn2CGIYD4wS1UeKKALt/QdTXldVWXRA0DTEI=</string>
 </dict>
