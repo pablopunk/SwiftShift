@@ -20,50 +20,55 @@ class MouseTracker {
     private init() {}
     
     func startTracking(for action: MouseAction) {
-        if let currentWindow = WindowManager.getCurrentWindow() {
-            if let app = WindowManager.getNSApplication(from: currentWindow) {
-                if IGNORE_APP_BUNDLE_ID.contains(app.bundleIdentifier!) {
-                    print("ignoring", app.bundleIdentifier!)
-                    trackedWindow = nil
-                    return
-                }
-            }
-            currentAction = action
-            initialMouseLocation = NSEvent.mouseLocation
-            trackedWindow = currentWindow
-            initialWindowLocation = WindowManager.getPosition(window: currentWindow)
-            if PreferencesManager.loadBool(for: .focusOnApp) == true {
-                WindowManager.focus(window: trackedWindow!)
-            }
-            mouseEventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { [weak self] event in
-                self?.handleMouseMoved(event)
-            }
-            // Start the tracking timer
-            trackingTimer?.invalidate() // Invalidate any existing timer
-            trackingTimer = Timer.scheduledTimer(withTimeInterval: trackingTimeout, repeats: false) { [weak self] _ in
-                self?.stopTracking(for: self!.currentAction)
-            }
-        } else {
-            trackedWindow = nil
-        }
+        prepareTracking(for: action)
+        registerMouseEventMonitor()
+        startTrackingTimer()
     }
     
     func stopTracking(for action: MouseAction) {
-        if currentAction != action {
+        guard currentAction == action else { return }
+        invalidateTrackingTimer()
+        removeMouseEventMonitor()
+        resetTrackingVariables()
+    }
+    
+    private func prepareTracking(for action: MouseAction) {
+        guard let currentWindow = WindowManager.getCurrentWindow(),
+                !shouldIgnore(window: currentWindow) else {
+            trackedWindow = nil
             return
         }
         
-        // Invalidate the timer when tracking stops
-        trackingTimer?.invalidate()
-        trackingTimer = nil
-        if let monitor = mouseEventMonitor {
-            NSEvent.removeMonitor(monitor)
-            mouseEventMonitor = nil
+        currentAction = action
+        initialMouseLocation = NSEvent.mouseLocation
+        trackedWindow = currentWindow
+        initialWindowLocation = WindowManager.getPosition(window: currentWindow)
+        if PreferencesManager.loadBool(for: .focusOnApp) == true {
+            WindowManager.focus(window: trackedWindow!)
         }
-        trackedWindow = nil
-        initialMouseLocation = nil
-        initialWindowLocation = nil
-        currentAction = .none
+    }
+    
+    private func shouldIgnore(window: AXUIElement) -> Bool {
+        guard let app = WindowManager.getNSApplication(from: window),
+              let bundleIdentifier = app.bundleIdentifier,
+              IGNORE_APP_BUNDLE_ID.contains(bundleIdentifier) else {
+            return false
+        }
+        print("Ignoring", bundleIdentifier)
+        return true
+    }
+    
+    private func registerMouseEventMonitor() {
+        mouseEventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { [weak self] event in
+            self?.handleMouseMoved(event)
+        }
+    }
+    
+    private func startTrackingTimer() {
+        trackingTimer?.invalidate()
+        trackingTimer = Timer.scheduledTimer(withTimeInterval: trackingTimeout, repeats: false) { [weak self] _ in
+            self?.stopTracking(for: self!.currentAction)
+        }
     }
     
     private func handleMouseMoved(_ event: NSEvent) {
@@ -103,5 +108,24 @@ class MouseTracker {
         
         // Update initial mouse location for the next event
         initialMouseLocation = currentMouseLocation
+    }
+    
+    private func invalidateTrackingTimer() {
+        trackingTimer?.invalidate()
+        trackingTimer = nil
+    }
+    
+    private func removeMouseEventMonitor() {
+        if let monitor = mouseEventMonitor {
+            NSEvent.removeMonitor(monitor)
+            mouseEventMonitor = nil
+        }
+    }
+    
+    private func resetTrackingVariables() {
+        trackedWindow = nil
+        initialMouseLocation = nil
+        initialWindowLocation = nil
+        currentAction = .none
     }
 }
