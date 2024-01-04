@@ -109,9 +109,10 @@ class ShortcutsManager {
     }
     
     private func handleFlagsChanged(_ shortcut: Shortcut, _ event: NSEvent, _ action: MouseAction) {
-        if event.modifierFlags.isDisjoint(with: shortcut.modifierFlags) {
+        let eventFlags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        if eventFlags.isDisjoint(with: shortcut.modifierFlags) {
             MouseTracker.shared.stopTracking(for: action)
-        } else if event.modifierFlags.contains(shortcut.modifierFlags) {
+        } else if eventFlags == shortcut.modifierFlags {
             MouseTracker.shared.startTracking(for: action)
         }
     }
