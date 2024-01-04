@@ -41,12 +41,10 @@ struct ShortcutNSView: NSViewRepresentable {
 }
 
 struct ShortcutView: View {
-    @State private var recorder = RecorderControl()
     @State private var shortcut: UserShortcut
     
     init(type: ShortcutType) {
         self.shortcut = ShortcutsManager.shared.load(for: type) ?? UserShortcut(type: type)
-        recorder.allowsModifierFlagsOnlyShortcut = true
     }
     
     var body: some View {
