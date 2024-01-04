@@ -23,7 +23,12 @@ struct CheckUpdatesButton: View {
             UpdatesManager.shared.checkForUpdates()
         } label: {
             Image(systemName: "arrow.counterclockwise")
-        }.disabled(!checkForUpdatesViewModel.canCheckForUpdates)
-            
+                .disabled(!checkForUpdatesViewModel.canCheckForUpdates)
+        }
+        .buttonStyle(.borderless)
     }
+}
+
+#Preview {
+    CheckUpdatesButton().padding()
 }

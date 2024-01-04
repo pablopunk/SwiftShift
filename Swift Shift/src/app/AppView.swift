@@ -23,13 +23,15 @@ struct AppView: View {
                 
                 Spacer()
                 
-                if (version != nil) {
-                    Text("v" + version!)
-                        .font(.subheadline)
-                        .foregroundStyle(.gray)
+                HStack(alignment: .bottom) {
+                    if (version != nil) {
+                        Text("v" + version!)
+                            .font(.subheadline)
+                            .foregroundStyle(.gray)
+                    }
+                    
+                    CheckUpdatesButton()
                 }
-                
-                CheckUpdatesButton()
             }.padding(.horizontal)
                 .padding(.top, 6)
             
@@ -74,6 +76,8 @@ struct AppView: View {
                     Button("Refresh permissions") {
                         refreshPermissions()
                     }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.orange)
                 }
             }
             .padding([.bottom, .horizontal])
