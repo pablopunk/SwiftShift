@@ -8,7 +8,7 @@
             <sparkle:version>3</sparkle:version>
             <sparkle:shortVersionString>0.13.0</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/pablopunk/SwiftShift/releases/latest/download/SwiftShift.zip" length="2355016" type="application/octet-stream" sparkle:edSignature="odRII0ffUuwyCYYhz5cMeVgwRLy1NqdH19coujMllygpZ22UJ++GZgMOUk9eflvATJr9SEM2bqmNFcSJPEqYBA=="/>
+            <enclosure url="https://github.com/pablopunk/SwiftShift/releases/latest/download/SwiftShift.zip" length="2338184" type="application/octet-stream" sparkle:edSignature="reZ5ye8/Pv5yco4JWzkPTPtMC0hjfxxYCDLlkijG6B3X3cKHMqgResIPIRmMMeuT4klE1eCp8TRHG4ba9m6gBw=="/>
         </item>
     </channel>
 </rss>
