@@ -4,7 +4,7 @@
 
 https://github.com/pablopunk/SwiftShift/assets/4324982/471e01fb-24bc-4d7b-b1eb-0dc138ea723f
 
-<img width="397" alt="screenshot" src="https://github.com/pablopunk/SwiftShift/assets/4324982/b793652c-b5ff-48e0-9eff-17db48f1637b">
+![screenshot](https://github.com/pablopunk/SwiftShift/assets/4324982/d1fd407c-c52b-4cc6-8ac5-6f38227e0920)
 
 ![header](https://github.com/pablopunk/swiftshift.app/blob/main/public/header-dark.png?raw=true#gh-dark-mode-only)
 ![header](https://github.com/pablopunk/swiftshift.app/blob/main/public/header-light.png?raw=true#gh-light-mode-only)
