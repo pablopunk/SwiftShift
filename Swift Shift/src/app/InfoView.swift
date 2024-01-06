@@ -1,10 +1,16 @@
 import SwiftUI
 
+extension Bundle {
+    var buildNumber: String {
+        return infoDictionary?["CFBundleVersion"] as! String
+    }
+}
+
 struct InfoView: View {
     private var version: String? = nil
     
     init(hasPermissions: Bool = false) {
-        self.version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+        self.version = Bundle.main.buildNumber
     }
     
     var body: some View {
