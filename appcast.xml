@@ -8,7 +8,7 @@
             <sparkle:version>0.17.0</sparkle:version>
             <sparkle:shortVersionString>0.17.0</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
-            <enclosure url="https://pablopunk.github.io/SwiftShift/SwiftShift.zip" length="2351099" type="application/octet-stream" sparkle:edSignature="KuU8ZRdPOszUCWMcG50OaAHT0nLPo5bmlJSkF8dUTS7dU6qtjw7et+aAtAQ0JGB7mQOJOiYCNAOjMeyDTTo3Aw=="/>
+            <enclosure url="https://github.com/pablopunk/SwiftShift/releases/latest/download/SwiftShift.zip" length="2351099" type="application/octet-stream" sparkle:edSignature="2cNo5knuJ9yAyRbQe/LKNTC4QoS8ofI/X4d+Vd2JUcwKFn8939E4kAQvBlw5n6f3NJJ5rn1M5cwtIWlGj2xvCg=="/>
         </item>
         <item>
             <title>0.16.0</title>
@@ -16,7 +16,7 @@
             <sparkle:version>0.16.0</sparkle:version>
             <sparkle:shortVersionString>0.16.0</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
-            <enclosure url="https://pablopunk.github.io/SwiftShift/SwiftShift.zip" length="2350739" type="application/octet-stream" sparkle:edSignature="JijNyDblolQqmuwHhE89ASlpUvvcEHrIRA0Lx8/WJqVJNLOzPkC4a20CHudIxMkNN2itAb85MgzynY428V+9Bw=="/>
+            <enclosure url="https://github.com/pablopunk/SwiftShift/releases/latest/download/SwiftShift.zip" length="2350739" type="application/octet-stream" sparkle:edSignature="JijNyDblolQqmuwHhE89ASlpUvvcEHrIRA0Lx8/WJqVJNLOzPkC4a20CHudIxMkNN2itAb85MgzynY428V+9Bw=="/>
         </item>
     </channel>
 </rss>

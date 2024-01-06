@@ -34,6 +34,9 @@ generate_appcast=$(find ~/Library/Developer/Xcode/DerivedData/Swift* -type f -na
 echo "Generating appcast.xml..."
 $generate_appcast $export_folder
 
+# modify appcast.xml to point to latest release ZIP in github
+sed -i '' 's/https:\/\/pablopunk.github.io\/SwiftShift\/SwiftShift.zip/https:\/\/github.com\/pablopunk\/SwiftShift\/releases\/latest\/download\/SwiftShift.zip/g' $export_folder/appcast.xml
+
 # copy appcast.xml back to repo
 cp $export_folder/appcast.xml .
 
