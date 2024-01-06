@@ -19,7 +19,7 @@ if [[ ! -d "$export_folder/$app_name.app" ]]; then
 fi
 
 # move current appcast.xml to export folder
-# cp ./appcast.xml $export_folder
+cp ./appcast.xml $export_folder
 
 # zip app
 echo "Generating zip file..."
