@@ -8,62 +8,59 @@ struct InfoView: View {
     }
     
     var body: some View {
-        HStack(alignment: .bottom) {
-            Text("⌘ Swift Shift").font(.headline)
-            if version != nil {
-                Text("v" + version!).font(.subheadline)
+        Group {
+            VStack {
+                HStack(alignment: .bottom) {
+                    Text("⌘ Swift Shift").font(.headline)
+                    if version != nil {
+                        Text("v" + version!).font(.subheadline)
+                    }
+                }.padding(.bottom)
+                
+                Text("Made with 🩵 by")
+                
+                Button(action: {
+                    guard let url = URL(string: "https://pablopunk.com") else {
+                        print("Invalid URL")
+                        return
+                    }
+                    NSWorkspace.shared.open(url)
+                }, label: {
+                    Text("Pablo Varela")
+                }).buttonStyle(.link)
+                
             }
-            Spacer()
-        }.padding(.horizontal)
-        
-        
-        VStack {
-            Text("Made with 🩵 by")
             
-            Button(action: {
-                guard let url = URL(string: "https://pablopunk.com") else {
-                    print("Invalid URL")
-                    return
-                }
-                NSWorkspace.shared.open(url)
-            }, label: {
-                Text("Pablo Varela")
-            }).buttonStyle(.link)
+            VStack {
+                CheckUpdatesButton(label: "Check for updates").buttonStyle(.borderedProminent)
+                Button(action: {
+                    guard let url = URL(string: "https://github.com/pablopunk/SwiftShift") else {
+                        print("Invalid URL")
+                        return
+                    }
+                    NSWorkspace.shared.open(url)
+                }, label: {
+                    Image(systemName: "swift")
+                    Text("Go to Open Source Project")
+                })
+            }
+        }.padding()
             
-        }.padding(6)
-        
-        VStack {
-            CheckUpdatesButton(label: "Check for updates").buttonStyle(.borderedProminent)
-            Button(action: {
-                guard let url = URL(string: "https://github.com/pablopunk/SwiftShift") else {
-                    print("Invalid URL")
-                    return
-                }
-                NSWorkspace.shared.open(url)
-            }, label: {
-                Image(systemName: "swift")
-                Text("Go to Open Source Project")
-            })
-        }.padding(.bottom, 6)
-        
-        Divider()
-        
-        HStack {
-            Button(action: {
-                NSApplication.shared.terminate(0)
-            }, label: {
-                HStack {
-                    Text("Quit")
-                    Text("⌘+Q").foregroundStyle(.gray).font(.subheadline)
-                }
-            })
-            .keyboardShortcut("Q", modifiers: .command)
+            Divider()
             
-            Spacer()
-        }
-        .padding([.bottom, .horizontal])
-        .padding(.top, 5)
-        
+            HStack {
+                Button(action: {
+                    NSApplication.shared.terminate(0)
+                }, label: {
+                    HStack {
+                        Text("Quit")
+                        Text("⌘+Q").foregroundStyle(.gray).font(.subheadline)
+                    }
+                })
+                .keyboardShortcut("Q", modifiers: .command)
+                
+                Spacer()
+            }.padding()
     }
 }
 

@@ -34,8 +34,6 @@ struct AppView: View {
                 TabButton(tab: .info, selectedTab: $selectedTab, iconName: "info.circle")
             }
             
-            Divider()
-            
             // Content area
             Group {
                 switch selectedTab {
@@ -44,7 +42,7 @@ struct AppView: View {
                 case .info:
                     InfoView()
                 }
-            }.padding([.top])
+            }
         }.frame(width: MAIN_WINDOW_WIDTH)
     }
 }
