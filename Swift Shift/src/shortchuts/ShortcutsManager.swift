@@ -5,9 +5,22 @@ enum ShortcutType: String, CaseIterable {
     case resize = "Resize"
 }
 
+enum MouseButton: String, CaseIterable {
+    case none = "None"
+    case left = "Left"
+    case right = "Right"
+}
+
 struct UserShortcut {
     var type: ShortcutType
     var shortcut: Shortcut?
+    var mouseButton: MouseButton
+    
+    init(type: ShortcutType, shortcut: Shortcut? = nil, mouseButton: MouseButton) {
+        self.type = type
+        self.shortcut = shortcut
+        self.mouseButton = mouseButton
+    }
 }
 
 class ShortcutsManager {
@@ -34,7 +47,8 @@ class ShortcutsManager {
         guard let data = UserDefaults.standard.data(forKey: type.rawValue) else { return nil }
         do {
             let shortcut = try NSKeyedUnarchiver.unarchivedObject(ofClass: Shortcut.self, from: data)
-            return UserShortcut(type: type, shortcut: shortcut)
+            // TODO: mouseButton should also be saved in save() and retrieved here
+            return UserShortcut(type: type, shortcut: shortcut, mouseButton: .none)
         } catch {
             print("Error unarchiving data: \(error.localizedDescription)")
             return nil
