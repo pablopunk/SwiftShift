@@ -8,11 +8,11 @@ extension Bundle {
 
 struct InfoView: View {
     private var version: String? = nil
-    
+
     init(hasPermissions: Bool = false) {
         self.version = Bundle.main.buildNumber
     }
-    
+
     var body: some View {
         Group {
             VStack {
@@ -22,9 +22,9 @@ struct InfoView: View {
                         Text("v" + version!).font(.subheadline)
                     }
                 }.padding(.bottom)
-                
+
                 Text("Made with 🩵 by")
-                
+
                 Button(action: {
                     guard let url = URL(string: "https://pablopunk.com") else {
                         print("Invalid URL")
@@ -34,11 +34,7 @@ struct InfoView: View {
                 }, label: {
                     Text("Pablo Varela")
                 }).buttonStyle(.link)
-                
-            }
-            
-            VStack {
-                CheckUpdatesButton(label: "Check for updates").buttonStyle(.borderedProminent)
+
                 Button(action: {
                     guard let url = URL(string: "https://github.com/pablopunk/SwiftShift") else {
                         print("Invalid URL")
@@ -49,24 +45,27 @@ struct InfoView: View {
                     Image(systemName: "swift")
                     Text("Go to Open Source Project")
                 })
+                .padding(.top)
             }
         }.padding()
-            
-            Divider()
-            
-            HStack {
-                Button(action: {
-                    NSApplication.shared.terminate(0)
-                }, label: {
-                    HStack {
-                        Text("Quit")
-                        Text("⌘+Q").foregroundStyle(.gray).font(.subheadline)
-                    }
-                })
-                .keyboardShortcut("Q", modifiers: .command)
-                
-                Spacer()
-            }.padding()
+
+        Divider()
+
+        HStack {
+            Button(action: {
+                NSApplication.shared.terminate(0)
+            }, label: {
+                HStack {
+                    Text("Quit")
+                    Text("⌘+Q").foregroundStyle(.gray).font(.subheadline)
+                }
+            })
+            .keyboardShortcut("Q", modifiers: .command)
+
+            Spacer()
+
+            CheckUpdatesButton(label: "Check for updates").buttonStyle(.borderedProminent)
+        }.padding()
     }
 }
 
