@@ -33,6 +33,7 @@ struct SettingsView: View {
                     VStack {
                         ForEach(Array(ShortcutType.allCases), id: \.self) { type in
                             ShortcutView(type: type)
+                                .padding(.vertical, 6)
                         }
                     }
                 } else {
