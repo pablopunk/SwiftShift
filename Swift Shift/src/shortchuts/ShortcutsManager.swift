@@ -102,8 +102,13 @@ class ShortcutsManager {
             let userShortcut = load(for: type)
             if let shortcut = userShortcut?.shortcut {
                 let mouseAction = type == .move ? MouseAction.move : MouseAction.resize
-                addActions(mouseAction: mouseAction, for: shortcut)
-                addGlobalMonitors(mouseAction: mouseAction, for: shortcut)
+                let isModifierOnlyShortcut = shortcut.charactersIgnoringModifiers == nil
+                
+                if isModifierOnlyShortcut {
+                    addGlobalMonitors(mouseAction: mouseAction, for: shortcut)
+                } else {
+                    addActions(mouseAction: mouseAction, for: shortcut)
+                }
             }
         }
     }
