@@ -3,6 +3,14 @@
     <channel>
         <title>Swift Shift</title>
         <item>
+            <title>0.18.0</title>
+            <pubDate>Tue, 16 Jan 2024 20:28:43 +0100</pubDate>
+            <sparkle:version>0.18.0</sparkle:version>
+            <sparkle:shortVersionString>0.18.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/pablopunk/SwiftShift/releases/latest/download/SwiftShift.zip" length="2350472" type="application/octet-stream" sparkle:edSignature="lcXc6QgDTJUiFiluygjBzSNe51sjT2pIZhtxOxtrOo8o0aZRTu0nmAX6hg8PxhBlcDV0wYft+BQz/h5T9Q0/AA=="/>
+        </item>
+        <item>
             <title>0.17.0</title>
             <pubDate>Sat, 06 Jan 2024 15:08:11 +0100</pubDate>
             <sparkle:version>0.17.0</sparkle:version>
