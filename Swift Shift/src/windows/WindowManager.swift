@@ -32,23 +32,21 @@ class WindowManager {
     // Function to get the window under the cursor (even if it's not focused)
     // It won't return the window if it's from this app
     static func getCurrentWindow() -> AXUIElement? {
-        // Get the current mouse location
-        let mouseLocation = NSEvent.mouseLocation
+        // Use CGEvent to get the current mouse location
+        guard let event = CGEvent(source: nil) else { return nil }
+        let mouseLocation = event.location
         
         // Create a system-wide accessibility object
         let systemWideElement = AXUIElementCreateSystemWide()
         
-        // Convert the mouse location to a CGPoint for the hit test
-        let point = CGPoint(x: mouseLocation.x, y: NSScreen.main!.frame.height - mouseLocation.y)
-        
         // Perform a hit test to find the element under the mouse
         var element: AXUIElement?
-        let error = AXUIElementCopyElementAtPosition(systemWideElement, Float(point.x), Float(point.y), &element)
+        let error = AXUIElementCopyElementAtPosition(systemWideElement, Float(mouseLocation.x), Float(mouseLocation.y), &element)
         
         if error == .success, let element = element, let window = getWindow(from: element) {
             var pid: pid_t = 0
             AXUIElementGetPid(window, &pid)
-            // Don't move the window of this app
+            // Don't return the window of this app
             if pid != NSRunningApplication.current.processIdentifier {
                 return window
             }
@@ -75,11 +73,7 @@ class WindowManager {
             if let boundsDict = entry[kCGWindowBounds as String] as? [String: CGFloat],
                let windowBounds = CGRect(dictionaryRepresentation: boundsDict as CFDictionary) {
                 
-                // Adjust the Y-coordinate of the mouse location
-                // TODO: Is this needed?
-                let adjustedMouseLocation = NSPoint(x: mouseLocation.x, y: NSScreen.main!.frame.height - mouseLocation.y)
-                
-                if windowBounds.contains(adjustedMouseLocation),
+                if windowBounds.contains(mouseLocation),
                    let pid = entry[kCGWindowOwnerPID as String] as? pid_t {
                     let appAXUIElement = AXUIElementCreateApplication(pid)
                     var value: AnyObject?
