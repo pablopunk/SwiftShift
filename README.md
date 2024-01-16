@@ -1,5 +1,6 @@
 # [SwiftShift.app](https://swiftshift.app)
 
+
 > Sweet window management for macOS
 
 https://github.com/pablopunk/SwiftShift/assets/4324982/471e01fb-24bc-4d7b-b1eb-0dc138ea723f
