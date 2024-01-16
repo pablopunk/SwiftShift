@@ -13,6 +13,8 @@ class MouseTracker {
     private var initialMouseLocation: NSPoint?
     private var initialWindowLocation: NSPoint?
     private var trackedWindow: AXUIElement?
+    private var trackedWindowIsFocused: Bool = false
+    private var shouldFocusWindow: Bool = false
     private var currentAction: MouseAction = .none
     private var trackingTimer: Timer?
     private let trackingTimeout: TimeInterval = 8 // in seconds
@@ -39,13 +41,12 @@ class MouseTracker {
             return
         }
         
+        shouldFocusWindow = PreferencesManager.loadBool(for: .focusOnApp)
+        trackedWindowIsFocused = false
         currentAction = action
         initialMouseLocation = NSEvent.mouseLocation
         trackedWindow = currentWindow
         initialWindowLocation = WindowManager.getPosition(window: currentWindow)
-        if PreferencesManager.loadBool(for: .focusOnApp) == true {
-            WindowManager.focus(window: trackedWindow!)
-        }
     }
     
     private func shouldIgnore(window: AXUIElement) -> Bool {
@@ -76,6 +77,11 @@ class MouseTracker {
               let _ = initialWindowLocation,
               let _ = trackedWindow else {
             return
+        }
+        
+        if shouldFocusWindow && !trackedWindowIsFocused {
+            WindowManager.focus(window: trackedWindow!)
+            trackedWindowIsFocused = true
         }
         
         switch currentAction {

@@ -30,7 +30,6 @@ class WindowManager {
     }
     
     // Function to get the window under the cursor (even if it's not focused)
-    // It won't return the window if it's from this app
     static func getCurrentWindow() -> AXUIElement? {
         // Use CGEvent to get the current mouse location
         guard let event = CGEvent(source: nil) else { return nil }
