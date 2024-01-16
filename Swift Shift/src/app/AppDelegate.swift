@@ -3,12 +3,12 @@ import AppKit
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     static var shared: AppDelegate!
-    var shortcutMonitor: AXGlobalShortcutMonitor?
+    var shortcutMonitor: GlobalShortcutMonitor?
     
     override init() {
         super.init()
         AppDelegate.shared = self
-        self.shortcutMonitor = AXGlobalShortcutMonitor()
+        self.shortcutMonitor = GlobalShortcutMonitor()
     }
     
     func applicationDidFinishLaunching(_ notification: Notification) {
