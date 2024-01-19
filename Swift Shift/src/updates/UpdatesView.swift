@@ -23,9 +23,9 @@ struct CheckUpdatesButton: View {
     }
 
     var body: some View {
-        Button {
+        UIButton(action: {
             UpdatesManager.shared.checkForUpdates()
-        } label: {
+        }, background: .blue) {
             Image(systemName: "arrow.counterclockwise")
                 .disabled(!checkForUpdatesViewModel.canCheckForUpdates)
             if label != nil {
@@ -36,5 +36,5 @@ struct CheckUpdatesButton: View {
 }
 
 #Preview {
-    CheckUpdatesButton(label: "Check for updates").padding()
+    CheckUpdatesButton(label: "Check for updates").padding(120)
 }
