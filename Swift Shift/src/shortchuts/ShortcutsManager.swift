@@ -92,7 +92,6 @@ class ShortcutsManager {
         }) {
             self.globalMonitors.append(eventMonitor)
         }
-        
     }
     
     private func updateGlobalShortcuts() {
@@ -115,10 +114,10 @@ class ShortcutsManager {
     
     private func handleFlagsChanged(_ shortcut: Shortcut, _ event: NSEvent, _ action: MouseAction) {
         let eventFlags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-        if eventFlags.isDisjoint(with: shortcut.modifierFlags) {
-            MouseTracker.shared.stopTracking(for: action)
-        } else if eventFlags == shortcut.modifierFlags {
+        if eventFlags == shortcut.modifierFlags {
             MouseTracker.shared.startTracking(for: action)
+        } else {
+            MouseTracker.shared.stopTracking(for: action)
         }
     }
 }
