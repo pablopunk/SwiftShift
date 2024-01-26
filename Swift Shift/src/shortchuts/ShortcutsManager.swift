@@ -114,9 +114,15 @@ class ShortcutsManager {
     
     private func handleFlagsChanged(_ shortcut: Shortcut, _ event: NSEvent, _ action: MouseAction) {
         let eventFlags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        
+        // Sometimes the tracking doesn't stop, so we force it to stop in every flag change
+        MouseTracker.shared.stopTracking(for: action)
+        
         if eventFlags == shortcut.modifierFlags {
+            print("start")
             MouseTracker.shared.startTracking(for: action)
         } else {
+            print("stop")
             MouseTracker.shared.stopTracking(for: action)
         }
     }
