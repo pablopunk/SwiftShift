@@ -80,13 +80,13 @@ class ShortcutsManager {
     // Workaround to get those f**kers to work on key-up
     private func addGlobalMonitors(mouseAction: MouseAction, for shortcut: Shortcut) {
         // Global events
-        if let eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged, handler: { (event) in
+        if let eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.keyUp, .keyDown, .flagsChanged], handler: { (event) in
             self.handleFlagsChanged(shortcut, event, mouseAction)
         }) {
             self.globalMonitors.append(eventMonitor)
         }
         // Local events (https://github.com/pablopunk/SwiftShift/issues/10#issuecomment-1872524489)
-        if let eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged, handler: {(event) in
+        if let eventMonitor = NSEvent.addLocalMonitorForEvents(matching: [.keyUp, .keyDown, .flagsChanged], handler: {(event) in
             self.handleFlagsChanged(shortcut, event, mouseAction)
             return event
         }) {
