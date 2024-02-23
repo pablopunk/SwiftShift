@@ -119,10 +119,8 @@ class ShortcutsManager {
         MouseTracker.shared.stopTracking(for: action)
         
         if eventFlags == shortcut.modifierFlags {
-            print("start")
             MouseTracker.shared.startTracking(for: action)
         } else {
-            print("stop")
             MouseTracker.shared.stopTracking(for: action)
         }
     }
