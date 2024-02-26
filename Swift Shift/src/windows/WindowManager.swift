@@ -8,7 +8,7 @@ class WindowManager {
         let pointValue = AXValueCreate(AXValueType.cgPoint, &mutablePoint)!
         AXUIElementSetAttributeValue(window, kAXPositionAttribute as CFString, pointValue)
     }
-    
+
     // Function to resize a specified window to a new size
     static func resize(window: AXUIElement, deltaX: CGFloat, deltaY: CGFloat) {
         // Get the current window size
@@ -16,32 +16,32 @@ class WindowManager {
         AXUIElementCopyAttributeValue(window, kAXSizeAttribute as CFString, &sizeRef)
         var windowSize: CGSize = .zero
         AXValueGetValue(sizeRef as! AXValue, AXValueType.cgSize, &windowSize)
-        
+
         // Calculate the new size based on mouse movement
         // Adjust these calculations if you want different resize behavior
         let newWidth = max(windowSize.width + deltaX, 0) // Ensure new width is not negative
         let newHeight = max(windowSize.height - deltaY, 0) // Ensure new height is not negative
         var newSize = CGSize(width: newWidth, height: newHeight)
-        
+
         // Create an AXValue representing the new size
         if let newSizeValue = AXValueCreate(AXValueType.cgSize, &newSize) {
             AXUIElementSetAttributeValue(window , kAXSizeAttribute as CFString, newSizeValue)
         }
     }
-    
+
     // Function to get the window under the cursor (even if it's not focused)
     static func getCurrentWindow() -> AXUIElement? {
         // Use CGEvent to get the current mouse location
         guard let event = CGEvent(source: nil) else { return nil }
         let mouseLocation = event.location
-        
+
         // Create a system-wide accessibility object
         let systemWideElement = AXUIElementCreateSystemWide()
-        
+
         // Perform a hit test to find the element under the mouse
         var element: AXUIElement?
         let error = AXUIElementCopyElementAtPosition(systemWideElement, Float(mouseLocation.x), Float(mouseLocation.y), &element)
-        
+
         if error == .success, let element = element, let window = getWindow(from: element) {
             var pid: pid_t = 0
             AXUIElementGetPid(window, &pid)
@@ -49,41 +49,78 @@ class WindowManager {
             if pid != NSRunningApplication.current.processIdentifier {
                 return window
             }
-        } else if error == .notImplemented {
+        } else {
+//            switch error {
+//            case .apiDisabled:
+//                print("AXError.apiDisabled")
+//            case .actionUnsupported:
+//                print("AXError.actionUnsupported")
+//            case .attributeUnsupported:
+//                print("AXError.attributeUnsupported")
+//            case .cannotComplete:
+//                print("AXError.cannotComplete")
+//            case .failure:
+//                print("AXError.failure")
+//            case .illegalArgument:
+//                print("AXError.illegalArgument")
+//            case .invalidUIElement:
+//                print("AXError.invalidUIElement")
+//            case .invalidUIElementObserver:
+//                print("AXError.invalidUIElementObserver")
+//            case .noValue:
+//                print("AXError.noValue")
+//            case .notEnoughPrecision:
+//                print("AXError.notEnoughPrecision")
+//            case .notImplemented:
+//                print("AXError.notImplemented")
+//            case .notificationAlreadyRegistered:
+//                print("AXError.notificationAlreadyRegistered")
+//            case .notificationNotRegistered:
+//                print("AXError.notificationNotRegistered")
+//            case .notificationUnsupported:
+//                print("AXError.notificationUnsupported")
+//            case .parameterizedAttributeUnsupported:
+//                print("AXError.parameterizedAttributeUnsupported")
+//            case .success:
+//                print("AXError.success")
+//            @unknown default:
+//                print("Unknown AXError.")
+//            }
+
             // Fallback using CGWindowListCopyWindowInfo
             return getTopWindowAtCursorUsingCGWindowList(mouseLocation: mouseLocation)
         }
-        
+
         return nil
     }
-    
+
     // Fallback function using CGWindowListCopyWindowInfo
     private static func getTopWindowAtCursorUsingCGWindowList(mouseLocation: NSPoint) -> AXUIElement? {
         let windowListInfo = CGWindowListCopyWindowInfo([.excludeDesktopElements, .optionOnScreenOnly], kCGNullWindowID) as NSArray? as? [[String: AnyObject]]
-        
+
         guard let windowList = windowListInfo else { return nil }
-        
+
         // Sort the windows based on their layer. Lower layer numbers are closer to the front
         let sortedWindows = windowList.sorted {
             ($0[kCGWindowLayer as String] as? Int ?? 0) < ($1[kCGWindowLayer as String] as? Int ?? 0)
         }
-        
+
         for entry in sortedWindows {
             if let boundsDict = entry[kCGWindowBounds as String] as? [String: CGFloat],
                let windowBounds = CGRect(dictionaryRepresentation: boundsDict as CFDictionary) {
-                
+
                 if windowBounds.contains(mouseLocation),
                    let pid = entry[kCGWindowOwnerPID as String] as? pid_t {
                     let appAXUIElement = AXUIElementCreateApplication(pid)
                     var value: AnyObject?
-                    
+
                     if let app = getNSApplication(from: appAXUIElement) {
                         if (IGNORE_APP_BUNDLE_ID.contains(app.bundleIdentifier!)) {
                             print("ignoring", app.bundleIdentifier! as String)
                             continue
                         }
                     }
-                    
+
                     if AXUIElementCopyAttributeValue(appAXUIElement, kAXWindowsAttribute as CFString, &value) == .success,
                        let windowList = value as? [AXUIElement],
                        let window = windowList.first {
@@ -92,10 +129,10 @@ class WindowManager {
                 }
             }
         }
-        
+
         return nil
     }
-    
+
     // Helper function to find the window containing a given accessibility element
     private static func getWindow(from element: AXUIElement) -> AXUIElement? {
         var role: AnyObject?
@@ -111,24 +148,24 @@ class WindowManager {
         }
         return nil
     }
-    
+
     static func focus(window: AXUIElement) {
         // Bring the window to the foreground
         let result = AXUIElementPerformAction(window, kAXRaiseAction as CFString)
         if result != .success {
             print("Error: Unable to focus window")
         }
-        
+
         if let app = getNSApplication(from: window) {
             app.activate()
         }
     }
-    
+
     static func getNSApplication(from element: AXUIElement) -> NSRunningApplication? {
         // Get the PID of the application that owns the window
         var pid: pid_t = 0
         AXUIElementGetPid(element, &pid)
-        
+
         // Activate the application with the obtained PID
         if let app = NSRunningApplication(processIdentifier: pid) {
             return app
@@ -137,18 +174,18 @@ class WindowManager {
             return nil
         }
     }
-    
+
     static func getPosition(window: AXUIElement) -> NSPoint? {
         var positionRef: CFTypeRef?
-        
+
         let result = AXUIElementCopyAttributeValue(window, kAXPositionAttribute as CFString, &positionRef)
         guard result == .success else {
             return nil
         }
-        
+
         var windowPosition: CGPoint = .zero
         AXValueGetValue(positionRef as! AXValue, AXValueType.cgPoint, &windowPosition)
-        
+
         return NSPoint(x: windowPosition.x, y: windowPosition.y)
     }
 }

@@ -80,19 +80,18 @@ class ShortcutsManager {
     // Workaround to get those f**kers to work on key-up
     private func addGlobalMonitors(mouseAction: MouseAction, for shortcut: Shortcut) {
         // Global events
-        if let eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged, handler: { (event) in
+        if let eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.keyUp, .keyDown, .flagsChanged], handler: { (event) in
             self.handleFlagsChanged(shortcut, event, mouseAction)
         }) {
             self.globalMonitors.append(eventMonitor)
         }
         // Local events (https://github.com/pablopunk/SwiftShift/issues/10#issuecomment-1872524489)
-        if let eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged, handler: {(event) in
+        if let eventMonitor = NSEvent.addLocalMonitorForEvents(matching: [.keyUp, .keyDown, .flagsChanged], handler: {(event) in
             self.handleFlagsChanged(shortcut, event, mouseAction)
             return event
         }) {
             self.globalMonitors.append(eventMonitor)
         }
-        
     }
     
     private func updateGlobalShortcuts() {
@@ -115,10 +114,14 @@ class ShortcutsManager {
     
     private func handleFlagsChanged(_ shortcut: Shortcut, _ event: NSEvent, _ action: MouseAction) {
         let eventFlags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-        if eventFlags.isDisjoint(with: shortcut.modifierFlags) {
-            MouseTracker.shared.stopTracking(for: action)
-        } else if eventFlags == shortcut.modifierFlags {
+        
+        // Sometimes the tracking doesn't stop, so we force it to stop in every flag change
+        MouseTracker.shared.stopTracking(for: action)
+        
+        if eventFlags == shortcut.modifierFlags {
             MouseTracker.shared.startTracking(for: action)
+        } else {
+            MouseTracker.shared.stopTracking(for: action)
         }
     }
 }
