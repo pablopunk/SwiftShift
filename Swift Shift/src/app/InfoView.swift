@@ -35,13 +35,13 @@ struct InfoView: View {
                     Text("Pablo Varela")
                 }).buttonStyle(.link)
 
-                Button(action: {
+                UIButton(action: {
                     guard let url = URL(string: "https://github.com/pablopunk/SwiftShift") else {
                         print("Invalid URL")
                         return
                     }
                     NSWorkspace.shared.open(url)
-                }, label: {
+                }, background: .orange, label: {
                     Image(systemName: "swift")
                     Text("Go to Open Source Project")
                 })
@@ -52,19 +52,19 @@ struct InfoView: View {
         Divider()
 
         HStack {
-            Button(action: {
+            UIButton(action: {
                 NSApplication.shared.terminate(0)
             }, label: {
                 HStack {
                     Text("Quit")
-                    Text("⌘+Q").foregroundStyle(.gray).font(.subheadline)
+                    Text("⌘Q").font(.subheadline).opacity(0.6)
                 }
             })
             .keyboardShortcut("Q", modifiers: .command)
 
             Spacer()
 
-            CheckUpdatesButton(label: "Check for updates").buttonStyle(.borderedProminent)
+            CheckUpdatesButton(label: "Check for updates")
         }.padding()
     }
 }

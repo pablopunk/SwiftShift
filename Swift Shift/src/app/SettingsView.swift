@@ -43,7 +43,7 @@ struct SettingsView: View {
             Divider()
             
             HStack {
-                Button(action: {
+                UIButton(action: {
                     NSApplication.shared.terminate(0)
                 }, label: {
                     HStack {
@@ -54,11 +54,12 @@ struct SettingsView: View {
                 .keyboardShortcut("Q", modifiers: .command)
                 
                 if !hasPermissions {
-                    Button("Refresh permissions") {
+                    UIButton(action: {
                         refreshPermissions()
+                    }, background: .orange.opacity(0.6)) {
+                        Text("Refresh permissions")
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(.orange)
                 }
             }
             .padding([.bottom, .horizontal])

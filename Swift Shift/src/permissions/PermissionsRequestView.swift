@@ -11,14 +11,16 @@ struct PermissionRequestView: View {
             HStack {
                 Text("Accessibility").font(.subheadline)
                 Spacer()
-                Button("Open Preferences") {
+                UIButton(action: {
                     PermissionsManager.openPreferences(at: .accessibility)
-                }
+                }, label: {
+                    Text("Open Preferences")
+                })
             }
         }
     }
 }
 
 #Preview {
-    PermissionRequestView()
+    PermissionRequestView().padding().frame(width: MAIN_WINDOW_WIDTH)
 }
