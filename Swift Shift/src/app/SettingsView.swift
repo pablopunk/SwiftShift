@@ -3,16 +3,17 @@ import ShortcutRecorder
 import Sparkle
 
 struct SettingsView: View {
-    @State var hasPermissions = false
-    private var version: String? = nil
+    @State private var hasPermissions = false
+    private var version: String?
+    private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     
     init(hasPermissions: Bool = false) {
-        self.hasPermissions = hasPermissions
+        self._hasPermissions = State(initialValue: hasPermissions)
         self.version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
     }
     
     private func refreshPermissions() {
-        hasPermissions =  PermissionsManager.hasAccessibilityPermission()
+        hasPermissions = PermissionsManager.hasAccessibilityPermission()
     }
     
     var body: some View {
@@ -52,19 +53,14 @@ struct SettingsView: View {
                     }
                 })
                 .keyboardShortcut("Q", modifiers: .command)
-                
-                if !hasPermissions {
-                    Button("Refresh permissions") {
-                        refreshPermissions()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.orange)
-                }
             }
             .padding([.bottom, .horizontal])
             .padding(.top, 5)
         }
         .onAppear {
+            refreshPermissions()
+        }
+        .onReceive(timer) { _ in
             refreshPermissions()
         }
     }
