@@ -18,35 +18,96 @@ class MouseTracker {
     private var currentAction: MouseAction = .none
     private var trackingTimer: Timer?
     private let trackingTimeout: TimeInterval = 4 // in seconds
+    private var initialMouseQuadrant: WindowQuadrant?
 
     private init() {}
-
+    
     func startTracking(for action: MouseAction) {
         prepareTracking(for: action)
         registerMouseEventMonitor()
         startTrackingTimer()
     }
-
+    
     func stopTracking(for action: MouseAction) {
         guard currentAction == action else { return }
         invalidateTrackingTimer()
         removeMouseEventMonitor()
         resetTrackingVariables()
     }
-
+    
     private func prepareTracking(for action: MouseAction) {
         guard let currentWindow = WindowManager.getCurrentWindow(),
-                !shouldIgnore(window: currentWindow) else {
+              !shouldIgnore(window: currentWindow) else {
             trackedWindow = nil
             return
         }
-
+        
         shouldFocusWindow = PreferencesManager.loadBool(for: .focusOnApp)
         trackedWindowIsFocused = false
         currentAction = action
         initialMouseLocation = NSEvent.mouseLocation
         trackedWindow = currentWindow
         initialWindowLocation = WindowManager.getPosition(window: currentWindow)
+        
+        if action == .resize {
+            prepareResizeTracking()
+        }
+    }
+    
+    private func prepareResizeTracking() {
+        let quadrant = determineMouseQuadrant()
+        initialMouseQuadrant = quadrant // Store the quadrant information
+        print("Mouse is in the \(quadrant) quadrant")
+    }
+    
+    private func determineMouseQuadrant() -> WindowQuadrant {
+        // Use CGEvent to get the current mouse location
+        guard let event = CGEvent(source: nil) else { return .unknown }
+        let mouseLocation = event.unflippedLocation
+        
+        guard let window = trackedWindow,
+              let windowPosition = WindowManager.getPosition(window: window),
+              let windowSize = WindowManager.getSize(window: window) else {
+            return .unknown
+        }
+        
+        let midX = windowPosition.x + windowSize.width / 2
+        let midY = windowPosition.y + windowSize.height / 2
+        
+        drawCircleAt(x: windowPosition.x, y: windowPosition.y, diameter: 10, color: .purple)
+        drawCircleAt(x: midX, y: midY, diameter: 10, color: .blue)
+        drawCircleAt(x: mouseLocation.x, y: mouseLocation.y, diameter: 10, color: .green)
+        
+        if mouseLocation.x < midX && mouseLocation.y > midY {
+            return .topLeft
+        } else if mouseLocation.x >= midX && mouseLocation.y > midY {
+            return .topRight
+        } else if mouseLocation.x < midX && mouseLocation.y <= midY {
+            return .bottomLeft
+        } else {
+            return .bottomRight
+        }
+    }
+    
+    private func resizeWindowBasedOnMouseLocation(_ event: NSEvent) {
+        guard let quadrant = initialMouseQuadrant,
+                let window = trackedWindow else {
+            return
+        }
+        
+        let currentMouseLocation = NSEvent.mouseLocation
+        let deltaX = currentMouseLocation.x - initialMouseLocation!.x
+        let deltaY = currentMouseLocation.y - initialMouseLocation!.y
+        
+        switch quadrant {
+        case .topLeft, .topRight, .bottomLeft, .bottomRight:
+            WindowManager.resizeAndMove(window: window, deltaX: deltaX, deltaY: deltaY, fromQuadrant: quadrant)
+        case .unknown:
+            WindowManager.resize(window: window, deltaX: deltaX, deltaY: deltaY)
+        }
+        
+        // Update initial mouse location for the next event
+        initialMouseLocation = currentMouseLocation
     }
 
     private func shouldIgnore(window: AXUIElement) -> Bool {
@@ -101,19 +162,6 @@ class MouseTracker {
         let newOrigin = NSPoint(x: initialWindowLocation!.x + deltaX, y: initialWindowLocation!.y - deltaY)
 
         WindowManager.move(window: trackedWindow!, to: newOrigin)
-    }
-
-    private func resizeWindowBasedOnMouseLocation(_ event: NSEvent) {
-        let currentMouseLocation = NSEvent.mouseLocation
-
-        // Calculate the change in mouse location since tracking started
-        let deltaX = currentMouseLocation.x - initialMouseLocation!.x
-        let deltaY = currentMouseLocation.y - initialMouseLocation!.y
-
-        WindowManager.resize(window: trackedWindow!, deltaX: deltaX, deltaY: deltaY)
-
-        // Update initial mouse location for the next event
-        initialMouseLocation = currentMouseLocation
     }
 
     private func invalidateTrackingTimer() {

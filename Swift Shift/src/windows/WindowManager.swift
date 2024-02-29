@@ -1,6 +1,14 @@
 import Cocoa
 import Accessibility
 
+enum WindowQuadrant {
+    case topLeft
+    case topRight
+    case bottomLeft
+    case bottomRight
+    case unknown
+}
+
 class WindowManager {
     // Function to move a specified window to a new location
     static func move(window: AXUIElement, to point: NSPoint) {
@@ -8,27 +16,70 @@ class WindowManager {
         let pointValue = AXValueCreate(AXValueType.cgPoint, &mutablePoint)!
         AXUIElementSetAttributeValue(window, kAXPositionAttribute as CFString, pointValue)
     }
-
+    
     // Function to resize a specified window to a new size
     static func resize(window: AXUIElement, deltaX: CGFloat, deltaY: CGFloat) {
-        // Get the current window size
         var sizeRef: CFTypeRef?
         AXUIElementCopyAttributeValue(window, kAXSizeAttribute as CFString, &sizeRef)
         var windowSize: CGSize = .zero
         AXValueGetValue(sizeRef as! AXValue, AXValueType.cgSize, &windowSize)
-
-        // Calculate the new size based on mouse movement
-        // Adjust these calculations if you want different resize behavior
-        let newWidth = max(windowSize.width + deltaX, 0) // Ensure new width is not negative
-        let newHeight = max(windowSize.height - deltaY, 0) // Ensure new height is not negative
+        
+        let newWidth = max(windowSize.width + deltaX, 0)
+        let newHeight = max(windowSize.height - deltaY, 0)
         var newSize = CGSize(width: newWidth, height: newHeight)
-
-        // Create an AXValue representing the new size
+        
         if let newSizeValue = AXValueCreate(AXValueType.cgSize, &newSize) {
             AXUIElementSetAttributeValue(window , kAXSizeAttribute as CFString, newSizeValue)
         }
     }
+    
+    static func resizeAndMove(window: AXUIElement, deltaX: CGFloat, deltaY: CGFloat, fromQuadrant quadrant: WindowQuadrant) {
+        guard let originalPosition = getPosition(window: window),
+              let originalSize = getSize(window: window) else {
+            return
+        }
+        
+        switch quadrant {
+        case .topLeft:
+            let newOrigin = NSPoint(x: originalPosition.x + deltaX, y: originalPosition.y - deltaY)
+            let newSize = NSSize(width: max(originalSize.width - deltaX, 100), height: max(originalSize.height + deltaY, 100))
+            move(window: window, to: newOrigin)
+            resize(window: window, to: newSize)
+        case .topRight:
+            let newSize = NSSize(width: max(originalSize.width + deltaX, 100), height: max(originalSize.height + deltaY, 100))
+            resize(window: window, to: newSize)
+        case .bottomLeft:
+            let newOrigin = NSPoint(x: originalPosition.x + deltaX, y: originalPosition.y)
+            let newSize = NSSize(width: max(originalSize.width - deltaX, 100), height: max(originalSize.height + deltaY, 100))
+            move(window: window, to: newOrigin)
+            resize(window: window, to: newSize)
+        case .bottomRight:
+            resize(window: window, deltaX: deltaX, deltaY: deltaY)
+        case .unknown:
+            // Optionally handle unknown quadrant
+            break
+        }
+    }
+    
+    static func resize(window: AXUIElement, to newSize: NSSize) {
+        var sizeRef = newSize
+        if let newSizeValue = AXValueCreate(AXValueType.cgSize, &sizeRef) {
+            AXUIElementSetAttributeValue(window, kAXSizeAttribute as CFString, newSizeValue)
+        }
+    }
+    
+    static func getSize(window: AXUIElement) -> NSSize? {
+        var sizeRef: CFTypeRef?
+        let result = AXUIElementCopyAttributeValue(window, kAXSizeAttribute as CFString, &sizeRef)
+        guard result == .success, let sizeValue = sizeRef else {
+            return nil
+        }
+        var windowSize: CGSize = .zero
+        AXValueGetValue(sizeValue as! AXValue, AXValueType.cgSize, &windowSize)
+        return NSSize(width: windowSize.width, height: windowSize.height)
+    }
 
+    
     // Function to get the window under the cursor (even if it's not focused)
     static func getCurrentWindow() -> AXUIElement? {
         // Use CGEvent to get the current mouse location
