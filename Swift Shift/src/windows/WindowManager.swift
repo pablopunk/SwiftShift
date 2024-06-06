@@ -148,7 +148,7 @@ class WindowManager {
     static func convertYCoordinateBecauseTheAreTwoFuckingCoordinateSystems(point: NSPoint) -> NSPoint {
         return NSPoint(x: point.x, y: CGDisplayBounds(CGMainDisplayID()).height - point.y)
     }
-
+    
     
     static func getPosition(window: AXUIElement) -> NSPoint? {
         var positionRef: CFTypeRef?
@@ -164,13 +164,16 @@ class WindowManager {
     
     static func getWindowBounds(windowLocation: NSPoint, windowSize: CGSize) -> WindowBounds {
         let windowLocationWithFixedCoordinates = WindowManager.convertYCoordinateBecauseTheAreTwoFuckingCoordinateSystems(point: windowLocation)
-//      drawCircleAt(x: windowLocationWithFixedCoordinates.x, y: windowLocationWithFixedCoordinates.y, diameter: 10, color: .blue)
-//      drawCircleAt(x: windowLocationWithFixedCoordinates.x + windowSize.width, y:windowLocationWithFixedCoordinates.y-windowSize.height, diameter: 10, color: .green)
         let topLeft = NSPoint(x: windowLocationWithFixedCoordinates.x, y: windowLocationWithFixedCoordinates.y)
         let topRight = NSPoint(x: windowLocationWithFixedCoordinates.x + windowSize.width, y: windowLocationWithFixedCoordinates.y)
         let bottomLeft = NSPoint(x: windowLocationWithFixedCoordinates.x, y: windowLocationWithFixedCoordinates.y - windowSize.height)
         let bottomRight = NSPoint(x: windowLocationWithFixedCoordinates.x + windowSize.width, y: windowLocationWithFixedCoordinates.y - windowSize.height)
         
+        // drawCircleAt(x: topLeft.x, y: topLeft.y, diameter: 10, color: .blue)
+        // drawCircleAt(x: topRight.x, y: topRight.y, diameter: 10, color: .blue)
+        // drawCircleAt(x: bottomLeft.x, y: bottomLeft.y, diameter: 10, color: .blue)
+        // drawCircleAt(x: bottomRight.x, y: bottomRight.y, diameter: 10, color: .blue)
+
         return WindowBounds(topLeft: topLeft, topRight: topRight, bottomLeft: bottomLeft, bottomRight: bottomRight)
     }
 }
