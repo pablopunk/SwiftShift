@@ -184,8 +184,6 @@ class MouseTracker {
                 newWidth += deltaX
                 newHeight -= deltaY
             }
-            // Ensure the new width and height are not negative
-            
         } else {
             let currentMouseLocation = NSEvent.mouseLocation
             let deltaX = currentMouseLocation.x - initialMouseLocation.x
@@ -195,6 +193,7 @@ class MouseTracker {
             newOrigin = initialWindowLocation
         }
         
+        // Ensure the new width and height are not negative
         newWidth = max(newWidth, 1)
         newHeight = max(newHeight, 1)
         let newSize = CGSize(width: newWidth, height: newHeight)
