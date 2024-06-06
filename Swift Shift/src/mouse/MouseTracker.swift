@@ -144,13 +144,17 @@ class MouseTracker {
     }
     
     private func resizeWindowBasedOnMouseLocation(_ event: NSEvent) {
+        
+        guard let windowSize = windowSize,
+              let initialMouseLocation = initialMouseLocation,
+              let initialWindowLocation = initialWindowLocation else {
+            return
+        }
+        
+        var newWidth: CGFloat, newHeight: CGFloat, newOrigin: NSPoint
+        
         if (shouldUseQuadrants) {
-            guard let quadrant = quadrant,
-                  let windowSize = windowSize,
-                  let initialMouseLocation = initialMouseLocation,
-                  let initialWindowLocation = initialWindowLocation else {
-                return
-            }
+            guard let quadrant = quadrant else { return }
             
             let currentMouseLocation = NSEvent.mouseLocation
             let windowRelativeCurrentMouseLocation = convertToWindowCoordinates(currentMouseLocation, windowOrigin: initialWindowLocation)
@@ -158,9 +162,9 @@ class MouseTracker {
             let deltaX = windowRelativeCurrentMouseLocation.x - (initialMouseLocation.x - initialWindowLocation.x)
             let deltaY = windowRelativeCurrentMouseLocation.y - (initialMouseLocation.y - initialWindowLocation.y)
             
-            var newWidth = windowSize.width
-            var newHeight = windowSize.height
-            var newOrigin = initialWindowLocation
+            newWidth = windowSize.width
+            newHeight = windowSize.height
+            newOrigin = initialWindowLocation
             
             switch quadrant {
             case .topLeft:
@@ -180,33 +184,21 @@ class MouseTracker {
                 newWidth += deltaX
                 newHeight -= deltaY
             }
-            
             // Ensure the new width and height are not negative
-            newWidth = max(newWidth, 1)
-            newHeight = max(newHeight, 1)
             
-            let newSize = CGSize(width: newWidth, height: newHeight)
-            WindowManager.resize(window: trackedWindow!, to: newSize, from: newOrigin)
         } else {
-            guard let windowSize = windowSize,
-                  let initialMouseLocation = initialMouseLocation,
-                  let initialWindowLocation = initialWindowLocation else {
-                return
-            }
-            
             let currentMouseLocation = NSEvent.mouseLocation
-            
-            // Calculate the change in mouse location since tracking started
             let deltaX = currentMouseLocation.x - initialMouseLocation.x
             let deltaY = currentMouseLocation.y - initialMouseLocation.y
-            
-            let newWidth = windowSize.width + deltaX
-            let newHeight = windowSize.height - deltaY
-            let newSize = CGSize(width: newWidth, height: newHeight)
-            let newOrigin = initialWindowLocation
-            
-            WindowManager.resize(window: trackedWindow!, to: newSize, from: newOrigin)
+            newWidth = windowSize.width + deltaX
+            newHeight = windowSize.height - deltaY
+            newOrigin = initialWindowLocation
         }
+        
+        newWidth = max(newWidth, 1)
+        newHeight = max(newHeight, 1)
+        let newSize = CGSize(width: newWidth, height: newHeight)
+        WindowManager.resize(window: trackedWindow!, to: newSize, from: newOrigin)
     }
     
     private func invalidateTrackingTimer() {
