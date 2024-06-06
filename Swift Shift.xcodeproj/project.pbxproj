@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		172E0BD52B32F36300D5CDA7 /* MouseTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 172E0BD42B32F36300D5CDA7 /* MouseTracker.swift */; };
+		173C0E832C123CF700654527 /* DrawCircle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 173C0E822C123CF700654527 /* DrawCircle.swift */; };
 		174652CE2B33345200241CE6 /* WindowManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 174652CD2B33345200241CE6 /* WindowManager.swift */; };
 		177FB2412B31F9B900B11BA3 /* PermissionsRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 177FB2402B31F9B900B11BA3 /* PermissionsRequestView.swift */; };
 		177FB2482B31FE7F00B11BA3 /* ShortcutRecorder in Frameworks */ = {isa = PBXBuildFile; productRef = 177FB2472B31FE7F00B11BA3 /* ShortcutRecorder */; };
@@ -33,6 +34,7 @@
 
 /* Begin PBXFileReference section */
 		172E0BD42B32F36300D5CDA7 /* MouseTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MouseTracker.swift; sourceTree = "<group>"; };
+		173C0E822C123CF700654527 /* DrawCircle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawCircle.swift; sourceTree = "<group>"; };
 		174652CD2B33345200241CE6 /* WindowManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowManager.swift; sourceTree = "<group>"; };
 		177FB2402B31F9B900B11BA3 /* PermissionsRequestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsRequestView.swift; sourceTree = "<group>"; };
 		177FB24B2B31FF1E00B11BA3 /* ShortcutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutView.swift; sourceTree = "<group>"; };
@@ -69,6 +71,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		173C0E812C123CE700654527 /* utils */ = {
+			isa = PBXGroup;
+			children = (
+				173C0E822C123CF700654527 /* DrawCircle.swift */,
+			);
+			path = utils;
+			sourceTree = "<group>";
+		};
 		17550A652B3351000058A94F /* windows */ = {
 			isa = PBXGroup;
 			children = (
@@ -118,6 +128,7 @@
 		17550A6A2B3351A80058A94F /* src */ = {
 			isa = PBXGroup;
 			children = (
+				173C0E812C123CE700654527 /* utils */,
 				E2CABBA62B447B0A00D66D43 /* updates */,
 				E236331C2B44668300C0E61F /* preferences */,
 				17550A692B3351600058A94F /* app */,
@@ -271,6 +282,7 @@
 				177FB24C2B31FF1E00B11BA3 /* ShortcutView.swift in Sources */,
 				172E0BD52B32F36300D5CDA7 /* MouseTracker.swift in Sources */,
 				1781A5E42B31EE4A00F27910 /* AppView.swift in Sources */,
+				173C0E832C123CF700654527 /* DrawCircle.swift in Sources */,
 				E2CABBA52B447AEA00D66D43 /* UpdatesView.swift in Sources */,
 				177FB2532B321D0500B11BA3 /* ShortcutsManager.swift in Sources */,
 				E2E6F5EA2B3EF03C005B0D96 /* Constants.swift in Sources */,

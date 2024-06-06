@@ -3,6 +3,7 @@ import Foundation
 enum PreferenceKey: String {
     case focusOnApp = "focusOnApp"
     case showMenuBarIcon = "showMenuBarIcon"
+    case useQuadrants = "useQuadrants"
 }
 
 class PreferencesManager {
