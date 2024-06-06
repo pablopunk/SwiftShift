@@ -60,7 +60,6 @@ class MouseTracker {
         
         if action == .resize && shouldUseQuadrants, let initialMouseLocation = initialMouseLocation, let initialWindowLocation = initialWindowLocation, let windowSize = windowSize {
             quadrant = determineQuadrant(mouseLocation: initialMouseLocation, windowSize: windowSize, windowLocation: initialWindowLocation)
-            print(quadrant!)
         }
     }
     
