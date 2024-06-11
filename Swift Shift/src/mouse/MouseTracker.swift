@@ -12,8 +12,6 @@ enum Quadrant {
 }
 
 class MouseTracker {
-    static let MOUSE_EVENT_SUBSCRIBER = "MouseTracker_mouseMoved"
-
     static let shared = MouseTracker()
     private var mouseEventMonitor: Any?
     private var initialMouseLocation: NSPoint?
