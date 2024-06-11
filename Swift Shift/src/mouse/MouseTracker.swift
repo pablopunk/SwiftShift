@@ -1,7 +1,7 @@
 import Cocoa
 import Accessibility
 
-enum MouseAction {
+enum MouseAction: String {
     case move
     case resize
     case none
@@ -12,6 +12,8 @@ enum Quadrant {
 }
 
 class MouseTracker {
+    static let MOUSE_EVENT_SUBSCRIBER = "MouseTracker_mouseMoved"
+
     static let shared = MouseTracker()
     private var mouseEventMonitor: Any?
     private var initialMouseLocation: NSPoint?
@@ -28,9 +30,9 @@ class MouseTracker {
     
     private init() {}
     
-    func startTracking(for action: MouseAction) {
+    func startTracking(for action: MouseAction, button: MouseButton) {
         prepareTracking(for: action)
-        registerMouseEventMonitor()
+        registerMouseEventMonitor(button: button)
         startTrackingTimer()
     }
     
@@ -94,8 +96,13 @@ class MouseTracker {
         }
     }
     
-    private func registerMouseEventMonitor() {
-        mouseEventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { [weak self] event in
+    private func registerMouseEventMonitor(button: MouseButton) {
+        let eventType: NSEvent.EventTypeMask = switch button {
+        case .left: .leftMouseDragged
+        case .right: .rightMouseDragged
+        case .none: .mouseMoved
+        }
+        mouseEventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [eventType]) { [weak self] event in
             self?.handleMouseMoved(event)
         }
     }
@@ -143,7 +150,7 @@ class MouseTracker {
     }
     
     private func resizeWindowBasedOnMouseLocation(_ event: NSEvent) {
-        
+
         guard let windowSize = windowSize,
               let initialMouseLocation = initialMouseLocation,
               let initialWindowLocation = initialWindowLocation else {

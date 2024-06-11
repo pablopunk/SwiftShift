@@ -111,6 +111,7 @@ struct ShortcutView: View {
                             if (newValue == .none) {
                                 requireMouseClick = false
                             }
+                            ShortcutsManager.shared.save(shortcut)
                         }
                         .frame(width: 100).padding(.leading, -10)
                     }
