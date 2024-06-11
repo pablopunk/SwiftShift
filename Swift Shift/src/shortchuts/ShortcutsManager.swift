@@ -9,6 +9,15 @@ enum MouseButton: String, CaseIterable {
     case none = "None"
     case left = "Left"
     case right = "Right"
+
+    static func parse(rawValue: String?) -> MouseButton {
+      guard let rawValue = rawValue else { return .none }
+      if let value = MouseButton(rawValue: rawValue) {
+        return value
+      } else {
+        return .none
+      }
+    }
 }
 
 struct UserShortcut {
@@ -36,6 +45,7 @@ class ShortcutsManager {
             if let shortcut = userShortcut.shortcut {
                 let data = try NSKeyedArchiver.archivedData(withRootObject: shortcut, requiringSecureCoding: false)
                 UserDefaults.standard.set(data, forKey: userShortcut.type.rawValue)
+                UserDefaults.standard.set(userShortcut.mouseButton.rawValue, forKey: "\(userShortcut.type.rawValue)_mouseButton")
             }
         } catch {
             print("Error: \(error)")
@@ -47,8 +57,8 @@ class ShortcutsManager {
         guard let data = UserDefaults.standard.data(forKey: type.rawValue) else { return nil }
         do {
             let shortcut = try NSKeyedUnarchiver.unarchivedObject(ofClass: Shortcut.self, from: data)
-            // TODO: mouseButton should also be saved in save() and retrieved here
-            return UserShortcut(type: type, shortcut: shortcut, mouseButton: .none)
+            let mouseButton = MouseButton.parse(rawValue: UserDefaults.standard.string(forKey: "\(type.rawValue)_mouseButton"))
+            return UserShortcut(type: type, shortcut: shortcut, mouseButton: mouseButton)
         } catch {
             print("Error unarchiving data: \(error.localizedDescription)")
             return nil
