@@ -23,13 +23,21 @@ There are 3 possible ways:
 * Focus on window
 * Smart resizing with quadrants
 
-### Quadrants 
+### Quadrants
 
 https://github.com/pablopunk/SwiftShift/assets/4324982/5aac5bab-ad87-43c1-b2fe-fd55077f56f6
 
 
-
 ## Contributing
+
+You can either use Xcode ([be careful with signing](https://github.com/pablopunk/SwiftShift/issues/52#issuecomment-2160423351)) or build it
+directly from the command line:
+
+### Build and run from the command line
+
+```bash
+make run
+```
 
 I'm open to PRs and requests. If you are looking for something to do, take a look at the issues marked as [`help wanted`](https://github.com/pablopunk/SwiftShift/issues?q=is:issue+is:open+label:%22help+wanted%22).
 
