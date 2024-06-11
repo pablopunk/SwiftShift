@@ -39,6 +39,16 @@ directly from the command line:
 make run
 ```
 
+### Accessibility permissions running locally
+
+Make sure you don't have Swift Shift running already. If you have 2 versions of Swift Shift, only one will get
+Accessibility permissions. To fix it:
+
+* Quit all Swift Shift instances
+* Remove Swift Shift from the System Preferences > Security & Privacy > Accessibility
+* Run the app you want to test
+* Enable Accessibility permissions
+
 I'm open to PRs and requests. If you are looking for something to do, take a look at the issues marked as [`help wanted`](https://github.com/pablopunk/SwiftShift/issues?q=is:issue+is:open+label:%22help+wanted%22).
 
 ![header](https://github.com/pablopunk/swiftshift.app/blob/main/public/header-dark-extended.png?raw=true#gh-dark-mode-only)
