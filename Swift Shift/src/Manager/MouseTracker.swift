@@ -1,7 +1,7 @@
 import Cocoa
 import Accessibility
 
-enum MouseAction {
+enum MouseAction: String {
     case move
     case resize
     case none
@@ -28,9 +28,9 @@ class MouseTracker {
 
     private init() {}
 
-    func startTracking(for action: MouseAction) {
+    func startTracking(for action: MouseAction, button: MouseButton) {
         prepareTracking(for: action)
-        registerMouseEventMonitor()
+        registerMouseEventMonitor(button: button)
         startTrackingTimer()
     }
 
@@ -75,8 +75,10 @@ class MouseTracker {
     private func determineQuadrant(mouseLocation: NSPoint, windowSize: CGSize, windowLocation: NSPoint) -> Quadrant {
         let bounds = WindowManager.getWindowBounds(windowLocation: windowLocation, windowSize: windowSize)
 
-        let thirdX = (bounds.topRight.x - bounds.topLeft.x) / 3
-        let thirdY = (bounds.topLeft.y - bounds.bottomLeft.y) / 3
+        let centreSize = 0.25 // https://github.com/pablopunk/SwiftShift/pull/54#discussion_r1635854368
+        let sideSize = (1 - centreSize) / 2
+        let thirdX = (bounds.topRight.x - bounds.topLeft.x) * sideSize
+        let thirdY = (bounds.topLeft.y - bounds.bottomLeft.y) * sideSize
 
         let leftX = bounds.topLeft.x + thirdX
         let rightX = bounds.topRight.x - thirdX
@@ -107,8 +109,14 @@ class MouseTracker {
         }
     }
 
-    private func registerMouseEventMonitor() {
-        mouseEventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { [weak self] event in
+    private func registerMouseEventMonitor(button: MouseButton) {
+        let eventType: NSEvent.EventTypeMask = switch button {
+        case .left: .leftMouseDragged
+        case .right: .rightMouseDragged
+        case .none: .mouseMoved
+        }
+
+        mouseEventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [eventType]) { [weak self] event in
             self?.handleMouseMoved(event)
         }
     }
@@ -194,13 +202,10 @@ class MouseTracker {
                 newWidth -= deltaX
                 newOrigin.x += deltaX
             case .center:
-                if abs(deltaX) > abs(deltaY) {
-                    newWidth += 2 * deltaX
-                    newOrigin.x -= deltaX
-                } else {
-                    newHeight += 2 * deltaY
-                    newOrigin.y -= deltaY
-                }
+                newWidth += 2 * deltaX
+                newOrigin.x -= deltaX
+                newHeight += 2 * deltaY
+                newOrigin.y -= deltaY
             case .right:
                 newWidth += deltaX
             case .bottomLeft:
