@@ -8,7 +8,7 @@ enum MouseAction: String {
 }
 
 enum Quadrant {
-    case topLeft, topRight, bottomLeft, bottomRight
+    case topLeft, top, topRight, left, center, right, bottomLeft, bottom, bottomRight
 }
 
 class MouseTracker {
@@ -41,7 +41,6 @@ class MouseTracker {
         resetTrackingVariables()
     }
 
-
     private func prepareTracking(for action: MouseAction) {
         guard let currentWindow = WindowManager.getCurrentWindow(),
               !shouldIgnore(window: currentWindow) else {
@@ -57,7 +56,6 @@ class MouseTracker {
         trackedWindow = currentWindow
         initialWindowLocation = WindowManager.getPosition(window: currentWindow)
         windowSize = WindowManager.getSize(window: currentWindow)
-
 
         if action == .resize && shouldUseQuadrants, let initialMouseLocation = initialMouseLocation, let initialWindowLocation = initialWindowLocation, let windowSize = windowSize {
             quadrant = determineQuadrant(mouseLocation: initialMouseLocation, windowSize: windowSize, windowLocation: initialWindowLocation)
@@ -77,21 +75,37 @@ class MouseTracker {
     private func determineQuadrant(mouseLocation: NSPoint, windowSize: CGSize, windowLocation: NSPoint) -> Quadrant {
         let bounds = WindowManager.getWindowBounds(windowLocation: windowLocation, windowSize: windowSize)
 
-        let midX = (bounds.topLeft.x + bounds.topRight.x) / 2
-        let midY = (bounds.topLeft.y + bounds.bottomLeft.y) / 2
+        let centreSize = 0.25 // https://github.com/pablopunk/SwiftShift/pull/54#discussion_r1635854368
+        let sideSize = (1 - centreSize) / 2
+        let thirdX = (bounds.topRight.x - bounds.topLeft.x) * sideSize
+        let thirdY = (bounds.topLeft.y - bounds.bottomLeft.y) * sideSize
 
-        let isLeft = mouseLocation.x < midX
-        let isTop = mouseLocation.y > midY
+        let leftX = bounds.topLeft.x + thirdX
+        let rightX = bounds.topRight.x - thirdX
+        let topY = bounds.topLeft.y - thirdY
+        let bottomY = bounds.bottomLeft.y + thirdY
 
-        switch (isLeft, isTop) {
-        case (true, true):
+        switch (mouseLocation.x, mouseLocation.y) {
+        case (..<(leftX), topY...):
             return .topLeft
-        case (false, true):
+        case (leftX..<rightX, topY...):
+            return .top
+        case (rightX..., topY...):
             return .topRight
-        case (true, false):
+        case (..<(leftX), bottomY..<topY):
+            return .left
+        case (leftX..<rightX, bottomY..<topY):
+            return .center
+        case (rightX..., bottomY..<topY):
+            return .right
+        case (..<(leftX), ..<bottomY):
             return .bottomLeft
-        case (false, false):
+        case (leftX..<rightX, ..<bottomY):
+            return .bottom
+        case (rightX..., ..<bottomY):
             return .bottomRight
+        default:
+            return .bottomRight // Fallback to bottomRight
         }
     }
 
@@ -101,12 +115,11 @@ class MouseTracker {
         case .right: .rightMouseDragged
         case .none: .mouseMoved
         }
-        
+
         mouseEventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [eventType]) { [weak self] event in
             self?.handleMouseMoved(event)
         }
     }
-
 
     private func startTrackingTimer() {
         trackingTimer?.invalidate()
@@ -151,7 +164,6 @@ class MouseTracker {
     }
 
     private func resizeWindowBasedOnMouseLocation(_ event: NSEvent) {
-
         guard let windowSize = windowSize,
               let initialMouseLocation = initialMouseLocation,
               let initialWindowLocation = initialWindowLocation else {
@@ -179,14 +191,29 @@ class MouseTracker {
                 newHeight += deltaY
                 newOrigin.x += deltaX
                 newOrigin.y -= deltaY
+            case .top:
+                newHeight += deltaY
+                newOrigin.y -= deltaY
             case .topRight:
                 newWidth += deltaX
                 newHeight += deltaY
                 newOrigin.y -= deltaY
+            case .left:
+                newWidth -= deltaX
+                newOrigin.x += deltaX
+            case .center:
+                newWidth += 2 * deltaX
+                newOrigin.x -= deltaX
+                newHeight += 2 * deltaY
+                newOrigin.y -= deltaY
+            case .right:
+                newWidth += deltaX
             case .bottomLeft:
                 newWidth -= deltaX
                 newHeight -= deltaY
                 newOrigin.x += deltaX
+            case .bottom:
+                newHeight -= deltaY
             case .bottomRight:
                 newWidth += deltaX
                 newHeight -= deltaY
