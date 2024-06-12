@@ -71,6 +71,15 @@ class ShortcutsManager {
         updateGlobalShortcuts()
     }
     
+    func removeClickActionsForAll() {
+        for type in ShortcutType.allCases {
+            if var userShortcut = load(for: type) {
+                userShortcut.mouseButton = .none
+                self.save(userShortcut)
+            }
+        }
+    }
+    
     private func clearActionsAndMonitors() {
         removeAllActions()
         removeGlobalMonitors()
