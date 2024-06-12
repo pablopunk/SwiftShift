@@ -15,8 +15,8 @@ There are 3 possible ways:
 
 ## Features
 
+<img src="https://github.com/pablopunk/SwiftShift/assets/4324982/58373dcf-217f-4b11-b734-dd0c1ee31063" width="380" />
 
-<img src="https://github.com/pablopunk/SwiftShift/assets/4324982/3b8937aa-6dce-4129-a5a4-9ca49f3ca157" width="380" />
 
 * Launch at login
 * Hide menubar icon
@@ -26,7 +26,6 @@ There are 3 possible ways:
 ### Quadrants 
 
 https://github.com/pablopunk/SwiftShift/assets/4324982/5aac5bab-ad87-43c1-b2fe-fd55077f56f6
-
 
 
 ## Contributing
