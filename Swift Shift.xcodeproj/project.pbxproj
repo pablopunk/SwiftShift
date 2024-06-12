@@ -116,8 +116,8 @@
 				1781A5E12B31EE4A00F27910 /* App.swift */,
 				E2E6F5E92B3EF03C005B0D96 /* Constants.swift */,
 				1751BFD72C19E98D00559AC7 /* lib */,
-				1751BFD62C19E91300559AC7 /* Manager */,
 				1751BFD52C19E90200559AC7 /* View */,
+				1751BFD62C19E91300559AC7 /* Manager */,
 			);
 			path = src;
 			sourceTree = "<group>";
