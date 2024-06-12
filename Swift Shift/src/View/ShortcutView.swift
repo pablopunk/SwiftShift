@@ -72,19 +72,19 @@ struct ShortcutView: View {
             if requireMouseClick {
                 HStack {
                     Image(systemName: "magicmouse.fill")
-                        .foregroundColor(.gray)
+                        .foregroundColor(.secondary)
                         .frame(width: 18)
 
                     Text("Click")
                         .font(.callout)
-                        .foregroundStyle(.gray)
+                        .foregroundStyle(.secondary)
                     
                     Spacer()
                     
                     HStack {
                         ForEach(Array(MouseButton.allCases), id: \.self) { mouseButton in
                             let selected = mouseButton == shortcut.mouseButton
-                            let color: Color = selected ? .teal : .gray
+                            let color: Color = selected ? .teal : .primary.opacity(0.8)
                             UIButton(action: {
                                 shortcut.mouseButton = mouseButton
                                 ShortcutsManager.shared.save(shortcut)

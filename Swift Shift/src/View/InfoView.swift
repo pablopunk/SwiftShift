@@ -57,7 +57,7 @@ struct InfoView: View {
             }, label: {
                 HStack {
                     Text("Quit")
-                    Text("⌘+Q").foregroundStyle(.gray).font(.subheadline)
+                    Text("⌘+Q").foregroundStyle(.secondary).font(.subheadline)
                 }
             })
             .keyboardShortcut("Q", modifiers: .command)

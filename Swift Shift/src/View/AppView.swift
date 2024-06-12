@@ -19,7 +19,7 @@ struct TabButton: View {
                 .frame(width: 40, height: 40)
         }
         .buttonStyle(PlainButtonStyle())
-        .foregroundColor(selectedTab == tab ? .blue : .gray)
+        .foregroundColor(selectedTab == tab ? .blue : .secondary)
     }
 }
 

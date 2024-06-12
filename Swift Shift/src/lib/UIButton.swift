@@ -89,5 +89,18 @@ struct UIButton<Label: View>: View {
         UIButton(action: {print("Pressed")}, plain: true, background: .cyan, label: {
             Text("Plain")
         }, backgroundHover: .teal.opacity(0.2))
-    }.padding(120)
+
+            ForEach(Array(MouseButton.allCases), id: \.self) { mouseButton in
+                let selected = mouseButton == .none
+                let color: Color = selected ? .teal : .primary
+                UIButton(action: {
+                    print("hi")
+                }, plain: true, background: color, label: {
+                    if mouseButton != .none {
+                        Image(systemName: "capsule.lefthalf.filled")
+                    }
+                    Text(mouseButton.rawValue).font(.caption)
+                }, backgroundHover: .teal.opacity(0.2))
+            }
+    }.padding(80)
 }
