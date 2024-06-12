@@ -42,19 +42,17 @@ struct ShortcutNSView: NSViewRepresentable {
 
 struct ShortcutView: View {
     @State private var shortcut: UserShortcut
-    @State private var isExpanded: Bool
-    @State private var requireMouseClick: Bool
+    @AppStorage(PreferenceKey.requireMouseClick.rawValue) var requireMouseClick = false
     
     init(type: ShortcutType) {
         let loadedShortcut = ShortcutsManager.shared.load(for: type) ?? UserShortcut(type: type, mouseButton: .none)
         self.shortcut = loadedShortcut
-        self.requireMouseClick = loadedShortcut.mouseButton != MouseButton.none
-        self.isExpanded = loadedShortcut.mouseButton != MouseButton.none
     }
     
     var body: some View {
         VStack(alignment: .leading) {
             HStack {
+                Image(systemName: actionIcon())
                 Text(shortcut.type.rawValue)
                     .font(.headline)
                     .frame(width: 60, alignment: .leading)
@@ -70,61 +68,67 @@ struct ShortcutView: View {
                 Button("Clear") {
                     shortcut.shortcut = nil
                 }
-                Button(action: {
-                    withAnimation(.easeIn(duration: 0.3)) {
-                        isExpanded.toggle()
-                    }
-                }) {
-                    Image(systemName: "chevron.right")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 10, height: 10)
-                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
-                }.buttonStyle(.borderless)
             }
-            if isExpanded {
+            if requireMouseClick {
                 HStack {
-                    Toggle(isOn: $requireMouseClick, label: {
-                        Text("Require mouse click")
-                    }).onChange(of: requireMouseClick) {
-                        newValue in
-                        if (newValue == false) {
-                            shortcut.mouseButton = MouseButton.none
-                        } else {
-                            shortcut.mouseButton = MouseButton.left
-                        }
-                        ShortcutsManager.shared.save(shortcut)
-                    }
+                    Image(systemName: "magicmouse.fill")
+                        .foregroundColor(.gray)
+                        .frame(width: 18)
+
+                    Text("Click")
+                        .font(.callout)
+                        .foregroundStyle(.gray)
                     
-                    if requireMouseClick {
-                        
-                        Spacer()
-                        
-                        Image(systemName: "magicmouse.fill")
-                        
-                        Picker("", selection: $shortcut.mouseButton) {
-                            ForEach(Array(MouseButton.allCases), id: \.self) { type in
-                                Text(type.rawValue).tag(type)
-                            }
-                        }.onChange(of: shortcut.mouseButton) {
-                            newValue in
-                            if (newValue == .none) {
-                                requireMouseClick = false
-                            }
-                            ShortcutsManager.shared.save(shortcut)
+                    Spacer()
+                    
+                    HStack {
+                        ForEach(Array(MouseButton.allCases), id: \.self) { mouseButton in
+                            let selected = mouseButton == shortcut.mouseButton
+                            let color: Color = selected ? .teal : .gray
+                            UIButton(action: {
+                                shortcut.mouseButton = mouseButton
+                                ShortcutsManager.shared.save(shortcut)
+                            }, plain: !selected, background: color, label: {
+                                if mouseButton != .none {
+                                    Image(systemName: clickIcon(mouseButton))
+                                }
+                                Text(mouseButton.rawValue).font(.caption)
+                            }, backgroundHover: .teal.opacity(0.2))
                         }
-                        .frame(width: 100).padding(.leading, -10)
                     }
                 }
-                .animation(.easeInOut, value: isExpanded)
+                .onAppear {
+                    // this is needed when we update the mouse to .none from PreferencesView
+                    loadShortcutFromStorage()
+                }
             }
-            
+        }
+    }
+    
+    private func loadShortcutFromStorage() {
+        let loadedShortcut = ShortcutsManager.shared.load(for: self.shortcut.type) ?? UserShortcut(type: self.shortcut.type, mouseButton: .none)
+        self.shortcut = loadedShortcut
+    }
+    
+    private func actionIcon() -> String {
+        switch(self.shortcut.type) {
+        case .move: return "macwindow.and.cursorarrow"
+        case .resize: return "macwindow.badge.plus"
+        }
+    }
+    
+    private func clickIcon(_ clickType: MouseButton) -> String {
+        switch(clickType) {
+        case .left: return "capsule.lefthalf.filled"
+        case .right: return "capsule.righthalf.filled"
+        case .none: return ""
         }
     }
 }
 
 #Preview {
-    ShortcutView(type: .move)
-        .padding()
-        .frame(width: MAIN_WINDOW_WIDTH)
+    VStack {
+        ShortcutView(type: .move)
+        ShortcutView(type: .resize)
+    }.frame(width: MAIN_WINDOW_WIDTH).padding()
 }
