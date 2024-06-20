@@ -73,6 +73,8 @@ class MouseTracker {
     }
 
     private func determineQuadrant(mouseLocation: NSPoint, windowSize: CGSize, windowLocation: NSPoint) -> Quadrant {
+        if (!shouldUseQuadrants) { return .bottomRight }
+
         let bounds = WindowManager.getWindowBounds(windowLocation: windowLocation, windowSize: windowSize)
 
         let centreSize = 0.25 // https://github.com/pablopunk/SwiftShift/pull/54#discussion_r1635854368
@@ -170,68 +172,57 @@ class MouseTracker {
             return
         }
 
-        var newWidth: CGFloat, newHeight: CGFloat, newOrigin: NSPoint
+        guard let quadrant = quadrant else { return }
 
-        if (shouldUseQuadrants) {
-            guard let quadrant = quadrant else { return }
+        let currentMouseLocation = NSEvent.mouseLocation
+        let windowRelativeCurrentMouseLocation = convertToWindowCoordinates(currentMouseLocation, windowOrigin: initialWindowLocation)
 
-            let currentMouseLocation = NSEvent.mouseLocation
-            let windowRelativeCurrentMouseLocation = convertToWindowCoordinates(currentMouseLocation, windowOrigin: initialWindowLocation)
+        let deltaX = windowRelativeCurrentMouseLocation.x - (initialMouseLocation.x - initialWindowLocation.x)
+        let deltaY = windowRelativeCurrentMouseLocation.y - (initialMouseLocation.y - initialWindowLocation.y)
 
-            let deltaX = windowRelativeCurrentMouseLocation.x - (initialMouseLocation.x - initialWindowLocation.x)
-            let deltaY = windowRelativeCurrentMouseLocation.y - (initialMouseLocation.y - initialWindowLocation.y)
+        var newWidth = windowSize.width
+        var newHeight = windowSize.height
+        var moving = NSPoint(x: 0, y: 0)
 
-            newWidth = windowSize.width
-            newHeight = windowSize.height
-            newOrigin = initialWindowLocation
-
-            switch quadrant {
-            case .topLeft:
-                newWidth -= deltaX
-                newHeight += deltaY
-                newOrigin.x += deltaX
-                newOrigin.y -= deltaY
-            case .top:
-                newHeight += deltaY
-                newOrigin.y -= deltaY
-            case .topRight:
-                newWidth += deltaX
-                newHeight += deltaY
-                newOrigin.y -= deltaY
-            case .left:
-                newWidth -= deltaX
-                newOrigin.x += deltaX
-            case .center:
-                newWidth += 2 * deltaX
-                newOrigin.x -= deltaX
-                newHeight += 2 * deltaY
-                newOrigin.y -= deltaY
-            case .right:
-                newWidth += deltaX
-            case .bottomLeft:
-                newWidth -= deltaX
-                newHeight -= deltaY
-                newOrigin.x += deltaX
-            case .bottom:
-                newHeight -= deltaY
-            case .bottomRight:
-                newWidth += deltaX
-                newHeight -= deltaY
-            }
-        } else {
-            let currentMouseLocation = NSEvent.mouseLocation
-            let deltaX = currentMouseLocation.x - initialMouseLocation.x
-            let deltaY = currentMouseLocation.y - initialMouseLocation.y
-            newWidth = windowSize.width + deltaX
-            newHeight = windowSize.height - deltaY
-            newOrigin = initialWindowLocation
+        switch quadrant {
+        case .topLeft:
+            newWidth -= deltaX
+            newHeight += deltaY
+            moving.x = 1.0
+            moving.y = 1.0
+        case .top:
+            newHeight += deltaY
+            moving.y = 1.0
+        case .topRight:
+            newWidth += deltaX
+            newHeight += deltaY
+            moving.y = 1.0
+        case .left:
+            newWidth -= deltaX
+            moving.x = 1.0
+        case .center:
+            newWidth += 2 * deltaX
+            newHeight += 2 * deltaY
+            moving.x = 0.5
+            moving.y = 0.5
+        case .right:
+            newWidth += deltaX
+        case .bottomLeft:
+            newWidth -= deltaX
+            newHeight -= deltaY
+            moving.x = 1.0
+        case .bottom:
+            newHeight -= deltaY
+        case .bottomRight:
+            newWidth += deltaX
+            newHeight -= deltaY
         }
 
         // Ensure the new width and height are not negative
         newWidth = max(newWidth, 1)
         newHeight = max(newHeight, 1)
         let newSize = CGSize(width: newWidth, height: newHeight)
-        WindowManager.resize(window: trackedWindow!, to: newSize, from: newOrigin)
+        WindowManager.resizeMove(window: trackedWindow!, from: windowSize, to: newSize, relativeTo: initialWindowLocation, moving: moving)
     }
 
     private func invalidateTrackingTimer() {

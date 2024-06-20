@@ -15,15 +15,21 @@ class WindowManager {
         let pointValue = AXValueCreate(AXValueType.cgPoint, &mutablePoint)!
         AXUIElementSetAttributeValue(window, kAXPositionAttribute as CFString, pointValue)
     }
-    
-    // Function to resize a specified window to a new size from a specific origin
-    static func resize(window: AXUIElement, to newSize: CGSize, from origin: NSPoint) {
-        move(window: window, to: origin)
+
+    // Function to resize a specified window to a new size, moving the window if necessary
+    static func resizeMove(window: AXUIElement, from oldSize: CGSize, to newSize: CGSize, relativeTo oldOrigin: NSPoint, moving: NSPoint) {
         var mutableSize = newSize
         let sizeValue = AXValueCreate(AXValueType.cgSize, &mutableSize)!
         AXUIElementSetAttributeValue(window, kAXSizeAttribute as CFString, sizeValue)
+        guard let resultSize = getSize(window: window) else { return }
+        let diffX = oldSize.width - resultSize.width
+        let diffY = oldSize.height - resultSize.height
+        var newOrigin = oldOrigin
+        newOrigin.x += diffX * moving.x
+        newOrigin.y += diffY * moving.y
+        move(window: window, to: newOrigin)
     }
-    
+
     // Function to get the window size
     static func getSize(window: AXUIElement) -> NSSize? {
         var sizeRef: CFTypeRef?
@@ -41,7 +47,7 @@ class WindowManager {
         // Use CGEvent to get the current mouse location
         guard let event = CGEvent(source: nil) else { return nil }
         let mouseLocation = event.location
-        
+
         // Create a system-wide accessibility object
         let systemWideElement = AXUIElementCreateSystemWide()
         
