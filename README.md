@@ -2,7 +2,7 @@
 
 > Sweet window management for macOS
 
-https://github.com/pablopunk/SwiftShift/assets/4324982/5f27ae84-1584-4682-bf82-13d34b4c7fde
+https://github.com/pablopunk/SwiftShift/assets/4324982/8f0566b9-d18e-462e-8d74-52bcf6c95f52
 
 
 ## Installation
