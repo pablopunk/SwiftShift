@@ -1,4 +1,4 @@
-# [SwiftShift.app](https://swiftshift.app)
+# [SwiftShift.app](https://swiftshift.app) [![Github all releases](https://img.shields.io/github/downloads/pablopunk/swiftshift/total.svg)](https://GitHub.com/pablopunk/swiftshift/releases/)
 
 > Sweet window management for macOS
 
