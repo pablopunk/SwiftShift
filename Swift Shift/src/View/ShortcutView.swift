@@ -69,7 +69,6 @@ struct ShortcutView: View {
           shortcut.shortcut = nil
         }
       }
-      if requireMouseClick {
         HStack {
           Image(systemName: "magicmouse.fill")
             .foregroundColor(.secondary)
@@ -101,7 +100,6 @@ struct ShortcutView: View {
           // this is needed when we update the mouse to .none from PreferencesView
           loadShortcutFromStorage()
         }
-      }
     }
   }
   

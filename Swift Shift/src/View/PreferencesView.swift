@@ -5,7 +5,6 @@ struct PreferencesView: View {
   @AppStorage(PreferenceKey.showMenuBarIcon.rawValue) var showMenuBarIcon = true
   @AppStorage(PreferenceKey.focusOnApp.rawValue) var focusOnApp = true
   @AppStorage(PreferenceKey.useQuadrants.rawValue) var useQuadrants = false
-  @AppStorage(PreferenceKey.requireMouseClick.rawValue) var requireMouseClick = false
   
   var body: some View {
     VStack(alignment: .leading) {
@@ -29,16 +28,6 @@ struct PreferencesView: View {
         Text("The resize action will happen from the edge/corner that's closer to your mouse")
           .fixedSize(horizontal: false, vertical: true)
       }
-      
-      Toggle(isOn: $requireMouseClick) {
-        Text("Require mouse click")
-        Text("Allows you to use the mouse buttons in your shortcuts")
-          .fixedSize(horizontal: false, vertical: true)
-      }.onChange(of: requireMouseClick, perform: { newValue in
-        if newValue == false {
-          ShortcutsManager.shared.removeClickActionsForAll()
-        }
-      })
     }
   }
 }
