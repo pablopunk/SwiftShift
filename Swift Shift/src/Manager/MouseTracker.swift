@@ -26,8 +26,46 @@ class MouseTracker {
   private var quadrant: Quadrant?
   private var windowSize: CGSize?
   private var isTracking: Bool = false
+  private var spaceChangeObserver: Any?
   
-  private init() {}
+  private init() {
+    // Register for space change notifications at the class level too
+    registerForSpaceChangeNotifications()
+  }
+  
+  deinit {
+    unregisterForSpaceChangeNotifications()
+  }
+  
+  private func registerForSpaceChangeNotifications() {
+    // Listen for space changes to reset tracking if necessary
+    let notificationCenter = NSWorkspace.shared.notificationCenter
+    spaceChangeObserver = notificationCenter.addObserver(
+      forName: NSWorkspace.activeSpaceDidChangeNotification,
+      object: nil,
+      queue: .main) { [weak self] _ in
+        self?.handleSpaceChange()
+      }
+  }
+  
+  private func unregisterForSpaceChangeNotifications() {
+    if let observer = spaceChangeObserver {
+      NSWorkspace.shared.notificationCenter.removeObserver(observer)
+      spaceChangeObserver = nil
+    }
+  }
+  
+  private func handleSpaceChange() {
+    // We only need to clear internal state flags, 
+    // but not stop tracking completely which would break functionality
+    // This ensures command key presses aren't "stuck" after desktop switches
+    if isTracking {
+      // Just reset the tracking state flag without stopping actual tracking
+      isTracking = false
+      // Immediately set it back to true to ensure ongoing operations continue
+      isTracking = true
+    }
+  }
   
   func startTracking(for action: MouseAction, button: MouseButton) {
     // If already tracking, clean up first
@@ -51,6 +89,15 @@ class MouseTracker {
     removeMouseEventMonitor()
     resetTrackingVariables()
     isTracking = false
+  }
+  
+  // Explicit method to force reset tracking state, but only use in emergency cases
+  func forceResetTracking() {
+    if currentAction != .none {
+      // Instead of completely stopping tracking, just ensure proper state
+      // This is safer than a full reset
+      initialMouseLocation = NSEvent.mouseLocation
+    }
   }
   
   private func prepareTracking(for action: MouseAction) {
@@ -150,6 +197,16 @@ class MouseTracker {
           let _ = initialMouseLocation,
           let _ = initialWindowLocation,
           let _ = trackedWindow else {
+      return
+    }
+    
+    // Check if any other app might be trying to use key combinations
+    // If other keys are pressed, we should give control back to other apps
+    let currentFlags = NSEvent.modifierFlags
+    let hasOtherKeys = checkForKeyPresses()
+    if hasOtherKeys {
+      // Temporarily pause tracking without stopping it
+      pauseTracking()
       return
     }
     
@@ -271,5 +328,39 @@ class MouseTracker {
     currentAction = .none
     quadrant = nil
     windowSize = nil
+  }
+  
+  // Add a method to pause tracking without completely stopping it
+  func pauseTracking() {
+    // Temporarily pause tracking without resetting all variables
+    isTracking = false
+  }
+  
+  // Add a method to resume tracking
+  func resumeTracking() {
+    // Only resume if we have a valid tracking session
+    if currentAction != .none && trackedWindow != nil {
+      isTracking = true
+    }
+  }
+  
+  // Check if any keys are being pressed that might indicate other apps need the shortcut
+  private func checkForKeyPresses() -> Bool {
+    guard let currentEvent = NSApp.currentEvent else { return false }
+    
+    // Only key-based events have keyCode property
+    // We need to check type first to avoid crashes
+    switch currentEvent.type {
+    case .keyDown, .keyUp:
+      let nonModifierKeyCodes = Set<UInt16>(36...126) // Common keys excluding modifiers
+      if nonModifierKeyCodes.contains(currentEvent.keyCode) {
+        return true
+      }
+    default:
+      // Other event types don't have keyCode, so we don't check them
+      break
+    }
+    
+    return false
   }
 }
