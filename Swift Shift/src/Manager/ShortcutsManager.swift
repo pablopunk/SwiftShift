@@ -36,9 +36,36 @@ struct UserShortcut {
 class ShortcutsManager {
   static let shared = ShortcutsManager()
   var globalMonitors: [Any] = []
+  private var activeShortcuts: [ShortcutType: Bool] = [:]
+  private var mouseSubscriptions: Set<String> = []
   
   private init() {
+    // Initialize tracking state for each shortcut type
+    for type in ShortcutType.allCases {
+      activeShortcuts[type] = false
+    }
     updateGlobalShortcuts()
+  }
+  
+  // Public method to cleanup all shortcuts when the app quits
+  func cleanupAllShortcuts() {
+    // Stop any active tracking
+    for type in ShortcutType.allCases {
+      if activeShortcuts[type] == true {
+        let action = type == .move ? MouseAction.move : MouseAction.resize
+        MouseTracker.shared.stopTracking(for: action)
+        cleanupMouseSubscriptions(action: action)
+      }
+    }
+    
+    // Clear all monitors and actions
+    removeGlobalMonitors()
+    removeAllActions()
+    
+    // Reset the active shortcuts state
+    for type in ShortcutType.allCases {
+      activeShortcuts[type] = false
+    }
   }
   
   func save(_ userShortcut: UserShortcut) {
@@ -83,6 +110,7 @@ class ShortcutsManager {
   private func clearActionsAndMonitors() {
     removeAllActions()
     removeGlobalMonitors()
+    cleanupAllMouseSubscriptions()
   }
   
   private func removeAllActions() {
@@ -96,6 +124,13 @@ class ShortcutsManager {
     self.globalMonitors = []
   }
   
+  private func cleanupAllMouseSubscriptions() {
+    for subscriptionKey in mouseSubscriptions {
+      CGEventSupervisor.shared.cancel(subscriber: subscriptionKey)
+    }
+    mouseSubscriptions.removeAll()
+  }
+  
   // Regular shortcuts that should work fine except for modifier-only shortcuts on key-up
   private func addActions(mouseAction: MouseAction, for userShortcut: UserShortcut) {
     guard let shortcut = userShortcut.shortcut else { return }
@@ -104,6 +139,7 @@ class ShortcutsManager {
       self.startTracking(userShortcut, mouseAction)
       return true
     }
+    
     let keyupAction = ShortcutAction(shortcut: shortcut) { _ in
       self.stopTracking(userShortcut, mouseAction)
       return true
@@ -113,22 +149,43 @@ class ShortcutsManager {
     AppDelegate.shared.shortcutMonitor?.addAction(keyupAction, forKeyEvent: .up)
   }
   
-  // Workaround to get those f**kers to work on key-up
+  // Handle modifier-only shortcuts with better flag handling
   private func addGlobalMonitors(mouseAction: MouseAction, for userShortcut: UserShortcut) {
     guard let shortcut = userShortcut.shortcut else { return }
     
-    // Global events
-    if let eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.keyUp, .keyDown, .flagsChanged], handler: { (event) in
-      self.handleFlagsChanged(userShortcut, shortcut, event, mouseAction)
-    }) {
-      self.globalMonitors.append(eventMonitor)
+    let flagsChangedHandler: (NSEvent) -> Void = { [weak self] event in
+      guard let self = self else { return }
+      
+      // Use deviceIndependentFlagsMask for consistent behavior across keyboard layouts
+      let eventFlags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+      let shortcutFlags = shortcut.modifierFlags
+      
+      let shortcutType = userShortcut.type
+      let isActive = self.activeShortcuts[shortcutType] ?? false
+      
+      if eventFlags == shortcutFlags && !isActive {
+        // Shortcut activated - start tracking
+        self.startTracking(userShortcut, mouseAction)
+        self.activeShortcuts[shortcutType] = true
+      } else if eventFlags != shortcutFlags && isActive {
+        // Shortcut deactivated - stop tracking
+        self.stopTracking(userShortcut, mouseAction)
+        self.activeShortcuts[shortcutType] = false
+      }
     }
-    // Local events (https://github.com/pablopunk/SwiftShift/issues/10#issuecomment-1872524489)
-    if let eventMonitor = NSEvent.addLocalMonitorForEvents(matching: [.keyUp, .keyDown, .flagsChanged], handler: {(event) in
-      self.handleFlagsChanged(userShortcut, shortcut, event, mouseAction)
+    
+    // Global monitor for flagsChanged events only
+    if let monitor = NSEvent.addGlobalMonitorForEvents(matching: [.flagsChanged], handler: flagsChangedHandler) {
+      globalMonitors.append(monitor)
+    }
+    
+    // Also track local events for when the app is in focus
+    if let monitor = NSEvent.addLocalMonitorForEvents(matching: [.flagsChanged], handler: { event in
+      flagsChangedHandler(event)
+      // Always propagate the original event to prevent hijacking
       return event
     }) {
-      self.globalMonitors.append(eventMonitor)
+      globalMonitors.append(monitor)
     }
   }
   
@@ -149,17 +206,6 @@ class ShortcutsManager {
     }
   }
   
-  private func handleFlagsChanged(_ userShortcut: UserShortcut, _ shortcut: Shortcut, _ event: NSEvent, _ action: MouseAction) {
-    let eventFlags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-    
-    // Sometimes the tracking doesn't stop, so we force it to stop in every flag change
-    stopTracking(userShortcut, action)
-    
-    if eventFlags == shortcut.modifierFlags {
-      startTracking(userShortcut, action)
-    }
-  }
-  
   private func startTracking(_ userShortcut: UserShortcut, _ action: MouseAction) {
     if userShortcut.mouseButton == .none {
       MouseTracker.shared.startTracking(for: action, button: .none)
@@ -168,27 +214,46 @@ class ShortcutsManager {
     
     let downEvent: CGEventType = userShortcut.mouseButton == .left ? .leftMouseDown : .rightMouseDown
     let upEvent: CGEventType = userShortcut.mouseButton == .left ? .leftMouseUp : .rightMouseUp
+    let downKey = "\(action.rawValue)_mouseDown"
+    let upKey = "\(action.rawValue)_mouseUp"
     
+    // Subscribe to mouse events only if shortcut is active
     CGEventSupervisor.shared.subscribe(
-      as: "\(action.rawValue)_mouseDown",
+      as: downKey,
       to: .cgEvents(downEvent),
-      using: {(event) in
+      using: { [weak self] event in
+        guard let self = self, self.activeShortcuts[userShortcut.type] == true else { return }
         event.cancel()
         MouseTracker.shared.startTracking(for: action, button: userShortcut.mouseButton)
-      });
+      })
     
     CGEventSupervisor.shared.subscribe(
-      as: "\(action.rawValue)_mouseUp",
+      as: upKey,
       to: .cgEvents(upEvent),
-      using: {(event) in
+      using: { [weak self] event in
+        guard let self = self, self.activeShortcuts[userShortcut.type] == true else { return }
         event.cancel()
         MouseTracker.shared.stopTracking(for: action)
-      });
+      })
+    
+    // Keep track of our subscriptions
+    mouseSubscriptions.insert(downKey)
+    mouseSubscriptions.insert(upKey)
   }
   
   private func stopTracking(_ userShortcut: UserShortcut, _ action: MouseAction) {
     MouseTracker.shared.stopTracking(for: action)
-    CGEventSupervisor.shared.cancel(subscriber: "\(action.rawValue)_mouseDown")
-    CGEventSupervisor.shared.cancel(subscriber: "\(action.rawValue)_mouseUp")
+    activeShortcuts[userShortcut.type] = false
+  }
+  
+  private func cleanupMouseSubscriptions(action: MouseAction) {
+    let downKey = "\(action.rawValue)_mouseDown"
+    let upKey = "\(action.rawValue)_mouseUp"
+    
+    CGEventSupervisor.shared.cancel(subscriber: downKey)
+    CGEventSupervisor.shared.cancel(subscriber: upKey)
+    
+    mouseSubscriptions.remove(downKey)
+    mouseSubscriptions.remove(upKey)
   }
 }

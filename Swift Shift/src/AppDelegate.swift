@@ -19,4 +19,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     UserDefaults.standard.set(true, forKey: "showMenuBarIcon")
     return true
   }
+  
+  func applicationWillTerminate(_ notification: Notification) {
+    // Ensure all shortcuts are properly cleaned up when the app quits
+    shortcutMonitor?.removeAllActions()
+    ShortcutsManager.shared.cleanupAllShortcuts()
+  }
 }
