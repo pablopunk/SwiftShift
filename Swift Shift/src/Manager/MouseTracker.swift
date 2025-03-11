@@ -25,13 +25,24 @@ class MouseTracker {
   private var shouldUseQuadrants: Bool = false
   private var quadrant: Quadrant?
   private var windowSize: CGSize?
+  private var isTracking: Bool = false
   
   private init() {}
   
   func startTracking(for action: MouseAction, button: MouseButton) {
+    // If already tracking, clean up first
+    if currentAction != .none {
+      stopTracking(for: currentAction)
+    }
+    
     prepareTracking(for: action)
-    registerMouseEventMonitor(button: button)
-    startTrackingTimer()
+    
+    // Only proceed if we have a valid window to track
+    if trackedWindow != nil {
+      registerMouseEventMonitor(button: button)
+      startTrackingTimer()
+      isTracking = true
+    }
   }
   
   func stopTracking(for action: MouseAction) {
@@ -39,6 +50,7 @@ class MouseTracker {
     invalidateTrackingTimer()
     removeMouseEventMonitor()
     resetTrackingVariables()
+    isTracking = false
   }
   
   private func prepareTracking(for action: MouseAction) {
@@ -110,14 +122,19 @@ class MouseTracker {
   }
   
   private func registerMouseEventMonitor(button: MouseButton) {
+    // Ensure we don't have any lingering monitors
+    removeMouseEventMonitor()
+    
     let eventType: NSEvent.EventTypeMask = switch button {
     case .left: .leftMouseDragged
     case .right: .rightMouseDragged
     case .none: .mouseMoved
     }
     
+    // Use global monitor to track mouse movements across the system
     mouseEventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [eventType]) { [weak self] event in
-      self?.handleMouseMoved(event)
+      guard let self = self, self.isTracking else { return }
+      self.handleMouseMoved(event)
     }
   }
   
@@ -129,7 +146,8 @@ class MouseTracker {
   }
   
   private func handleMouseMoved(_ event: NSEvent) {
-    guard let _ = initialMouseLocation,
+    guard isTracking,
+          let _ = initialMouseLocation,
           let _ = initialWindowLocation,
           let _ = trackedWindow else {
       return
@@ -251,5 +269,7 @@ class MouseTracker {
     initialMouseLocation = nil
     initialWindowLocation = nil
     currentAction = .none
+    quadrant = nil
+    windowSize = nil
   }
 }
