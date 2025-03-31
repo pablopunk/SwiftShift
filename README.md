@@ -9,10 +9,10 @@ https://github.com/pablopunk/SwiftShift/assets/4324982/8f0566b9-d18e-462e-8d74-5
 
 There are several ways:
 
-* Buy it at [swiftshift.app](https://swiftshift.app)
-* Install it with homebrew `brew install --cask swift-shift`
-* Download the [latest release on Github](https://github.com/pablopunk/SwiftShift/releases)
-* Clone it and build it yourself
+* 💰 Buy it at [swiftshift.app](https://swiftshift.app) (pay what you want)
+* 🍺 Install it with homebrew `brew install --cask swift-shift`
+* ⬇️ Download the [latest release on Github](https://github.com/pablopunk/SwiftShift/releases)
+* 🚀 Clone it and build it yourself
 
 ## Features
 
