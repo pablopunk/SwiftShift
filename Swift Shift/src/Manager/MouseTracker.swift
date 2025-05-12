@@ -124,7 +124,7 @@ class MouseTracker {
   private func shouldIgnore(window: AXUIElement) -> Bool {
     guard let app = WindowManager.getNSApplication(from: window),
           let bundleIdentifier = app.bundleIdentifier,
-          IGNORE_APP_BUNDLE_ID.contains(bundleIdentifier) else {
+          PreferencesManager.isAppIgnored(bundleIdentifier) else {
       return false
     }
     print("Ignoring", bundleIdentifier)

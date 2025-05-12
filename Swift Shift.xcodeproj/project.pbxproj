@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		17087D952DD254890006852C /* IgnoredAppsTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17087D942DD254890006852C /* IgnoredAppsTabView.swift */; };
 		172E0BD52B32F36300D5CDA7 /* MouseTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 172E0BD42B32F36300D5CDA7 /* MouseTracker.swift */; };
 		173C0E832C123CF700654527 /* DrawCircle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 173C0E822C123CF700654527 /* DrawCircle.swift */; };
 		174652CE2B33345200241CE6 /* WindowManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 174652CD2B33345200241CE6 /* WindowManager.swift */; };
@@ -34,6 +35,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		17087D942DD254890006852C /* IgnoredAppsTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IgnoredAppsTabView.swift; sourceTree = "<group>"; };
 		172E0BD42B32F36300D5CDA7 /* MouseTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MouseTracker.swift; sourceTree = "<group>"; };
 		173C0E822C123CF700654527 /* DrawCircle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawCircle.swift; sourceTree = "<group>"; };
 		174652CD2B33345200241CE6 /* WindowManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowManager.swift; sourceTree = "<group>"; };
@@ -80,6 +82,7 @@
 				E236331F2B4466F800C0E61F /* PreferencesView.swift */,
 				1798B11F2B4812D600E07964 /* SettingsView.swift */,
 				1798B1212B48131400E07964 /* InfoView.swift */,
+				17087D942DD254890006852C /* IgnoredAppsTabView.swift */,
 				E2CABBA42B447AEA00D66D43 /* UpdatesView.swift */,
 				177FB24B2B31FF1E00B11BA3 /* ShortcutView.swift */,
 				177FB2402B31F9B900B11BA3 /* PermissionsRequestView.swift */,
@@ -248,6 +251,7 @@
 				1781A5E42B31EE4A00F27910 /* AppView.swift in Sources */,
 				173C0E832C123CF700654527 /* DrawCircle.swift in Sources */,
 				E2CABBA52B447AEA00D66D43 /* UpdatesView.swift in Sources */,
+				17087D952DD254890006852C /* IgnoredAppsTabView.swift in Sources */,
 				177FB2532B321D0500B11BA3 /* ShortcutsManager.swift in Sources */,
 				E2E6F5EA2B3EF03C005B0D96 /* Constants.swift in Sources */,
 				E2CABBA82B44D69B00D66D43 /* UpdatesManager.swift in Sources */,
