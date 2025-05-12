@@ -61,16 +61,22 @@ I'm open to PRs and requests. If you are looking for something to do, take a loo
 4. Wait for Apple service to notarize it
 5. Go to Distribute App again > Distribute > Export > Save it somewhere in your computer
 6. `make appcast "path/to/the/folder/you/saved"` (make sure to use quotes)
-7. Create a new branch (e.g. `git checkout -b 0.26.0`)
-8. Commit it (e.g. `git commit -am "bump version and add appcast"`)
-9. Tag it (e.g. `git tag 0.26.0`)
-10. Push branch and tags `git push && git push --tags`
-11. Create a PR from that branch
-12. [Draft a new release](https://github.com/pablopunk/SwiftShift/releases/new) and select that new tag
-13. Click "Generate release notes"
-14. Upload the `SwiftShift.zip` from the folder you saved the notarized app
-15. Publish release
-16. Merge PR
+7. Create a new branch, create a commit, tag it and push it
+
+```bash
+export APP_VERSION=0.26.0
+git checkout -b "$APP_VERSION"
+git commit -am "$APP_VERSION"
+git tag "$APP_VERSION"
+git push
+git --tags
+```
+
+8. Create a PR from that branch and merge it
+9. [Draft a new release](https://github.com/pablopunk/SwiftShift/releases/new) and select that new tag
+10. Click "Generate release notes"
+11. Upload the `SwiftShift.zip` from the folder you saved the notarized app
+12. Publish release
 
 ![header](https://github.com/pablopunk/swiftshift.app/blob/main/public/header-dark-extended.png?raw=true#gh-dark-mode-only)
 ![header](https://github.com/pablopunk/swiftshift.app/blob/main/public/header-light-extended.png?raw=true#gh-light-mode-only)
