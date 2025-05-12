@@ -85,8 +85,8 @@ class WindowManager {
           var value: AnyObject?
           
           if let app = getNSApplication(from: appAXUIElement) {
-            if (IGNORE_APP_BUNDLE_ID.contains(app.bundleIdentifier!)) {
-              print("ignoring", app.bundleIdentifier! as String)
+            if let bundleId = app.bundleIdentifier, PreferencesManager.isAppIgnored(bundleId) {
+              print("ignoring", bundleId)
               continue
             }
           }

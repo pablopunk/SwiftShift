@@ -3,7 +3,7 @@ import ShortcutRecorder
 import Sparkle
 
 enum Tab {
-  case settings, info
+  case settings, ignoredApps, info
 }
 
 struct TabButton: View {
@@ -31,6 +31,7 @@ struct AppView: View {
       // Tab bar
       HStack {
         TabButton(tab: .settings, selectedTab: $selectedTab, iconName: "gear")
+        TabButton(tab: .ignoredApps, selectedTab: $selectedTab, iconName: "macwindow.on.rectangle")
         TabButton(tab: .info, selectedTab: $selectedTab, iconName: "info.circle")
       }
       
@@ -39,6 +40,8 @@ struct AppView: View {
         switch selectedTab {
         case .settings:
           SettingsView()
+        case .ignoredApps:
+          IgnoredAppsTabView()
         case .info:
           InfoView()
         }
