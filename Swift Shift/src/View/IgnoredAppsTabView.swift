@@ -70,8 +70,7 @@ struct IgnoredAppsTabView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            .padding(.horizontal)
-            .padding(.bottom)
+            .padding()
         }
         .onAppear {
             loadApps()
