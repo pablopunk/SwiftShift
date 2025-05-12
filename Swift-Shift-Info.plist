@@ -4,7 +4,7 @@
 <dict>
 	<key>SUFeedURL</key>
 	<string>https://pablopunk.github.io/SwiftShift/appcast.xml</string>
-	<key>SUPublicEDKey</key>
-	<string>PQGWx0AXEkNhJ/Bt6wwCk/wWouWD40dqdokJsY5BvdA=</string>
+  <key>SUPublicEDKey</key>
+  <string>36LJpGS8rTs3zPSj/ak2mIQhGEMVBSMzlXj7eJGSdSk=</string>
 </dict>
 </plist>
