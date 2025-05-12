@@ -69,7 +69,7 @@ git checkout -b "$APP_VERSION"
 git commit -am "$APP_VERSION"
 git tag "$APP_VERSION"
 git push
-git --tags
+git push --tags
 ```
 
 8. Create a PR from that branch and merge it
