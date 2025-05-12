@@ -395,7 +395,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 0.27.0;
+				CURRENT_PROJECT_VERSION = 0.27.1;
 				DEVELOPMENT_ASSET_PATHS = "\"Swift Shift/Preview Content\"";
 				DEVELOPMENT_TEAM = 2TZ4Q825M7;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -411,7 +411,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 0.27.0;
+				MARKETING_VERSION = 0.27.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.pablopunk.Swift-Shift";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -429,7 +429,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 0.27.0;
+				CURRENT_PROJECT_VERSION = 0.27.1;
 				DEVELOPMENT_ASSET_PATHS = "\"Swift Shift/Preview Content\"";
 				DEVELOPMENT_TEAM = 2TZ4Q825M7;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -445,7 +445,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 0.27.0;
+				MARKETING_VERSION = 0.27.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.pablopunk.Swift-Shift";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
