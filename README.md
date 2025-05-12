@@ -23,6 +23,7 @@ There are several ways:
 * Hide menubar icon
 * Focus on window
 * Smart resizing with quadrants
+* Ignore custom apps
 
 ### Quadrants
 

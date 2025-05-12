@@ -12,11 +12,10 @@ struct IgnoredAppsTabView: View {
             VStack(alignment: .leading) {
                 Text("Ignored Applications").font(.title2).bold()
                 Text("Applications in this list will be ignored when using Swift Shift shortcuts.")
+                    .fixedSize(horizontal: false, vertical: true)
                     .font(.caption)
                     .foregroundColor(.secondary)
-                    .padding(.bottom, 5)
             }.padding(.horizontal)
-            
             
             VStack(alignment: .leading, spacing: 10) {
                 VStack(alignment: .leading) {
@@ -34,6 +33,10 @@ struct IgnoredAppsTabView: View {
                             .foregroundColor(.secondary)
                             .padding()
                             .frame(maxWidth: .infinity, alignment: .center)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 5)
+                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                            )
                     } else {
                         List {
                             ForEach(ignoredApps, id: \.self) { bundleId in
@@ -50,8 +53,9 @@ struct IgnoredAppsTabView: View {
                                 }.padding(.vertical, 5)
                             }
                             .listRowBackground(Color.clear)
+                            .listRowSeparatorTint(Color.gray.opacity(0.3))
                         }
-                        .frame(height: 200)
+                        .frame(height: 150)
                         .overlay(
                             RoundedRectangle(cornerRadius: 5)
                                 .stroke(Color.gray.opacity(0.3), lineWidth: 1)
@@ -61,10 +65,8 @@ struct IgnoredAppsTabView: View {
             }
             .padding(.horizontal)
             
-            Spacer()
-            
             VStack(alignment: .leading) {
-                Text("Note: Some system applications are already ignored by default.")
+                Text("Note: Some applications are already ignored by default.")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
