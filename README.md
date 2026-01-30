@@ -78,5 +78,14 @@ git push --tags
 11. Upload the `SwiftShift.zip` from the folder you saved the notarized app
 12. Publish release
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=pablopunk/SwiftShift&type=date&legend=top-left)](https://www.star-history.com/#pablopunk/SwiftShift&type=date&legend=top-left)
+
+## License
+
+MIT License
+
 ![header](https://github.com/pablopunk/swiftshift.app/blob/main/public/header-dark-extended.png?raw=true#gh-dark-mode-only)
 ![header](https://github.com/pablopunk/swiftshift.app/blob/main/public/header-light-extended.png?raw=true#gh-light-mode-only)
+
