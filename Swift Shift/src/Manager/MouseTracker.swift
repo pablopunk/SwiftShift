@@ -17,7 +17,10 @@ class MouseTracker {
         spaceChangeObserver = NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main) { [weak self] _ in self?.handleSpaceChange() }
     }
     private func unregisterForSpaceChangeNotifications() { if let obs = spaceChangeObserver { NSWorkspace.shared.notificationCenter.removeObserver(obs) } }
-    private func handleSpaceChange() { if isTracking { isTracking = false; isTracking = true } }
+    private func handleSpaceChange() {
+        guard currentAction != .none, trackedWindow != nil else { return }
+        if isTracking { forceResetTracking() }
+    }
     func startTracking(for action: MouseAction, button: MouseButton) {
         if currentAction != .none { stopTracking(for: currentAction) }
         prepareTracking(for: action)
@@ -68,7 +71,10 @@ class MouseTracker {
     }
     private func startTrackingTimer() {
         trackingTimer?.invalidate()
-        trackingTimer = Timer.scheduledTimer(withTimeInterval: trackingTimeout, repeats: false) { [weak self] _ in self?.stopTracking(for: self!.currentAction) }
+        trackingTimer = Timer.scheduledTimer(withTimeInterval: trackingTimeout, repeats: false) { [weak self] _ in
+            guard let self = self else { return }
+            self.stopTracking(for: self.currentAction)
+        }
     }
     private func handleMouseMoved(_ event: NSEvent) {
         guard isTracking, let _ = initialMouseLocation, let _ = initialWindowLocation, let _ = trackedWindow else { return }

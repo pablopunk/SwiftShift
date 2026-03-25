@@ -1,6 +1,11 @@
 import Cocoa
 import Accessibility
-struct WindowBounds { let topLeft, topRight, bottomLeft, bottomRight: NSPoint }
+struct WindowBounds {
+    let topLeft: NSPoint
+    let topRight: NSPoint
+    let bottomLeft: NSPoint
+    let bottomRight: NSPoint
+}
 class WindowManager {
     static func move(window: AXUIElement, to point: NSPoint) {
         var p = point; let v = AXValueCreate(.cgPoint, &p)!
@@ -30,7 +35,15 @@ class WindowManager {
             if let bDict = e[kCGWindowBounds as String] as? [String: CGFloat], let b = CGRect(dictionaryRepresentation: bDict as CFDictionary), b.contains(mouseLocation), let pid = e[kCGWindowOwnerPID as String] as? pid_t {
                 let app = AXUIElementCreateApplication(pid); var val: AnyObject?
                 if let nsApp = getNSApplication(from: app), let bid = nsApp.bundleIdentifier, PreferencesManager.isAppIgnored(bid) { continue }
-                if AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &val) == .success, let wList = val as? [AXUIElement], let w = wList.first { return w }
+                if AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &val) == .success, let wList = val as? [AXUIElement] {
+                    for w in wList {
+                        if let pos = getPosition(window: w), let size = getSize(window: w) {
+                            let winRect = CGRect(origin: pos, size: size)
+                            if winRect.contains(mouseLocation) { return w }
+                        }
+                    }
+                    return wList.first
+                }
             }
         }
         return nil
@@ -39,7 +52,8 @@ class WindowManager {
         var r: AnyObject?; AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &r)
         if r as? String == kAXWindowRole { return element }
         var p: AnyObject?; AXUIElementCopyAttributeValue(element, kAXParentAttribute as CFString, &p)
-        return p != nil ? getWindow(from: p as! AXUIElement) : nil
+        if let parent = p as? AXUIElement { return getWindow(from: parent) }
+        return nil
     }
     static func focus(window: AXUIElement) { AXUIElementPerformAction(window, kAXRaiseAction as CFString); getNSApplication(from: window)?.activate() }
     static func getNSApplication(from element: AXUIElement) -> NSRunningApplication? {
