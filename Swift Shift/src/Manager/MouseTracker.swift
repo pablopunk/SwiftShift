@@ -30,7 +30,18 @@ class MouseTracker {
         guard currentAction == action else { return }
         flushPendingMouseUpdate(); invalidateTrackingTimer(); removeMouseEventMonitor(); resetTrackingVariables(); isTracking = false
     }
-    func forceResetTracking() { if currentAction != .none { initialMouseLocation = NSEvent.mouseLocation } }
+    func forceResetTracking() {
+        guard currentAction != .none, let window = trackedWindow else { return }
+        initialMouseLocation = NSEvent.mouseLocation
+        initialWindowLocation = WindowManager.getPosition(window: window)
+        windowSize = WindowManager.getSize(window: window)
+        pendingMouseLocation = nil
+        lastAppliedOrigin = initialWindowLocation
+        lastAppliedSize = windowSize
+        if currentAction == .resize, shouldUseQuadrants, let m = initialMouseLocation, let w = initialWindowLocation, let s = windowSize {
+            quadrant = determineQuadrant(mouseLocation: m, windowSize: s, windowLocation: w)
+        }
+    }
     private func prepareTracking(for action: MouseAction) {
         guard let currentWindow = WindowManager.getCurrentWindow(), !shouldIgnore(window: currentWindow) else { trackedWindow = nil; return }
         shouldFocusWindow = PreferencesManager.loadBool(for: .focusOnApp)
