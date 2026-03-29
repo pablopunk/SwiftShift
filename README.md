@@ -55,28 +55,24 @@ I'm open to PRs and requests. If you are looking for something to do, take a loo
 
 ### Release
 
-1. Xcode > Swift Shift > General > Targets > Swift Shift > bump the version and the build (e.g. `0.26.0`)
-2. Xcode > Product > Archive
-3. Select latest build and Distribute App > Direct Distribution > Distribute
-4. Wait for Apple service to notarize it
-5. Go to Distribute App again > Distribute > Export > Save it somewhere in your computer
-6. `make appcast "path/to/the/folder/you/saved"` (make sure to use quotes)
-7. Create a new branch, create a commit, tag it and push it
+One-time setup: store notarization credentials in your keychain:
+
+1. Generate an app-specific password at [appleid.apple.com](https://appleid.apple.com) (Sign-In and Security → App-Specific Passwords)
+2. Run:
 
 ```bash
-export APP_VERSION=0.26.0
-git checkout -b "$APP_VERSION"
-git commit -am "$APP_VERSION"
-git tag "$APP_VERSION"
-git push
-git push --tags
+xcrun notarytool store-credentials "SwiftShift" --apple-id YOUR_APPLE_ID --team-id YOUR_TEAM_ID
 ```
 
-8. Create a PR from that branch and merge it
-9. [Draft a new release](https://github.com/pablopunk/SwiftShift/releases/new) and select that new tag
-10. Click "Generate release notes"
-11. Upload the `SwiftShift.zip` from the folder you saved the notarized app
-12. Publish release
+It will prompt you to paste the app-specific password.
+
+Then release with a single command:
+
+```bash
+make release VERSION=0.28.0
+```
+
+This will: bump the version, archive, export, notarize, staple, generate the appcast, create a branch/commit/tag, open a PR with auto-merge, and create a GitHub release with the zip attached.
 
 ## Star History
 

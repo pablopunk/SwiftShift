@@ -1,4 +1,4 @@
-.PHONY: build open-app run appcast generate-keys
+.PHONY: build open-app run appcast generate-keys release
 
 build:
 	xcodebuild -scheme "Swift Shift" build SYMROOT=$(PWD)/build \
@@ -16,6 +16,9 @@ appcast:
 generate-keys:
 	@$(eval ARGS := $(filter-out $@,$(MAKECMDGOALS)))
 	./scripts/generate-keys.sh $(ARGS)
+
+release:
+	./scripts/release.sh $(VERSION)
 
 %:
 	@:
