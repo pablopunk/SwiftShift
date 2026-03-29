@@ -3,6 +3,14 @@
     <channel>
         <title>Swift Shift</title>
         <item>
+            <title>1.0.1</title>
+            <pubDate>Sun, 29 Mar 2026 16:17:42 +0200</pubDate>
+            <sparkle:version>1.0.1</sparkle:version>
+            <sparkle:shortVersionString>1.0.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/pablopunk/SwiftShift/releases/latest/download/SwiftShift.zip" length="4787290" type="application/octet-stream" sparkle:edSignature="cmd5wZH7RoTS9+EFYMaoepK5zh46DD2MkS5I5HOR65p8evLC1OqVeBHw2XGjTwui9fO7CrHAs/yOqc8UCPNyAg=="/>
+        </item>
+        <item>
             <title>1.0.0</title>
             <pubDate>Sun, 29 Mar 2026 15:14:05 +0200</pubDate>
             <sparkle:version>1.0.0</sparkle:version>
@@ -17,14 +25,6 @@
             <sparkle:shortVersionString>0.27.2</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
             <enclosure url="https://github.com/pablopunk/SwiftShift/releases/latest/download/SwiftShift.zip" length="2463751" type="application/octet-stream" sparkle:edSignature="486EORUBHXIqSmOM9D6le0rdcmN3QBUhES04oEdevA4qnH+hAtM6Mw7K9Afwgo7/bb85w5fS6wGCZbKakpYCAA=="/>
-        </item>
-        <item>
-            <title>0.27.1</title>
-            <pubDate>Mon, 12 May 2025 19:35:45 +0200</pubDate>
-            <sparkle:version>0.27.1</sparkle:version>
-            <sparkle:shortVersionString>0.27.1</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/pablopunk/SwiftShift/releases/latest/download/SwiftShift.zip" length="2469712" type="application/octet-stream" sparkle:edSignature="WXJ9+CIg7crApQuunWijv9yCoesGzmCqUG2/Ii1s4cpVJ+vU1sMqdPfk7qN8CAz/AZgNr9yBn+R9J0SND1XQBg=="/>
         </item>
     </channel>
 </rss>
