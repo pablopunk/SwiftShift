@@ -86,20 +86,25 @@ sed -i '' 's|https://pablopunk.github.io/SwiftShift/SwiftShift.zip|https://githu
 cp "$EXPORT_DIR/appcast.xml" .
 
 # --- 7. Git: branch, commit, tag, push ---
-echo "🔖 Creating branch, commit, and tag..."
+echo "🔖 Creating branch and commit..."
 git checkout -b "release/$VERSION"
 git add -A
 git commit -m "$VERSION"
-git tag "$VERSION"
 git push -u origin "release/$VERSION"
-git push --tags
 
-# --- 8. Create PR with auto-merge ---
-echo "🔀 Creating PR..."
+# --- 8. Create PR and merge ---
+echo "🔀 Creating and merging PR..."
 PR_URL=$(gh pr create --title "$VERSION" --body "Release $VERSION" --base main)
 gh pr merge "$PR_URL" --squash
 
-# --- 9. Create GitHub release ---
+# --- 9. Tag the merge commit on main ---
+echo "🔖 Tagging merge commit..."
+git checkout main
+git pull
+git tag "$VERSION"
+git push --tags
+
+# --- 10. Create GitHub release ---
 echo "🎉 Creating GitHub release..."
 gh release create "$VERSION" "$ZIP_PATH" \
     --title "$VERSION" \
