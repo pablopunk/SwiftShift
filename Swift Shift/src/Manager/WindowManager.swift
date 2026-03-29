@@ -52,7 +52,7 @@ class WindowManager {
         var r: AnyObject?; AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &r)
         if r as? String == kAXWindowRole { return element }
         var p: AnyObject?; AXUIElementCopyAttributeValue(element, kAXParentAttribute as CFString, &p)
-        if let parent = p as? AXUIElement { return getWindow(from: parent) }
+        if let parent = p { return getWindow(from: parent as! AXUIElement) }
         return nil
     }
     static func focus(window: AXUIElement) { AXUIElementPerformAction(window, kAXRaiseAction as CFString); getNSApplication(from: window)?.activate() }
@@ -71,3 +71,4 @@ class WindowManager {
         return WindowBounds(topLeft: fixed, topRight: NSPoint(x: fixed.x + windowSize.width, y: fixed.y), bottomLeft: NSPoint(x: fixed.x, y: fixed.y - windowSize.height), bottomRight: NSPoint(x: fixed.x + windowSize.width, y: fixed.y - windowSize.height))
     }
 }
+
