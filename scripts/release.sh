@@ -106,9 +106,17 @@ git push --tags
 
 # --- 10. Create GitHub release ---
 echo "🎉 Creating GitHub release..."
-gh release create "$VERSION" "$ZIP_PATH" \
-    --title "$VERSION" \
-    --generate-notes
+PREV_TAG=$(git tag --sort=-v:refname | grep -v "^$VERSION$" | head -1)
+if [[ -n "$PREV_TAG" ]]; then
+    gh release create "$VERSION" "$ZIP_PATH" \
+        --title "$VERSION" \
+        --generate-notes \
+        --notes-start-tag "$PREV_TAG"
+else
+    gh release create "$VERSION" "$ZIP_PATH" \
+        --title "$VERSION" \
+        --generate-notes
+fi
 
 echo ""
 echo "✅ Release $VERSION complete!"
