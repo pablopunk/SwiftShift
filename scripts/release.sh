@@ -37,8 +37,10 @@ xcodebuild archive \
     -scheme "$SCHEME" \
     -archivePath "$ARCHIVE_PATH" \
     -configuration Release \
+    CODE_SIGN_STYLE=Manual \
     CODE_SIGN_IDENTITY="Developer ID Application" \
     DEVELOPMENT_TEAM="$TEAM_ID" \
+    CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO \
     2>&1 | tail -1
 
 # --- 3. Export ---
