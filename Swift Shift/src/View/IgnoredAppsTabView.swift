@@ -3,130 +3,123 @@ import AppKit
 import UniformTypeIdentifiers
 
 struct IgnoredAppsTabView: View {
-    @State private var ignoredApps: [String] = []
-    @State private var defaultIgnoredApps: [String] = []
-    @State private var appNames: [String: String] = [:]
-    
-    var body: some View {
-        VStack(alignment: .leading) {
-            VStack(alignment: .leading) {
-                Text("Ignored Applications").font(.title2).bold()
-                Text("Applications in this list will be ignored when using Swift Shift shortcuts.")
-                    .fixedSize(horizontal: false, vertical: true)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }.padding(.horizontal)
-            
-            VStack(alignment: .leading, spacing: 10) {
-                VStack(alignment: .leading) {
-                    HStack {
-                        Button(action: {
-                            selectApp()
-                        }) {
-                            Label("Add", systemImage: "plus.circle")
-                        }
-                    }.padding(.bottom, 2)
-                    
-                    if ignoredApps.isEmpty {
-                        Text("No applications added")
-                            .italic()
-                            .foregroundStyle(.secondary)
-                            .padding()
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 5)
-                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                            )
-                    } else {
-                        List {
-                            ForEach(ignoredApps, id: \.self) { bundleId in
-                                HStack {
-                                    Text(appNames[bundleId] ?? bundleId)
-                                    Spacer()
-                                    Button(action: {
-                                        removeApp(bundleId)
-                                    }) {
-                                        Image(systemName: "trash")
-                                            .foregroundStyle(.red)
-                                    }
-                                    .buttonStyle(BorderlessButtonStyle())
-                                }.padding(.vertical, 5)
-                            }
-                            .listRowBackground(Color.clear)
-                            .listRowSeparatorTint(Color.gray.opacity(0.3))
-                        }
-                        .frame(height: 150)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 5)
-                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                        )
-                    }
-                }
-            }
-            .padding(.horizontal)
-            
-            VStack(alignment: .leading) {
-                Text("Note: Some applications are already ignored by default.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .padding()
+  @State private var ignoredApps: [String] = []
+  @State private var defaultIgnoredApps: [String] = []
+  @State private var appNames: [String: String] = [:]
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 12) {
+      // Header
+      VStack(alignment: .leading, spacing: 4) {
+        SectionHeader(title: "Ignored Apps", icon: "eye.slash")
+        Text("These apps won't respond to Swift Shift shortcuts.")
+          .font(.system(size: 11))
+          .foregroundStyle(.tertiary)
+      }
+
+      // Add button
+      Button {
+        selectApp()
+      } label: {
+        HStack(spacing: 4) {
+          Image(systemName: "plus.circle.fill")
+          Text("Add Application")
         }
-        .onAppear {
-            loadApps()
+        .font(.system(size: 12, weight: .medium))
+      }
+      .buttonStyle(.plain)
+      .foregroundStyle(.tint)
+
+      // List
+      if ignoredApps.isEmpty {
+        HStack {
+          Spacer()
+          VStack(spacing: 6) {
+            Image(systemName: "checkmark.circle")
+              .font(.system(size: 20))
+              .foregroundStyle(.tertiary)
+            Text("No apps ignored")
+              .font(.system(size: 12))
+              .foregroundStyle(.tertiary)
+          }
+          Spacer()
         }
-    }
-    
-    private func loadApps() {
-        defaultIgnoredApps = IGNORE_APP_BUNDLE_ID
-        ignoredApps = PreferencesManager.getUserIgnoredApps()
-        
-        // Resolve bundle IDs to app names
-        for bundleId in (defaultIgnoredApps + ignoredApps) {
-            if let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId),
-               let appBundle = Bundle(url: appURL),
-               let appName = appBundle.object(forInfoDictionaryKey: "CFBundleName") as? String {
-                appNames[bundleId] = appName
+        .padding(.vertical, 20)
+      } else {
+        VStack(spacing: 2) {
+          ForEach(ignoredApps, id: \.self) { bundleId in
+            HStack {
+              Text(appNames[bundleId] ?? bundleId)
+                .font(.system(size: 12))
+                .lineLimit(1)
+              Spacer()
+              Button {
+                removeApp(bundleId)
+              } label: {
+                Image(systemName: "minus.circle.fill")
+                  .font(.system(size: 13))
+                  .foregroundStyle(.red.opacity(0.7))
+              }
+              .buttonStyle(.plain)
             }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(.quaternary.opacity(0.3))
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+          }
         }
+      }
+
+      Text("Some system apps are ignored by default.")
+        .font(.system(size: 10))
+        .foregroundStyle(.quaternary)
     }
-    
-    private func selectApp() {
-        let openPanel = NSOpenPanel()
-        openPanel.canChooseFiles = true
-        openPanel.canChooseDirectories = false
-        openPanel.allowsMultipleSelection = false
-        openPanel.allowedContentTypes = [UTType.application]
-        openPanel.directoryURL = URL(fileURLWithPath: "/Applications")
-        
-        // Activate the app first to ensure its windows are in front
-        NSApp.activate(ignoringOtherApps: true)
-        
-        // Use runModal for sheet-style presentation that will come to the front
-        let response = openPanel.runModal()
-        
-        if response == .OK, let selectedURL = openPanel.url {
-            if let bundle = Bundle(url: selectedURL), 
-               let bundleIdentifier = bundle.bundleIdentifier {
-                let appName = bundle.object(forInfoDictionaryKey: "CFBundleName") as? String ?? bundleIdentifier
-                
-                // Don't add if it's already in the default list
-                if !defaultIgnoredApps.contains(bundleIdentifier) {
-                    // Add to ignored apps list
-                    PreferencesManager.addIgnoredApp(bundleIdentifier)
-                    appNames[bundleIdentifier] = appName
-                    ignoredApps = PreferencesManager.getUserIgnoredApps()
-                }
-            }
+    .padding(14)
+    .onAppear { loadApps() }
+  }
+
+  private func loadApps() {
+    defaultIgnoredApps = IGNORE_APP_BUNDLE_ID
+    ignoredApps = PreferencesManager.getUserIgnoredApps()
+    for bundleId in (defaultIgnoredApps + ignoredApps) {
+      if let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId),
+         let appBundle = Bundle(url: appURL),
+         let appName = appBundle.object(forInfoDictionaryKey: "CFBundleName") as? String {
+        appNames[bundleId] = appName
+      }
+    }
+  }
+
+  private func selectApp() {
+    let openPanel = NSOpenPanel()
+    openPanel.canChooseFiles = true
+    openPanel.canChooseDirectories = false
+    openPanel.allowsMultipleSelection = false
+    openPanel.allowedContentTypes = [UTType.application]
+    openPanel.directoryURL = URL(fileURLWithPath: "/Applications")
+
+    NSApp.activate(ignoringOtherApps: true)
+
+    let response = openPanel.runModal()
+    if response == .OK, let selectedURL = openPanel.url {
+      if let bundle = Bundle(url: selectedURL),
+         let bundleIdentifier = bundle.bundleIdentifier {
+        let appName = bundle.object(forInfoDictionaryKey: "CFBundleName") as? String ?? bundleIdentifier
+        if !defaultIgnoredApps.contains(bundleIdentifier) {
+          PreferencesManager.addIgnoredApp(bundleIdentifier)
+          appNames[bundleIdentifier] = appName
+          ignoredApps = PreferencesManager.getUserIgnoredApps()
         }
+      }
     }
-    
-    private func removeApp(_ bundleId: String) {
-        PreferencesManager.removeIgnoredApp(bundleId)
-        ignoredApps = PreferencesManager.getUserIgnoredApps()
-    }
+  }
+
+  private func removeApp(_ bundleId: String) {
+    PreferencesManager.removeIgnoredApp(bundleId)
+    ignoredApps = PreferencesManager.getUserIgnoredApps()
+  }
 }
 
 #Preview {
-    IgnoredAppsTabView()
-} 
+  IgnoredAppsTabView().frame(width: MAIN_WINDOW_WIDTH)
+}

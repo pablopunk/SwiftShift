@@ -2,40 +2,64 @@ import SwiftUI
 import ShortcutRecorder
 import Sparkle
 
-enum Tab {
-  case settings, ignoredApps, info
-}
+enum Tab: String, CaseIterable {
+  case settings = "Settings"
+  case ignoredApps = "Ignored Apps"
+  case info = "About"
 
-struct TabButton: View {
-  let tab: Tab
-  @Binding var selectedTab: Tab
-  let iconName: String
-  
-  var body: some View {
-    Button(action: {
-      selectedTab = tab
-    }) {
-      Image(systemName: iconName)
-        .frame(width: 40, height: 40)
+  var icon: String {
+    switch self {
+    case .settings: return "gear"
+    case .ignoredApps: return "macwindow.on.rectangle"
+    case .info: return "info.circle"
     }
-    .buttonStyle(PlainButtonStyle())
-    .foregroundStyle(selectedTab == tab ? .blue : .secondary)
   }
 }
 
 struct AppView: View {
   @State private var selectedTab: Tab = .settings
-  
+
   var body: some View {
-    VStack(alignment: .center, spacing: 0) {
-      // Tab bar
-      HStack {
-        TabButton(tab: .settings, selectedTab: $selectedTab, iconName: "gear")
-        TabButton(tab: .ignoredApps, selectedTab: $selectedTab, iconName: "macwindow.on.rectangle")
-        TabButton(tab: .info, selectedTab: $selectedTab, iconName: "info.circle")
+    VStack(spacing: 0) {
+      // Navigation tab bar — glass layer
+      HStack(spacing: 0) {
+        ForEach(Tab.allCases, id: \.self) { tab in
+          Button {
+            withAnimation(.snappy(duration: 0.25)) {
+              selectedTab = tab
+            }
+          } label: {
+            HStack(spacing: 5) {
+              Image(systemName: tab.icon)
+                .font(.system(size: 12, weight: .medium))
+              if selectedTab == tab {
+                Text(tab.rawValue)
+                  .font(.system(size: 11, weight: .semibold))
+                  .lineLimit(1)
+                  .fixedSize()
+              }
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .frame(maxWidth: .infinity)
+            .background(
+              Group {
+                if selectedTab == tab {
+                  Capsule()
+                    .fill(.tint.opacity(0.15))
+                }
+              }
+            )
+            .clipShape(Capsule())
+          }
+          .buttonStyle(.plain)
+          .foregroundStyle(selectedTab == tab ? .primary : .secondary)
+        }
       }
-      
-      // Content area
+      .padding(.horizontal, 8)
+      .padding(.vertical, 6)
+
+      // Content
       Group {
         switch selectedTab {
         case .settings:
@@ -46,13 +70,12 @@ struct AppView: View {
           InfoView()
         }
       }
-    }.frame(width: MAIN_WINDOW_WIDTH)
+      .transition(.opacity.combined(with: .move(edge: .bottom)))
+    }
+    .frame(width: MAIN_WINDOW_WIDTH)
   }
 }
 
-// Preview
-struct AppView_Previews: PreviewProvider {
-  static var previews: some View {
-    AppView()
-  }
+#Preview {
+  AppView()
 }
