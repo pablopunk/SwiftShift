@@ -58,7 +58,7 @@ I'm open to PRs and requests. If you are looking for something to do, take a loo
 One-time setup: store notarization credentials in your keychain:
 
 ```bash
-xcrun notarytool store-credentials "SwiftShift" --apple-id YOUR_APPLE_ID --team-id 2TZ4Q825M7
+xcrun notarytool store-credentials "SwiftShift" --apple-id YOUR_APPLE_ID --team-id YOUR_TEAM_ID
 ```
 
 Then release with a single command:

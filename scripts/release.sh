@@ -5,6 +5,7 @@ APP_NAME="Swift Shift"
 APP_NAME_NO_SPACE="SwiftShift"
 SCHEME="Swift Shift"
 NOTARY_PROFILE="SwiftShift"
+TEAM_ID=$(grep -m1 'DEVELOPMENT_TEAM' "$APP_NAME.xcodeproj/project.pbxproj" | sed 's/.*= //;s/;.*//')
 BUILD_DIR="$(pwd)/build/release"
 ARCHIVE_PATH="$BUILD_DIR/$APP_NAME_NO_SPACE.xcarchive"
 EXPORT_DIR="$BUILD_DIR/export"
@@ -24,6 +25,10 @@ echo "📝 Bumping version to $VERSION..."
 sed -i '' "s/MARKETING_VERSION = .*;/MARKETING_VERSION = $VERSION;/g" "$APP_NAME.xcodeproj/project.pbxproj"
 sed -i '' "s/CURRENT_PROJECT_VERSION = .*;/CURRENT_PROJECT_VERSION = $VERSION;/g" "$APP_NAME.xcodeproj/project.pbxproj"
 
+# --- Patch ExportOptions.plist with team ID ---
+sed -i '' "s/REPLACE_TEAM_ID/$TEAM_ID/g" ExportOptions.plist
+trap 'sed -i "" "s/$TEAM_ID/REPLACE_TEAM_ID/g" ExportOptions.plist' EXIT
+
 # --- 2. Archive ---
 echo "📦 Archiving..."
 rm -rf "$BUILD_DIR"
@@ -33,7 +38,7 @@ xcodebuild archive \
     -archivePath "$ARCHIVE_PATH" \
     -configuration Release \
     CODE_SIGN_IDENTITY="Developer ID Application" \
-    DEVELOPMENT_TEAM=2TZ4Q825M7 \
+    DEVELOPMENT_TEAM="$TEAM_ID" \
     2>&1 | tail -1
 
 # --- 3. Export ---
