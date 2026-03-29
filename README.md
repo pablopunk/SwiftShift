@@ -16,8 +16,7 @@ There are several ways:
 
 ## Features
 
-<img src="https://github.com/pablopunk/SwiftShift/assets/4324982/58373dcf-217f-4b11-b734-dd0c1ee31063" width="380" />
-
+<img src="https://github.com/user-attachments/assets/efa3a42b-e8d3-42d3-b420-18a0a2f18986" width="380" />
 
 * Launch at login
 * Hide menubar icon
