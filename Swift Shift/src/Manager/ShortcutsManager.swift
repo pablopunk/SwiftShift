@@ -36,19 +36,15 @@ struct UserShortcut {
 class ShortcutsManager {
   static let shared = ShortcutsManager()
   var globalMonitors: [Any] = []
-  private var activeShortcuts: [ShortcutType: Bool] = [:]
+  private(set) var activeShortcuts: [ShortcutType: Bool] = [:]
   private var mouseSubscriptions: Set<String> = []
   private var workspaceNotificationObserver: Any?
   
   private init() {
-    // Initialize tracking state for each shortcut type
     for type in ShortcutType.allCases {
       activeShortcuts[type] = false
     }
-    
-    // Register for workspace notifications to detect desktop switching
     registerForWorkspaceNotifications()
-    
     updateGlobalShortcuts()
   }
   
@@ -57,7 +53,6 @@ class ShortcutsManager {
   }
   
   private func registerForWorkspaceNotifications() {
-    // Register for active space change notification to detect desktop switching
     let notificationCenter = NSWorkspace.shared.notificationCenter
     workspaceNotificationObserver = notificationCenter.addObserver(
       forName: NSWorkspace.activeSpaceDidChangeNotification,
@@ -75,8 +70,6 @@ class ShortcutsManager {
   }
   
   private func handleSpaceChange() {
-    // When switching desktops, reset all shortcut states to prevent "stuck" modifiers
-    // But only clear the modifier key state, don't trigger full cleanup
     for type in ShortcutType.allCases {
       if activeShortcuts[type] == true {
         activeShortcuts[type] = false
@@ -84,9 +77,7 @@ class ShortcutsManager {
     }
   }
   
-  // Public method to cleanup all shortcuts when the app quits
   func cleanupAllShortcuts() {
-    // Stop any active tracking
     for type in ShortcutType.allCases {
       if activeShortcuts[type] == true {
         let action = type == .move ? MouseAction.move : MouseAction.resize
@@ -94,17 +85,11 @@ class ShortcutsManager {
         cleanupMouseSubscriptions(action: action)
       }
     }
-    
-    // Clear all monitors and actions
     removeGlobalMonitors()
     removeAllActions()
-    
-    // Reset the active shortcuts state
     for type in ShortcutType.allCases {
       activeShortcuts[type] = false
     }
-    
-    // Unregister workspace notifications
     unregisterForWorkspaceNotifications()
   }
   
@@ -171,17 +156,19 @@ class ShortcutsManager {
     mouseSubscriptions.removeAll()
   }
   
-  // Regular shortcuts that should work fine except for modifier-only shortcuts on key-up
+  // Regular shortcuts (key + modifiers)
   private func addActions(mouseAction: MouseAction, for userShortcut: UserShortcut) {
     guard let shortcut = userShortcut.shortcut else { return }
     
     let keydownAction = ShortcutAction(shortcut: shortcut) { _ in
+      self.activeShortcuts[userShortcut.type] = true
       self.startTracking(userShortcut, mouseAction)
       return true
     }
     
     let keyupAction = ShortcutAction(shortcut: shortcut) { _ in
       self.stopTracking(userShortcut, mouseAction)
+      self.activeShortcuts[userShortcut.type] = false
       return true
     }
     
@@ -189,50 +176,44 @@ class ShortcutsManager {
     AppDelegate.shared.shortcutMonitor?.addAction(keyupAction, forKeyEvent: .up)
   }
   
-  // Handle modifier-only shortcuts with better flag handling
+  // Handle modifier-only shortcuts
   private func addGlobalMonitors(mouseAction: MouseAction, for userShortcut: UserShortcut) {
     guard let shortcut = userShortcut.shortcut else { return }
     
     let flagsChangedHandler: (NSEvent) -> Void = { [weak self] event in
       guard let self = self else { return }
       
-      // Use deviceIndependentFlagsMask for consistent behavior across keyboard layouts
       let eventFlags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
       let shortcutFlags = shortcut.modifierFlags
-      
       let shortcutType = userShortcut.type
       let isActive = self.activeShortcuts[shortcutType] ?? false
-      
-      // IMPORTANT: Check if any other keys are pressed (like letters/numbers/etc)
-      // We don't want to intercept Command+C or other common shortcuts
       let keysDown = self.checkForAdditionalKeysDown()
       
       if eventFlags == shortcutFlags && !isActive && !keysDown {
-        // Shortcut activated - but only if no other keys are being pressed
         self.startTracking(userShortcut, mouseAction)
         self.activeShortcuts[shortcutType] = true
       } else if eventFlags != shortcutFlags && isActive {
-        // Shortcut deactivated - stop tracking
         self.stopTracking(userShortcut, mouseAction)
         self.activeShortcuts[shortcutType] = false
       }
     }
     
-    // Global monitor for flagsChanged events only
     if let monitor = NSEvent.addGlobalMonitorForEvents(matching: [.flagsChanged], handler: flagsChangedHandler) {
       globalMonitors.append(monitor)
     }
     
-    // We also need to monitor key up/down events to detect when non-modifier keys are pressed
+    // Monitor key events to release shortcut when non-modifier keys are pressed
     if let monitor = NSEvent.addGlobalMonitorForEvents(matching: [.keyDown, .keyUp], handler: { [weak self] event in
       guard let self = self else { return }
       
-      // If any key is pressed while a shortcut is active, release the shortcut
-      // This prevents the app from hijacking common key combinations
       for type in ShortcutType.allCases {
         if self.activeShortcuts[type] == true {
           let action = type == .move ? MouseAction.move : MouseAction.resize
-          self.stopTracking(userShortcut, action)
+          if let loaded = self.load(for: type) {
+            self.stopTracking(loaded, action)
+          } else {
+            MouseTracker.shared.stopTracking(for: action)
+          }
           self.activeShortcuts[type] = false
         }
       }
@@ -240,33 +221,25 @@ class ShortcutsManager {
       globalMonitors.append(monitor)
     }
     
-    // Also track local events for when the app is in focus
     if let monitor = NSEvent.addLocalMonitorForEvents(matching: [.flagsChanged], handler: { event in
       flagsChangedHandler(event)
-      // Always propagate the original event to prevent hijacking
       return event
     }) {
       globalMonitors.append(monitor)
     }
   }
   
-  // Helper method to check if any non-modifier keys are currently pressed
   private func checkForAdditionalKeysDown() -> Bool {
     guard let currentEvent = NSApp.currentEvent else { return false }
-    
-    // Only key-based events have keyCode property
-    // We need to check type first to avoid crashes
     switch currentEvent.type {
     case .keyDown, .keyUp:
-      let nonModifierKeyCodes = Set<UInt16>(36...126) // Common keys excluding modifiers
+      let nonModifierKeyCodes = Set<UInt16>(36...126)
       if nonModifierKeyCodes.contains(currentEvent.keyCode) {
         return true
       }
     default:
-      // Other event types don't have keyCode, so we don't check them
       break
     }
-    
     return false
   }
   
@@ -298,7 +271,6 @@ class ShortcutsManager {
     let downKey = "\(action.rawValue)_mouseDown"
     let upKey = "\(action.rawValue)_mouseUp"
     
-    // Subscribe to mouse events only if shortcut is active
     CGEventSupervisor.shared.subscribe(
       as: downKey,
       to: .cgEvents(downEvent),
@@ -317,13 +289,13 @@ class ShortcutsManager {
         MouseTracker.shared.stopTracking(for: action)
       })
     
-    // Keep track of our subscriptions
     mouseSubscriptions.insert(downKey)
     mouseSubscriptions.insert(upKey)
   }
   
   private func stopTracking(_ userShortcut: UserShortcut, _ action: MouseAction) {
     MouseTracker.shared.stopTracking(for: action)
+    cleanupMouseSubscriptions(action: action)
     activeShortcuts[userShortcut.type] = false
   }
   

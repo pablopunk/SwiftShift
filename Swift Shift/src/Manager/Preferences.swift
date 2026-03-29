@@ -9,16 +9,26 @@ enum PreferenceKey: String {
 }
 
 class PreferencesManager {
+    private static var cachedIgnoredApps: Set<String>?
+    
     static func loadBool(for key: PreferenceKey) -> Bool {
         return UserDefaults.standard.bool(forKey: key.rawValue)
     }
     
+    static func invalidateIgnoredAppsCache() {
+        cachedIgnoredApps = nil
+    }
+    
     static func getIgnoredApps() -> [String] {
-        // Include default apps + user-added apps
-        if let savedApps = UserDefaults.standard.array(forKey: PreferenceKey.ignoredApps.rawValue) as? [String] {
-            return Array(Set(IGNORE_APP_BUNDLE_ID + savedApps)) // Ensure no duplicates
+        if let cached = cachedIgnoredApps {
+            return Array(cached)
         }
-        return IGNORE_APP_BUNDLE_ID
+        var apps = Set(IGNORE_APP_BUNDLE_ID)
+        if let savedApps = UserDefaults.standard.array(forKey: PreferenceKey.ignoredApps.rawValue) as? [String] {
+            apps.formUnion(savedApps)
+        }
+        cachedIgnoredApps = apps
+        return Array(apps)
     }
     
     static func getUserIgnoredApps() -> [String] {
@@ -31,6 +41,7 @@ class PreferencesManager {
     
     static func setUserIgnoredApps(_ apps: [String]) {
         UserDefaults.standard.set(apps, forKey: PreferenceKey.ignoredApps.rawValue)
+        invalidateIgnoredAppsCache()
     }
     
     static func addIgnoredApp(_ bundleId: String) {

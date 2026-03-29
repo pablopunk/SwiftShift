@@ -1,7 +1,7 @@
 import Cocoa
 
 class CircleView: NSView {
-  var fillColor: NSColor = .green // Default color is green
+  var fillColor: NSColor = .green
   
   init(frame frameRect: NSRect, color: NSColor) {
     super.init(frame: frameRect)
@@ -20,7 +20,9 @@ class CircleView: NSView {
   }
 }
 
-func drawCircleAt(x: CGFloat, y: CGFloat, diameter: CGFloat, color: NSColor) {
+/// Draws a circle at the given position. Returns the window so the caller can keep a strong reference.
+@discardableResult
+func drawCircleAt(x: CGFloat, y: CGFloat, diameter: CGFloat, color: NSColor) -> NSWindow {
   let circleWindow = NSWindow(contentRect: NSRect(x: x, y: y, width: diameter, height: diameter),
                               styleMask: .borderless,
                               backing: .buffered,
@@ -35,5 +37,6 @@ func drawCircleAt(x: CGFloat, y: CGFloat, diameter: CGFloat, color: NSColor) {
   circleWindow.contentView = circleView
   
   circleWindow.makeKeyAndOrderFront(nil)
-  circleWindow.orderFrontRegardless() // Makes the window visible at all times
+  circleWindow.orderFrontRegardless()
+  return circleWindow
 }

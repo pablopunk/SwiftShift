@@ -11,6 +11,7 @@ class MouseTracker {
     private var shouldUseQuadrants = false, quadrant: Quadrant?, windowSize: CGSize?, isTracking = false
     private var spaceChangeObserver: Any?, pendingMouseLocation: NSPoint?, lastUpdateTime: TimeInterval = 0
     private var lastAppliedOrigin: NSPoint?, lastAppliedSize: CGSize?
+    private let trackingQueue = DispatchQueue(label: "com.swiftshift.mousetracker")
     private init() { registerForSpaceChangeNotifications() }
     deinit { unregisterForSpaceChangeNotifications() }
     private func registerForSpaceChangeNotifications() {
@@ -90,7 +91,7 @@ class MouseTracker {
     private func handleMouseMoved(_ event: NSEvent) {
         guard isTracking, let _ = initialMouseLocation, let _ = initialWindowLocation, let _ = trackedWindow else { return }
         if checkForKeyPresses() { pauseTracking(); return }
-        if shouldFocusWindow && !trackedWindowIsFocused { WindowManager.focus(window: trackedWindow!); trackedWindowIsFocused = true }
+        if shouldFocusWindow && !trackedWindowIsFocused, let w = trackedWindow { WindowManager.focus(window: w); trackedWindowIsFocused = true }
         pendingMouseLocation = NSEvent.mouseLocation
         if event.timestamp - lastUpdateTime >= minimumUpdateInterval { flushPendingMouseUpdate(at: event.timestamp) }
     }
@@ -100,15 +101,16 @@ class MouseTracker {
         if let t = timestamp { lastUpdateTime = t }
     }
     private func moveWindowBasedOnMouseLocation(_ loc: NSPoint) {
-        let dx = loc.x - initialMouseLocation!.x, dy = loc.y - initialMouseLocation!.y
-        let newO = NSPoint(x: initialWindowLocation!.x + dx, y: initialWindowLocation!.y - dy)
-        if !pointsApproximatelyEqual(newO, lastAppliedOrigin) { lastAppliedOrigin = newO; WindowManager.move(window: trackedWindow!, to: newO) }
+        guard let im = initialMouseLocation, let iw = initialWindowLocation, let w = trackedWindow else { return }
+        let dx = loc.x - im.x, dy = loc.y - im.y
+        let newO = NSPoint(x: iw.x + dx, y: iw.y - dy)
+        if !pointsApproximatelyEqual(newO, lastAppliedOrigin) { lastAppliedOrigin = newO; WindowManager.move(window: w, to: newO) }
     }
     private func resizeWindowBasedOnMouseLocation(_ loc: NSPoint) {
-        guard let s = windowSize, let im = initialMouseLocation, let iw = initialWindowLocation else { return }
+        guard let s = windowSize, let im = initialMouseLocation, let iw = initialWindowLocation, let w = trackedWindow else { return }
         var nw = s.width, nh = s.height, no = iw
         if shouldUseQuadrants, let q = quadrant {
-            let dx = (loc.x - iw.x) - (im.x - iw.x), dy = (loc.y - iw.y) - (im.y - iw.y)
+            let dx = loc.x - im.x, dy = loc.y - im.y
             switch q {
                 case .topLeft: nw -= dx; nh += dy; no.x += dx; no.y -= dy
                 case .top: nh += dy; no.y -= dy
@@ -126,7 +128,7 @@ class MouseTracker {
         nw = max(nw, 1); nh = max(nh, 1); let ns = CGSize(width: nw, height: nh)
         let moveO = !pointsApproximatelyEqual(no, lastAppliedOrigin)
         if moveO || !sizesApproximatelyEqual(ns, lastAppliedSize) {
-            lastAppliedOrigin = no; lastAppliedSize = ns; WindowManager.resize(window: trackedWindow!, to: ns, from: no, shouldMoveOrigin: moveO)
+            lastAppliedOrigin = no; lastAppliedSize = ns; WindowManager.resize(window: w, to: ns, from: no, shouldMoveOrigin: moveO)
         }
     }
     private func invalidateTrackingTimer() { trackingTimer?.invalidate(); trackingTimer = nil }

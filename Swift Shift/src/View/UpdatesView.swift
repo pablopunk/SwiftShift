@@ -12,14 +12,11 @@ final class CheckForUpdatesViewModel: ObservableObject {
 }
 
 struct CheckUpdatesButton: View {
-  @ObservedObject private var checkForUpdatesViewModel: CheckForUpdatesViewModel
+  @StateObject private var checkForUpdatesViewModel = CheckForUpdatesViewModel(updater: UpdatesManager.shared.updater)
   private var label: String?
   
   init(label: String? = nil) {
-    self.checkForUpdatesViewModel = CheckForUpdatesViewModel(updater: UpdatesManager.shared.updater)
-    if label != nil {
-      self.label = label
-    }
+    self.label = label
   }
   
   var body: some View {
@@ -27,11 +24,11 @@ struct CheckUpdatesButton: View {
       UpdatesManager.shared.checkForUpdates()
     } label: {
       Image(systemName: "arrow.counterclockwise")
-        .disabled(!checkForUpdatesViewModel.canCheckForUpdates)
-      if label != nil {
-        Text(label!)
+      if let label = label {
+        Text(label)
       }
     }
+    .disabled(!checkForUpdatesViewModel.canCheckForUpdates)
   }
 }
 

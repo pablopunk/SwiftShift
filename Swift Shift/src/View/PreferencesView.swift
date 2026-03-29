@@ -34,11 +34,11 @@ struct PreferencesView: View {
         Text("Require mouse click")
         Text("Allows you to use the mouse buttons in your shortcuts")
           .fixedSize(horizontal: false, vertical: true)
-      }.onChange(of: requireMouseClick, perform: { newValue in
+      }.onChange(of: requireMouseClick) { newValue in
         if newValue == false {
           ShortcutsManager.shared.removeClickActionsForAll()
         }
-      })
+      }
     }
   }
 }

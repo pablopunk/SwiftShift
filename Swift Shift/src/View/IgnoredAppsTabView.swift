@@ -14,7 +14,7 @@ struct IgnoredAppsTabView: View {
                 Text("Applications in this list will be ignored when using Swift Shift shortcuts.")
                     .fixedSize(horizontal: false, vertical: true)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }.padding(.horizontal)
             
             VStack(alignment: .leading, spacing: 10) {
@@ -30,7 +30,7 @@ struct IgnoredAppsTabView: View {
                     if ignoredApps.isEmpty {
                         Text("No applications added")
                             .italic()
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .padding()
                             .frame(maxWidth: .infinity, alignment: .center)
                             .overlay(
@@ -47,7 +47,7 @@ struct IgnoredAppsTabView: View {
                                         removeApp(bundleId)
                                     }) {
                                         Image(systemName: "trash")
-                                            .foregroundColor(.red)
+                                            .foregroundStyle(.red)
                                     }
                                     .buttonStyle(BorderlessButtonStyle())
                                 }.padding(.vertical, 5)
@@ -68,7 +68,7 @@ struct IgnoredAppsTabView: View {
             VStack(alignment: .leading) {
                 Text("Note: Some applications are already ignored by default.")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             .padding()
         }
