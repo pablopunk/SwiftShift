@@ -1,7 +1,8 @@
 .PHONY: build open-app run appcast generate-keys
 
 build:
-	xcodebuild -scheme "Swift Shift" build SYMROOT=$(PWD)/build
+	xcodebuild -scheme "Swift Shift" build SYMROOT=$(PWD)/build \
+		CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
 
 run-app:
 	open "./build/Debug/Swift Shift.app"
