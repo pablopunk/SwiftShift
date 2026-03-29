@@ -97,7 +97,7 @@ git push --tags
 # --- 8. Create PR with auto-merge ---
 echo "🔀 Creating PR..."
 PR_URL=$(gh pr create --title "$VERSION" --body "Release $VERSION" --base main)
-gh pr merge "$PR_URL" --squash --auto
+gh pr merge "$PR_URL" --squash
 
 # --- 9. Create GitHub release ---
 echo "🎉 Creating GitHub release..."
