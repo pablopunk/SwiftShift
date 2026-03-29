@@ -71,7 +71,9 @@ Then release with a single command:
 make release VERSION=0.28.0
 ```
 
-This will: bump the version, archive, export, notarize, staple, generate the appcast, create a branch/commit/tag, open a PR with auto-merge, and create a GitHub release with the zip attached.
+This will: bump the version, archive, export, notarize, staple, generate the appcast, create a branch/commit/tag, open a PR with auto-merge, create a GitHub release with the zip attached, and update the Homebrew cask automatically.
+
+If `GH_PAT` is available in the environment, the release script will use it to push the Homebrew tap update to `pablopunk/homebrew-brew`.
 
 ## Star History
 
