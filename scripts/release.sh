@@ -118,7 +118,38 @@ else
         --generate-notes
 fi
 
+# --- 11. Update Homebrew cask ---
+echo "🍺 Updating Homebrew cask..."
+ZIP_SHA=$(shasum -a 256 "$ZIP_PATH" | awk '{print $1}')
+TAP_REPO="pablopunk/homebrew-brew"
+TAP_CLONE_DIR="$(mktemp -d /tmp/swiftshift-homebrew.XXXXXX)"
+TAP_CASK_PATH="$TAP_CLONE_DIR/Casks/swift-shift.rb"
+GIT_REMOTE="https://github.com/$TAP_REPO.git"
+
+if [[ -n "${GH_PAT:-}" ]]; then
+    GIT_REMOTE="https://x-access-token:${GH_PAT}@github.com/$TAP_REPO.git"
+fi
+
+git clone "$GIT_REMOTE" "$TAP_CLONE_DIR"
+sed -i '' "s/version \".*\"/version \"$VERSION\"/" "$TAP_CASK_PATH"
+sed -i '' "s/sha256 \".*\"/sha256 \"$ZIP_SHA\"/" "$TAP_CASK_PATH"
+ruby -c "$TAP_CASK_PATH"
+
+pushd "$TAP_CLONE_DIR" > /dev/null
+git config user.name "github-actions[bot]"
+git config user.email "github-actions[bot]@users.noreply.github.com"
+if ! git diff --quiet -- Casks/swift-shift.rb; then
+    git add Casks/swift-shift.rb
+    git commit -m "swift-shift: update to $VERSION"
+    git push
+else
+    echo "Homebrew cask already up to date."
+fi
+popd > /dev/null
+rm -rf "$TAP_CLONE_DIR"
+
 echo ""
 echo "✅ Release $VERSION complete!"
 echo "   PR: $PR_URL"
 echo "   Release: https://github.com/pablopunk/SwiftShift/releases/tag/$VERSION"
+echo "   Homebrew: https://github.com/$TAP_REPO/blob/main/Casks/swift-shift.rb"
