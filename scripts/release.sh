@@ -85,11 +85,11 @@ cp "$EXPORT_DIR/appcast.xml" .
 
 # --- 7. Git: branch, commit, tag, push ---
 echo "🔖 Creating branch, commit, and tag..."
-git checkout -b "$VERSION"
+git checkout -b "release/$VERSION"
 git add -A
 git commit -m "$VERSION"
 git tag "$VERSION"
-git push -u origin "$VERSION"
+git push -u origin "release/$VERSION"
 git push --tags
 
 # --- 8. Create PR with auto-merge ---
