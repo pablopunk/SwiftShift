@@ -36,9 +36,9 @@ struct UIButton<Label: View>: View {
       HStack(alignment: .center, content: label)
         .padding(.vertical, 6)
         .padding(.horizontal, 8)
-        .foregroundColor(plain ? background : .primary)
+        .foregroundStyle(plain ? (background ?? .primary) : .primary)
         .background(getBackground())
-        .cornerRadius(40)
+        .clipShape(.rect(cornerRadius: 40))
         .scaleEffect(isPressed ? 0.90 : isHovering ? 1.1 : 1)
         .shadow(radius: 6)
     }
@@ -83,7 +83,7 @@ struct UIButton<Label: View>: View {
     }
     
     UIButton(action: {print("Pressed")}, plain: true, label: {
-      Image(systemName: "checkmark.circle.fill").foregroundColor(.teal)
+      Image(systemName: "checkmark.circle.fill").foregroundStyle(.teal)
     }, backgroundHover: .teal.opacity(0.2))
     
     UIButton(action: {print("Pressed")}, plain: true, background: .cyan, label: {

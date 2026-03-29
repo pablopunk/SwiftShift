@@ -10,7 +10,7 @@ struct PermissionRequestView: View {
         .lineLimit(2)
       HStack {
         Text("Accessibility").font(.subheadline)
-        Image(systemName: "exclamationmark.triangle").foregroundColor(.orange)
+        Image(systemName: "exclamationmark.triangle").foregroundStyle(.orange)
         Spacer()
         Button("Open Preferences") {
           PermissionsManager.openPreferences(at: .accessibility)

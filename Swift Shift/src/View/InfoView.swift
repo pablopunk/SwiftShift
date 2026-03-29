@@ -9,7 +9,7 @@ extension Bundle {
 struct InfoView: View {
   private var version: String? = nil
   
-  init(hasPermissions: Bool = false) {
+  init() {
     self.version = Bundle.main.buildNumber
   }
   
@@ -18,8 +18,8 @@ struct InfoView: View {
       VStack {
         HStack(alignment: .bottom) {
           Text("⌘ Swift Shift").font(.headline)
-          if version != nil {
-            Text("v" + version!).font(.subheadline)
+          if let version = version {
+            Text("v" + version).font(.subheadline)
           }
         }.padding(.bottom)
         
@@ -71,4 +71,5 @@ struct InfoView: View {
 
 #Preview {
   InfoView().frame(width: MAIN_WINDOW_WIDTH)
+
 }

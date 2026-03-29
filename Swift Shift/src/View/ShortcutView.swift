@@ -57,14 +57,13 @@ struct ShortcutView: View {
           .font(.headline)
           .frame(width: 60, alignment: .leading)
         ShortcutNSView(shortcut: $shortcut.shortcut)
-          .onChange(of: shortcut.shortcut, perform: {
-            newValue in
-            if (newValue == nil) {
+          .onChange(of: shortcut.shortcut) { newValue in
+            if newValue == nil {
               ShortcutsManager.shared.delete(for: shortcut.type)
             } else {
               ShortcutsManager.shared.save(shortcut)
             }
-          })
+          }
         Button("Clear") {
           shortcut.shortcut = nil
         }
@@ -72,7 +71,7 @@ struct ShortcutView: View {
       if requireMouseClick {
         HStack {
           Image(systemName: "magicmouse.fill")
-            .foregroundColor(.secondary)
+            .foregroundStyle(.secondary)
             .frame(width: 18)
           
           Text("Click")
