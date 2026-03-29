@@ -57,9 +57,14 @@ I'm open to PRs and requests. If you are looking for something to do, take a loo
 
 One-time setup: store notarization credentials in your keychain:
 
+1. Generate an app-specific password at [appleid.apple.com](https://appleid.apple.com) (Sign-In and Security → App-Specific Passwords)
+2. Run:
+
 ```bash
 xcrun notarytool store-credentials "SwiftShift" --apple-id YOUR_APPLE_ID --team-id YOUR_TEAM_ID
 ```
+
+It will prompt you to paste the app-specific password.
 
 Then release with a single command:
 
