@@ -27,7 +27,12 @@ sed -i '' "s/CURRENT_PROJECT_VERSION = .*;/CURRENT_PROJECT_VERSION = $VERSION;/g
 
 # --- Patch ExportOptions.plist with team ID ---
 sed -i '' "s/REPLACE_TEAM_ID/$TEAM_ID/g" ExportOptions.plist
-trap 'sed -i "" "s/$TEAM_ID/REPLACE_TEAM_ID/g" ExportOptions.plist' EXIT
+
+cleanup() {
+    sed -i '' "s/$TEAM_ID/REPLACE_TEAM_ID/g" ExportOptions.plist
+    [[ -n "${TAP_CLONE_DIR:-}" ]] && rm -rf "$TAP_CLONE_DIR"
+}
+trap cleanup EXIT
 
 # --- 2. Archive ---
 echo "📦 Archiving..."
@@ -125,14 +130,25 @@ TAP_REPO="pablopunk/homebrew-brew"
 TAP_CLONE_DIR="$(mktemp -d /tmp/swiftshift-homebrew.XXXXXX)"
 TAP_CASK_PATH="$TAP_CLONE_DIR/Casks/swift-shift.rb"
 GIT_REMOTE="https://github.com/$TAP_REPO.git"
-
+GIT_AUTH_ARGS=()
 if [[ -n "${GH_PAT:-}" ]]; then
-    GIT_REMOTE="https://x-access-token:${GH_PAT}@github.com/$TAP_REPO.git"
+    GIT_AUTH_ARGS=(-c "http.extraHeader=Authorization: Bearer $GH_PAT")
 fi
 
-git clone "$GIT_REMOTE" "$TAP_CLONE_DIR"
+git "${GIT_AUTH_ARGS[@]}" clone "$GIT_REMOTE" "$TAP_CLONE_DIR"
 sed -i '' "s/version \".*\"/version \"$VERSION\"/" "$TAP_CASK_PATH"
 sed -i '' "s/sha256 \".*\"/sha256 \"$ZIP_SHA\"/" "$TAP_CASK_PATH"
+
+# Verify replacements applied
+if ! grep -q "version \"$VERSION\"" "$TAP_CASK_PATH"; then
+    echo "❌ Failed to update cask version to $VERSION"
+    exit 1
+fi
+if ! grep -q "sha256 \"$ZIP_SHA\"" "$TAP_CASK_PATH"; then
+    echo "❌ Failed to update cask sha256 to $ZIP_SHA"
+    exit 1
+fi
+
 ruby -c "$TAP_CASK_PATH"
 
 pushd "$TAP_CLONE_DIR" > /dev/null
@@ -141,12 +157,11 @@ git config user.email "github-actions[bot]@users.noreply.github.com"
 if ! git diff --quiet -- Casks/swift-shift.rb; then
     git add Casks/swift-shift.rb
     git commit -m "swift-shift: update to $VERSION"
-    git push
+    git "${GIT_AUTH_ARGS[@]}" push
 else
     echo "Homebrew cask already up to date."
 fi
 popd > /dev/null
-rm -rf "$TAP_CLONE_DIR"
 
 echo ""
 echo "✅ Release $VERSION complete!"
