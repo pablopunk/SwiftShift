@@ -140,11 +140,11 @@ sed -i '' "s/version \".*\"/version \"$VERSION\"/" "$TAP_CASK_PATH"
 sed -i '' "s/sha256 \".*\"/sha256 \"$ZIP_SHA\"/" "$TAP_CASK_PATH"
 
 # Verify replacements applied
-if ! grep -q "version \"$VERSION\"" "$TAP_CASK_PATH"; then
+if ! grep -Fq "version \"$VERSION\"" "$TAP_CASK_PATH"; then
     echo "❌ Failed to update cask version to $VERSION"
     exit 1
 fi
-if ! grep -q "sha256 \"$ZIP_SHA\"" "$TAP_CASK_PATH"; then
+if ! grep -Fq "sha256 \"$ZIP_SHA\"" "$TAP_CASK_PATH"; then
     echo "❌ Failed to update cask sha256 to $ZIP_SHA"
     exit 1
 fi
