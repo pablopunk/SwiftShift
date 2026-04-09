@@ -42,6 +42,7 @@ struct AppView: View {
             .padding(.horizontal, 10)
             .padding(.vertical, 7)
             .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
             .background(
               Group {
                 if selectedTab == tab {
