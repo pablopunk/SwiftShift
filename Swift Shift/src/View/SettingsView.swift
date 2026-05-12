@@ -24,6 +24,12 @@ struct SettingsView: View {
 
   init(hasPermissions: Bool = false) {
     self._hasPermissions = State(initialValue: hasPermissions)
+
+    let hasFnShortcut = ShortcutType.allCases.contains { type in
+      ShortcutsManager.shared.load(for: type)?.keyboardShortcut?.usesFunctionModifier == true
+    }
+    self._hasFunctionKeyShortcut = State(initialValue: hasFnShortcut)
+    self._hadFunctionKeyShortcut = State(initialValue: hasFnShortcut)
   }
 
   private func refreshPermissions() {
