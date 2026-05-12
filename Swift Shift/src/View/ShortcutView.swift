@@ -156,18 +156,69 @@ private struct ShortcutRecorderView: NSViewRepresentable {
   }
 }
 
+struct ShortcutFnWarningView: View {
+  let onDismiss: () -> Void
+  private let keyboardSettingsURL = URL(string: "x-apple.systempreferences:com.apple.Keyboard-Settings.extension")!
+
+  var body: some View {
+    HStack(alignment: .top, spacing: 8) {
+      Image(systemName: "exclamationmark.triangle.fill")
+        .font(.system(size: 11, weight: .semibold))
+        .foregroundStyle(.yellow)
+        .padding(.top, 1)
+
+      Button {
+        NSWorkspace.shared.open(keyboardSettingsURL)
+      } label: {
+        VStack(alignment: .leading, spacing: 4) {
+          Text("Disable the fn key Emoji & Symbols shortcut in System Settings → Keyboard for more reliable shortcuts.")
+            .font(.system(size: 11))
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+
+          Text("Open Keyboard Settings")
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(.tint)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+      }
+      .buttonStyle(.plain)
+      .help("Open Keyboard settings")
+
+      Spacer(minLength: 0)
+
+      Button(action: onDismiss) {
+        Image(systemName: "xmark")
+          .font(.system(size: 10, weight: .semibold))
+          .foregroundStyle(.tertiary)
+          .frame(width: 16, height: 16)
+          .contentShape(Rectangle())
+      }
+      .buttonStyle(.plain)
+      .help("Dismiss")
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(.horizontal, 10)
+    .padding(.vertical, 8)
+    .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+  }
+}
+
 struct ShortcutView: View {
   @State private var shortcut: UserShortcut
   @AppStorage(PreferenceKey.requireMouseClick.rawValue) private var requireMouseClick = false
+  let onShortcutChanged: () -> Void
 
-  init(type: ShortcutType) {
+  init(type: ShortcutType, onShortcutChanged: @escaping () -> Void = {}) {
     let loaded = ShortcutsManager.shared.load(for: type) ?? UserShortcut(type: type, mouseButton: .none)
     self.shortcut = loaded
+    self.onShortcutChanged = onShortcutChanged
   }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      HStack(alignment: .top, spacing: 8) {
+      HStack(alignment: .center, spacing: 8) {
         Image(systemName: actionIcon())
           .font(.system(size: 14, weight: .medium))
           .foregroundStyle(.tint)
@@ -177,30 +228,22 @@ struct ShortcutView: View {
           .font(.system(size: 13, weight: .semibold))
           .frame(width: 50, alignment: .leading)
 
-        VStack(alignment: .leading, spacing: 4) {
-          ShortcutRecorderView(shortcut: $shortcut.keyboardShortcut)
-            .onChange(of: shortcut.keyboardShortcut) { newValue in
-              shortcut.shortcut = newValue?.shortcutRecorderShortcut
-              if newValue == nil {
-                ShortcutsManager.shared.delete(for: shortcut.type)
-              } else {
-                ShortcutsManager.shared.save(shortcut)
-              }
+        ShortcutRecorderView(shortcut: $shortcut.keyboardShortcut)
+          .onChange(of: shortcut.keyboardShortcut) { newValue in
+            shortcut.shortcut = newValue?.shortcutRecorderShortcut
+            if newValue == nil {
+              ShortcutsManager.shared.delete(for: shortcut.type)
+            } else {
+              ShortcutsManager.shared.save(shortcut)
             }
-
-          if shortcut.keyboardShortcut?.usesFunctionModifier == true {
-            Text("You may want to disable the function to show emoji&Symbols by press fn key\nThis can be disabled in System Settings -> Keyboard")
-              .font(.system(size: 11))
-              .foregroundStyle(.secondary)
-              .lineLimit(nil)
-              .fixedSize(horizontal: false, vertical: true)
+            onShortcutChanged()
           }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
+          .frame(maxWidth: .infinity, alignment: .leading)
 
         Button {
           shortcut.shortcut = nil
           shortcut.keyboardShortcut = nil
+          onShortcutChanged()
         } label: {
           Image(systemName: "xmark.circle.fill")
             .font(.system(size: 13))
@@ -222,6 +265,7 @@ struct ShortcutView: View {
               Button {
                 shortcut.mouseButton = mouseButton
                 ShortcutsManager.shared.save(shortcut)
+                onShortcutChanged()
               } label: {
                 HStack(spacing: 3) {
                   if mouseButton != .none {

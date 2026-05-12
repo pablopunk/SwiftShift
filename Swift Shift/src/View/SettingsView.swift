@@ -16,7 +16,10 @@ struct SectionHeader: View {
 
 struct SettingsView: View {
   @State private var hasPermissions = false
+  @State private var hasFunctionKeyShortcut = false
+  @State private var hadFunctionKeyShortcut = false
   @AppStorage(PreferenceKey.requireMouseClick.rawValue) var requireMouseClick = false
+  @AppStorage(PreferenceKey.fnShortcutWarningDismissed.rawValue) var fnShortcutWarningDismissed = false
   private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
   init(hasPermissions: Bool = false) {
@@ -25,6 +28,21 @@ struct SettingsView: View {
 
   private func refreshPermissions() {
     hasPermissions = PermissionsManager.hasAccessibilityPermission()
+  }
+
+  private func refreshFunctionKeyWarning() {
+    let hasFnShortcut = ShortcutType.allCases.contains { type in
+      ShortcutsManager.shared.load(for: type)?.keyboardShortcut?.usesFunctionModifier == true
+    }
+
+    if !hasFnShortcut {
+      fnShortcutWarningDismissed = false
+    } else if !hadFunctionKeyShortcut {
+      fnShortcutWarningDismissed = false
+    }
+
+    hasFunctionKeyShortcut = hasFnShortcut
+    hadFunctionKeyShortcut = hasFnShortcut
   }
 
   var body: some View {
@@ -43,9 +61,17 @@ struct SettingsView: View {
         SectionHeader(title: "Shortcuts", icon: "keyboard")
 
         if hasPermissions {
-          VStack(spacing: requireMouseClick ? 16 : 4) {
-            ForEach(Array(ShortcutType.allCases), id: \.self) { type in
-              ShortcutView(type: type)
+          VStack(alignment: .leading, spacing: 8) {
+            VStack(spacing: requireMouseClick ? 16 : 4) {
+              ForEach(Array(ShortcutType.allCases), id: \.self) { type in
+                ShortcutView(type: type, onShortcutChanged: refreshFunctionKeyWarning)
+              }
+            }
+
+            if hasFunctionKeyShortcut && !fnShortcutWarningDismissed {
+              ShortcutFnWarningView {
+                fnShortcutWarningDismissed = true
+              }
             }
           }
         } else {
@@ -75,8 +101,14 @@ struct SettingsView: View {
       }
     }
     .padding(14)
-    .onAppear { refreshPermissions() }
-    .onReceive(timer) { _ in refreshPermissions() }
+    .onAppear {
+      refreshPermissions()
+      refreshFunctionKeyWarning()
+    }
+    .onReceive(timer) { _ in
+      refreshPermissions()
+      refreshFunctionKeyWarning()
+    }
   }
 }
 
