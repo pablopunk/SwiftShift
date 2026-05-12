@@ -1,18 +1,145 @@
 import SwiftUI
-import ShortcutRecorder
+import AppKit
 
-struct ShortcutNSView: NSViewRepresentable {
-  @Binding var shortcut: Shortcut?
+private final class FnShortcutRecorderControl: NSButton {
+  var onShortcutChange: ((KeyboardShortcut?) -> Void)?
+  var shortcut: KeyboardShortcut? {
+    didSet {
+      if !isRecordingShortcut {
+        updateTitle()
+      }
+    }
+  }
 
-  func makeNSView(context: Context) -> RecorderControl {
-    let recorder = RecorderControl()
-    recorder.delegate = context.coordinator
-    recorder.allowsModifierFlagsOnlyShortcut = true
+  private var isRecordingShortcut = false
+  private var recordedModifierFlags: NSEvent.ModifierFlags = []
+
+  override var acceptsFirstResponder: Bool { true }
+
+  override init(frame frameRect: NSRect) {
+    super.init(frame: frameRect)
+    configure()
+  }
+
+  required init?(coder: NSCoder) {
+    super.init(coder: coder)
+    configure()
+  }
+
+  override func mouseDown(with event: NSEvent) {
+    beginRecording()
+  }
+
+  override func keyDown(with event: NSEvent) {
+    guard isRecordingShortcut else {
+      super.keyDown(with: event)
+      return
+    }
+
+    let modifierFlags = event.modifierFlags.swiftShiftShortcutFlags
+
+    if modifierFlags.isEmpty && event.keyCode == 53 {
+      cancelRecording()
+      return
+    }
+
+    if modifierFlags.isEmpty && (event.keyCode == 51 || event.keyCode == 117) {
+      finishRecording(with: nil)
+      return
+    }
+
+    if modifierFlags.isEmpty && !KeyboardShortcut.canUseWithoutModifiers(keyCode: event.keyCode) {
+      NSSound.beep()
+      return
+    }
+
+    finishRecording(with: KeyboardShortcut(
+      keyCode: event.keyCode,
+      modifierFlags: modifierFlags,
+      characters: event.characters,
+      charactersIgnoringModifiers: event.charactersIgnoringModifiers
+    ))
+  }
+
+  override func flagsChanged(with event: NSEvent) {
+    guard isRecordingShortcut else {
+      super.flagsChanged(with: event)
+      return
+    }
+
+    let modifierFlags = event.modifierFlags.swiftShiftShortcutFlags
+    if modifierFlags.isEmpty {
+      if !recordedModifierFlags.isEmpty {
+        finishRecording(with: KeyboardShortcut(keyCode: nil, modifierFlags: recordedModifierFlags))
+      }
+      return
+    }
+
+    recordedModifierFlags.formUnion(modifierFlags)
+    title = KeyboardShortcut(keyCode: nil, modifierFlags: recordedModifierFlags).displayString
+  }
+
+  override func resignFirstResponder() -> Bool {
+    if isRecordingShortcut {
+      cancelRecording()
+    }
+    return super.resignFirstResponder()
+  }
+
+  private func configure() {
+    setButtonType(.momentaryPushIn)
+    bezelStyle = .rounded
+    controlSize = .small
+    font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+    focusRingType = .default
+    lineBreakMode = .byTruncatingTail
+    alignment = .center
+    updateTitle()
+  }
+
+  private func beginRecording() {
+    isRecordingShortcut = true
+    recordedModifierFlags = []
+    title = "Press shortcut"
+    state = .on
+    window?.makeFirstResponder(self)
+    needsDisplay = true
+  }
+
+  private func cancelRecording() {
+    isRecordingShortcut = false
+    recordedModifierFlags = []
+    state = .off
+    updateTitle()
+  }
+
+  private func finishRecording(with newShortcut: KeyboardShortcut?) {
+    isRecordingShortcut = false
+    recordedModifierFlags = []
+    state = .off
+    shortcut = newShortcut
+    onShortcutChange?(newShortcut)
+    window?.makeFirstResponder(nil)
+  }
+
+  private func updateTitle() {
+    title = shortcut?.displayString ?? "Record Shortcut"
+  }
+}
+
+private struct ShortcutRecorderView: NSViewRepresentable {
+  @Binding var shortcut: KeyboardShortcut?
+
+  func makeNSView(context: Context) -> FnShortcutRecorderControl {
+    let recorder = FnShortcutRecorderControl()
+    recorder.onShortcutChange = { newShortcut in
+      context.coordinator.parent.shortcut = newShortcut
+    }
     return recorder
   }
 
-  func updateNSView(_ nsView: RecorderControl, context: Context) {
-    nsView.objectValue = shortcut
+  func updateNSView(_ nsView: FnShortcutRecorderControl, context: Context) {
+    nsView.shortcut = shortcut
     nsView.translatesAutoresizingMaskIntoConstraints = false
   }
 
@@ -20,22 +147,18 @@ struct ShortcutNSView: NSViewRepresentable {
     Coordinator(self)
   }
 
-  class Coordinator: NSObject, RecorderControlDelegate {
-    var parent: ShortcutNSView
+  class Coordinator {
+    var parent: ShortcutRecorderView
 
-    init(_ parent: ShortcutNSView) {
+    init(_ parent: ShortcutRecorderView) {
       self.parent = parent
-    }
-
-    func shortcutRecorderDidEndRecording(_ recorder: RecorderControl) {
-      parent.shortcut = recorder.objectValue
     }
   }
 }
 
 struct ShortcutView: View {
   @State private var shortcut: UserShortcut
-  @AppStorage(PreferenceKey.requireMouseClick.rawValue) var requireMouseClick = false
+  @AppStorage(PreferenceKey.requireMouseClick.rawValue) private var requireMouseClick = false
 
   init(type: ShortcutType) {
     let loaded = ShortcutsManager.shared.load(for: type) ?? UserShortcut(type: type, mouseButton: .none)
@@ -44,7 +167,7 @@ struct ShortcutView: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      HStack(spacing: 8) {
+      HStack(alignment: .top, spacing: 8) {
         Image(systemName: actionIcon())
           .font(.system(size: 14, weight: .medium))
           .foregroundStyle(.tint)
@@ -54,17 +177,30 @@ struct ShortcutView: View {
           .font(.system(size: 13, weight: .semibold))
           .frame(width: 50, alignment: .leading)
 
-        ShortcutNSView(shortcut: $shortcut.shortcut)
-          .onChange(of: shortcut.shortcut) { newValue in
-            if newValue == nil {
-              ShortcutsManager.shared.delete(for: shortcut.type)
-            } else {
-              ShortcutsManager.shared.save(shortcut)
+        VStack(alignment: .leading, spacing: 4) {
+          ShortcutRecorderView(shortcut: $shortcut.keyboardShortcut)
+            .onChange(of: shortcut.keyboardShortcut) { newValue in
+              shortcut.shortcut = newValue?.shortcutRecorderShortcut
+              if newValue == nil {
+                ShortcutsManager.shared.delete(for: shortcut.type)
+              } else {
+                ShortcutsManager.shared.save(shortcut)
+              }
             }
+
+          if shortcut.keyboardShortcut?.usesFunctionModifier == true {
+            Text("You may want to disable the function to show emoji&Symbols by press fn key\nThis can be disabled in System Settings -> Keyboard")
+              .font(.system(size: 11))
+              .foregroundStyle(.secondary)
+              .lineLimit(nil)
+              .fixedSize(horizontal: false, vertical: true)
           }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
 
         Button {
           shortcut.shortcut = nil
+          shortcut.keyboardShortcut = nil
         } label: {
           Image(systemName: "xmark.circle.fill")
             .font(.system(size: 13))
