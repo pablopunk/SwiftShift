@@ -260,7 +260,19 @@ class ShortcutsManager {
     }
 
     if let shortcut = loadLegacyShortcut(for: type) {
-      return UserShortcut(type: type, shortcut: shortcut, mouseButton: mouseButton)
+      let migrated = UserShortcut(type: type, shortcut: shortcut, mouseButton: mouseButton)
+
+      if let keyboardShortcut = migrated.keyboardShortcut {
+        do {
+          let data = try JSONEncoder().encode(keyboardShortcut)
+          UserDefaults.standard.set(data, forKey: keyboardShortcutKey(for: type))
+          UserDefaults.standard.set(mouseButton.rawValue, forKey: mouseButtonKey(for: type))
+        } catch {
+          print("Error migrating shortcut: \(error.localizedDescription)")
+        }
+      }
+
+      return migrated
     }
 
     return nil

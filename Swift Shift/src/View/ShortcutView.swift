@@ -26,6 +26,10 @@ private final class FnShortcutRecorderControl: NSButton {
     configure()
   }
 
+  override func performClick(_ sender: Any?) {
+    beginRecording()
+  }
+
   override func mouseDown(with event: NSEvent) {
     beginRecording()
   }
@@ -75,7 +79,7 @@ private final class FnShortcutRecorderControl: NSButton {
       return
     }
 
-    recordedModifierFlags.formUnion(modifierFlags)
+    recordedModifierFlags = modifierFlags
     title = KeyboardShortcut(keyCode: nil, modifierFlags: recordedModifierFlags).displayString
   }
 
