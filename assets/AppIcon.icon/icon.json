@@ -1,18 +1,19 @@
 {
   "fill" : {
-    "automatic-gradient" : "srgb:0.00000,0.03542,0.07271,1.00000"
+    "automatic-gradient" : "srgb:0.83455,0.85648,1.00000,1.00000"
   },
   "groups" : [
     {
       "layers" : [
         {
+          "glass" : false,
           "image-name" : "icon.png",
           "name" : "icon",
           "position" : {
             "scale" : 1.12,
             "translation-in-points" : [
-              10.595063068106896,
-              -18.850186070840106
+              6.800209184404224,
+              -3.4599263470518196
             ]
           }
         }
