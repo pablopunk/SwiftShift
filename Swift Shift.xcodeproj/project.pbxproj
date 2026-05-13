@@ -45,7 +45,7 @@
 		177FB24B2B31FF1E00B11BA3 /* ShortcutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutView.swift; sourceTree = "<group>"; };
 		177FB2502B32160B00B11BA3 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		177FB2522B321D0500B11BA3 /* ShortcutsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutsManager.swift; sourceTree = "<group>"; };
-		1781A5DE2B31EE4900F27910 /* Swift Shift.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Swift Shift.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		1781A5DE2B31EE4900F27910 /* Swift Shift Dev.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Swift Shift Dev.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		1781A5E12B31EE4A00F27910 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
 		1781A5E32B31EE4A00F27910 /* AppView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppView.swift; sourceTree = "<group>"; };
 		1781A5E52B31EE4B00F27910 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -138,7 +138,7 @@
 		1781A5DF2B31EE4900F27910 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				1781A5DE2B31EE4900F27910 /* Swift Shift.app */,
+				1781A5DE2B31EE4900F27910 /* Swift Shift Dev.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -186,7 +186,7 @@
 				336441102C189812000A1C90 /* CGEventSupervisor */,
 			);
 			productName = "Swift Shift";
-			productReference = 1781A5DE2B31EE4900F27910 /* Swift Shift.app */;
+			productReference = 1781A5DE2B31EE4900F27910 /* Swift Shift Dev.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -406,7 +406,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Swift-Shift-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Swift Shift";
+				INFOPLIST_KEY_CFBundleDisplayName = "Swift Shift Dev";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -416,8 +416,8 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.0.3;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.pablopunk.Swift-Shift";
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.pablopunk.Swift-Shift.dev";
+				PRODUCT_NAME = "$(TARGET_NAME) Dev";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};

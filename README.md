@@ -42,13 +42,7 @@ make run
 
 ### Accessibility permissions running locally
 
-Make sure you don't have Swift Shift running already. If you have 2 versions of Swift Shift, only one will get
-Accessibility permissions. To fix it:
-
-* Quit all Swift Shift instances
-* Remove Swift Shift from the System Preferences > Security & Privacy > Accessibility
-* Run the app you want to test
-* Enable Accessibility permissions
+Local Debug builds use a separate app identity (`Swift Shift Dev` / `com.pablopunk.Swift-Shift.dev`), so they can coexist with the released app without reusing the same Accessibility permission entry.
 
 I'm open to PRs and requests. If you are looking for something to do, take a look at the issues marked as [`help wanted`](https://github.com/pablopunk/SwiftShift/issues?q=is:issue+is:open+label:%22help+wanted%22).
 
