@@ -2,3 +2,8 @@
 xcuserdata
 project.xcworkspace
 build/
+
+# Website
+www/node_modules/
+www/dist/
+www/.astro/

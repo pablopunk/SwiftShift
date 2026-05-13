@@ -1,0 +1,191 @@
+---
+
+---
+
+<div id="theme-toggle-wrapper">
+	<input type="checkbox" class="theme-toggle-checkbox" id="chk" />
+	<label id="theme-toggle-label" for="chk">
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			aria-hidden="true"
+			class="icon-tabler icon-tabler-sun"
+			width="15px"
+			height="15px"
+			viewBox="0 0 24 24"
+			stroke-width="1.5"
+			stroke="currentColor"
+			fill="none"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+		>
+			<path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+			<circle cx="12" cy="12" r="4"></circle>
+			<path
+				d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7"
+			></path>
+		</svg>
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			aria-hidden="true"
+			class="icon-tabler icon-tabler-moon"
+			width="15"
+			height="15"
+			viewBox="0 0 24 24"
+			stroke-width="1.5"
+			stroke="currentColor"
+			fill="none"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+		>
+			<path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+			<path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"
+			></path>
+		</svg>
+		<div id="theme-toggle-ball">
+			<span class="sr-only">Use dark theme</span>
+		</div>
+	</label>
+</div>
+
+<style>
+	#theme-toggle-wrapper {
+		position: relative;
+		display: inline-block;
+	}
+
+	#theme-toggle-wrapper > div {
+		position: absolute;
+		right: 3px;
+		margin-top: 3px;
+	}
+
+	.theme-toggle-checkbox {
+		opacity: 0;
+		position: absolute;
+	}
+
+	#theme-toggle-label {
+		background-color: var(--accent-2);
+		border-radius: 50px;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 7.5px;
+		position: relative;
+		width: 66px;
+		height: 30px;
+		transform: scale(1.2);
+		outline: 1px solid transparent;
+	}
+
+	:global(body:not(.dark)) #theme-toggle-label {
+		box-shadow: 2px 2px 4px 0px var(--neutral-4);
+	}
+
+	#theme-toggle-label #theme-toggle-ball {
+		background-color: var(--accent2-3);
+		border: 2px solid var(--accent2-5);
+		border-radius: 50%;
+		position: absolute;
+		height: 30px;
+		width: 30px;
+		transform: translateX(-7.5px);
+		transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1) 0ms;
+	}
+
+	.theme-toggle-checkbox:checked + #theme-toggle-label #theme-toggle-ball {
+		transform: translateX(28.5px);
+	}
+
+	.icon-tabler {
+		transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1) 0ms;
+		z-index: 10;
+	}
+
+	.icon-tabler-moon,
+	.icon-tabler-sun {
+		color: var(--accent-11);
+	}
+
+	@media (max-width: 768px) {
+		#theme-toggle-wrapper > div {
+			position: absolute;
+			right: 22px;
+			margin-top: 47px;
+		}
+	}
+</style>
+
+<script is:inline>
+	window._setTheme = (theme) => {
+		document.body.classList.add(theme === "dark" ? "dark" : "light")
+		document.body.classList.remove(theme === "dark" ? "light" : "dark")
+		localStorage.setItem("theme", theme)
+		// set metatag theme-color
+		const bgValue = getComputedStyle(document.body).getPropertyValue("--neutral-1")
+		document.querySelector('meta[name="theme-color"]').setAttribute("content", bgValue)
+		// set the checkbox state
+		document
+			.querySelectorAll(".theme-toggle-checkbox")
+			.forEach((element) => (element.checked = theme === "dark"))
+	}
+</script>
+
+<script is:inline>
+	const setTheme = window._setTheme
+	const theme = (() => {
+		if (typeof localStorage !== "undefined" && localStorage.getItem("theme")) {
+			return localStorage.getItem("theme")
+		}
+		if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+			return "dark"
+		}
+		return "light"
+	})()
+
+	setTheme(theme)
+
+	const handleToggleClick = () => {
+		const theme = document.body.classList.contains("dark") ? "dark" : "light"
+		const newTheme = theme === "dark" ? "light" : "dark"
+		setTheme(newTheme)
+	}
+
+	document
+		.querySelectorAll(".theme-toggle-checkbox")
+		.forEach((element) => element.addEventListener("change", handleToggleClick))
+</script>
+
+<script>
+	// Prevent light/dark mode flicker on transitions
+	if (localStorage.theme === "dark") {
+		document.body.classList.remove("light")
+		document.body.classList.add("dark")
+	} else {
+		document.body.classList.remove("dark")
+		document.body.classList.add("light")
+	}
+</script>
+
+<script is:inline>
+	// Prevent light/dark mode flicker on page load
+	if (localStorage.theme === "dark") {
+		document.body.classList.remove("light")
+		document.body.classList.add("dark")
+	} else {
+		document.body.classList.remove("dark")
+		document.body.classList.add("light")
+	}
+</script>
+
+<script is:inline>
+	// listen for changes in the OS theme
+	window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (event) => {
+		if (event.matches) {
+			window._setTheme("dark")
+		} else {
+			window._setTheme("light")
+		}
+	})
+</script>

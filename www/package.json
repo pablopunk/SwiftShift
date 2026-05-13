@@ -1,0 +1,31 @@
+{
+  "name": "swiftshift.app",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "check": "astro check && tsc --noEmit",
+    "format": "biome check --write src"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.5.10",
+    "@astrojs/rss": "^4.0.5",
+    "@astrojs/sitemap": "^3.7.2",
+    "@astrojs/tailwind": "^5.1.0",
+    "@fontsource-variable/inter": "^5.0.18",
+    "@radix-ui/colors": "^3.0.0",
+    "astro": "6",
+    "astro-icon": "^1.1.0",
+    "astro-seo": "^0.8.3",
+    "tailwindcss": "^3.4.3",
+    "typescript": "^5.4.5"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.8.0",
+    "@types/node": "^20.12.7"
+  }
+}

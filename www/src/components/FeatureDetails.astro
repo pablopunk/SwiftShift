@@ -1,0 +1,14 @@
+---
+interface Props {
+  align?: "left" | "center" | "right"
+}
+
+const { align = "center" } = Astro.props
+---
+<div class:list={["flex flex-col gap-4 w-full lg:w-1/2 items-center", {
+    "lg:items-start [&>*]:text-center lg:[&>*]:text-left": align === "left",
+    "lg:items-center [&>*]:text-center": align === "center",
+    "lg:items-end [&>*]:text-right": align === "right",
+  }]}>
+  <slot />
+</div>

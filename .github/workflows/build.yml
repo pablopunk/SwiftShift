@@ -2,8 +2,14 @@ name: Build
 
 on:
   pull_request:
+    paths-ignore:
+      - "www/**"
+      - ".github/workflows/www.yml"
   push:
     branches: [main]
+    paths-ignore:
+      - "www/**"
+      - ".github/workflows/www.yml"
 
 jobs:
   build:
