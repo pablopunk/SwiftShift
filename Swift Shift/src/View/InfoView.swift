@@ -8,18 +8,22 @@ extension Bundle {
 
 struct InfoView: View {
   private let version: String?
+  private let appIconImage: NSImage
 
   init() {
     self.version = Bundle.main.buildNumber
+    self.appIconImage = NSImage(named: "icon-64x64") ?? NSApplication.shared.applicationIconImage
   }
 
   var body: some View {
     VStack(spacing: 14) {
       // App identity + credits combined
       HStack(spacing: 12) {
-        Image(systemName: "macwindow.on.rectangle")
-          .font(.system(size: 28, weight: .thin))
-          .foregroundStyle(.tint)
+        Image(nsImage: appIconImage)
+          .resizable()
+          .scaledToFit()
+          .frame(width: 32, height: 32)
+          .accessibilityHidden(true)
 
         VStack(alignment: .leading, spacing: 2) {
           HStack(alignment: .firstTextBaseline, spacing: 6) {
