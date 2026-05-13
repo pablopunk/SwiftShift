@@ -20,6 +20,24 @@ class WindowManager {
         var r: CFTypeRef?; guard AXUIElementCopyAttributeValue(window, kAXSizeAttribute as CFString, &r) == .success else { return nil }
         var s: CGSize = .zero; AXValueGetValue(r as! AXValue, .cgSize, &s); return NSSize(width: s.width, height: s.height)
     }
+    static func getVisibleWindowRects(excluding excludedWindow: AXUIElement? = nil) -> [CGRect] {
+        let excludedRect: CGRect? = {
+            guard let window = excludedWindow, let position = getPosition(window: window), let size = getSize(window: window) else { return nil }
+            return CGRect(origin: position, size: size)
+        }()
+        let windowInfo = CGWindowListCopyWindowInfo([.excludeDesktopElements, .optionOnScreenOnly], kCGNullWindowID) as? [[String: AnyObject]] ?? []
+        return windowInfo.compactMap { info in
+            guard (info[kCGWindowLayer as String] as? Int ?? 0) == 0,
+                  let pid = info[kCGWindowOwnerPID as String] as? pid_t,
+                  pid != NSRunningApplication.current.processIdentifier,
+                  let bounds = info[kCGWindowBounds as String] as? [String: CGFloat],
+                  let rect = CGRect(dictionaryRepresentation: bounds as CFDictionary),
+                  rect.width > 1, rect.height > 1 else { return nil }
+            guard let bundleId = NSRunningApplication(processIdentifier: pid)?.bundleIdentifier, !PreferencesManager.isAppIgnored(bundleId) else { return nil }
+            if let excludedRect = excludedRect, rect.equalTo(excludedRect) { return nil }
+            return rect
+        }
+    }
     static func getCurrentWindow() -> AXUIElement? {
         guard let ev = CGEvent(source: nil) else { return nil }
         let sys = AXUIElementCreateSystemWide(); var el: AXUIElement?
