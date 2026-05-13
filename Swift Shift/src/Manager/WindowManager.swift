@@ -34,7 +34,7 @@ class WindowManager {
                   let rect = CGRect(dictionaryRepresentation: bounds as CFDictionary),
                   rect.width > 1, rect.height > 1 else { return nil }
             if let bundleId = NSRunningApplication(processIdentifier: pid)?.bundleIdentifier, PreferencesManager.isAppIgnored(bundleId) { return nil }
-            if let excludedRect = excludedRect, rect.contains(excludedRect) { return nil }
+            if let excludedRect = excludedRect, rect.equalTo(excludedRect) { return nil }
             return rect
         }
     }
