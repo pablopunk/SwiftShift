@@ -1,6 +1,10 @@
 # [SwiftShift.app](https://swiftshift.app) [![Github all releases](https://img.shields.io/github/downloads/pablopunk/swiftshift/total.svg)](https://GitHub.com/pablopunk/swiftshift/releases/)
 
-> Sweet window management for macOS
+<p align="center">
+  <img width="250" height="250" alt="icon" src="https://github.com/user-attachments/assets/8ad784bb-4b03-4598-8215-5e1bb2c8efc9" />
+  <br/>
+  <i>Sweet window management for macOS</i>
+</p>
 
 https://github.com/pablopunk/SwiftShift/assets/4324982/8f0566b9-d18e-462e-8d74-52bcf6c95f52
 
@@ -76,7 +80,4 @@ If `GH_PAT` is available in the environment, the release script will use it to p
 ## License
 
 MIT License
-
-![header](https://github.com/pablopunk/swiftshift.app/blob/main/public/header-dark-extended.png?raw=true#gh-dark-mode-only)
-![header](https://github.com/pablopunk/swiftshift.app/blob/main/public/header-light-extended.png?raw=true#gh-light-mode-only)
 
