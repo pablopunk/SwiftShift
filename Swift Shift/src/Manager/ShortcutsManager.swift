@@ -200,8 +200,13 @@ class ShortcutsManager {
   }
 
   private func handleSpaceChange() {
-    for type in ShortcutType.allCases {
-      if activeShortcuts[type] == true {
+    for type in ShortcutType.allCases where activeShortcuts[type] == true {
+      let action: MouseAction = type == .move ? .move : .resize
+      if let loaded = load(for: type) {
+        stopTracking(loaded, action)
+      } else {
+        MouseTracker.shared.stopTracking(for: action)
+        cleanupMouseSubscriptions(action: action)
         activeShortcuts[type] = false
       }
     }
@@ -528,6 +533,10 @@ class ShortcutsManager {
     let upEvent: CGEventType = userShortcut.mouseButton == .left ? .leftMouseUp : .rightMouseUp
     let downKey = "\(action.rawValue)_mouseDown"
     let upKey = "\(action.rawValue)_mouseUp"
+
+    // Be defensive: shortcut events can arrive repeatedly or cleanup can be skipped
+    // by system state changes. Ensure we never accumulate duplicate event taps.
+    cleanupMouseSubscriptions(action: action)
 
     CGEventSupervisor.shared.subscribe(
       as: downKey,
