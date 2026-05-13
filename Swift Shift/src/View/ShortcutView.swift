@@ -13,6 +13,7 @@ private final class FnShortcutRecorderControl: NSButton {
 
   private var isRecordingShortcut = false
   private var recordedModifierFlags: NSEvent.ModifierFlags = []
+  private var recordedModifierKeyCodes = Set<UInt16>()
 
   override var acceptsFirstResponder: Bool { true }
 
@@ -71,16 +72,37 @@ private final class FnShortcutRecorderControl: NSButton {
       return
     }
 
-    let modifierFlags = event.modifierFlags.swiftShiftShortcutFlags
-    if modifierFlags.isEmpty {
+    updateRecordedModifierKeys(with: event)
+
+    if recordedModifierKeyCodes.isEmpty {
       if !recordedModifierFlags.isEmpty {
         finishRecording(with: KeyboardShortcut(keyCode: nil, modifierFlags: recordedModifierFlags))
       }
       return
     }
 
-    recordedModifierFlags = modifierFlags
+    let modifierFlags = event.modifierFlags.swiftShiftShortcutFlags
+    recordedModifierFlags.formUnion(modifierFlags)
     title = KeyboardShortcut(keyCode: nil, modifierFlags: recordedModifierFlags).displayString
+  }
+
+  private func updateRecordedModifierKeys(with event: NSEvent) {
+    if event.modifierFlags.swiftShiftShortcutFlags.contains(modifierFlag(for: event.keyCode)) {
+      recordedModifierKeyCodes.insert(event.keyCode)
+    } else {
+      recordedModifierKeyCodes.remove(event.keyCode)
+    }
+  }
+
+  private func modifierFlag(for keyCode: UInt16) -> NSEvent.ModifierFlags {
+    switch keyCode {
+    case 54, 55: return .command
+    case 56, 60: return .shift
+    case 58, 61: return .option
+    case 59, 62: return .control
+    case 63: return .function
+    default: return []
+    }
   }
 
   override func resignFirstResponder() -> Bool {
@@ -104,6 +126,7 @@ private final class FnShortcutRecorderControl: NSButton {
   private func beginRecording() {
     isRecordingShortcut = true
     recordedModifierFlags = []
+    recordedModifierKeyCodes = []
     title = "Press shortcut"
     state = .on
     window?.makeFirstResponder(self)
@@ -113,6 +136,7 @@ private final class FnShortcutRecorderControl: NSButton {
   private func cancelRecording() {
     isRecordingShortcut = false
     recordedModifierFlags = []
+    recordedModifierKeyCodes = []
     state = .off
     updateTitle()
   }
@@ -120,6 +144,7 @@ private final class FnShortcutRecorderControl: NSButton {
   private func finishRecording(with newShortcut: KeyboardShortcut?) {
     isRecordingShortcut = false
     recordedModifierFlags = []
+    recordedModifierKeyCodes = []
     state = .off
     shortcut = newShortcut
     onShortcutChange?(newShortcut)
