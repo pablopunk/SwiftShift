@@ -33,7 +33,7 @@ class WindowManager {
                   let bounds = info[kCGWindowBounds as String] as? [String: CGFloat],
                   let rect = CGRect(dictionaryRepresentation: bounds as CFDictionary),
                   rect.width > 1, rect.height > 1 else { return nil }
-            if let bundleId = NSRunningApplication(processIdentifier: pid)?.bundleIdentifier, PreferencesManager.isAppIgnored(bundleId) { return nil }
+            guard let bundleId = NSRunningApplication(processIdentifier: pid)?.bundleIdentifier, !PreferencesManager.isAppIgnored(bundleId) else { return nil }
             if let excludedRect = excludedRect, rect.equalTo(excludedRect) { return nil }
             return rect
         }
