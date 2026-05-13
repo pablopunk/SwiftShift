@@ -534,6 +534,10 @@ class ShortcutsManager {
       to: .cgEvents(downEvent),
       using: { [weak self] event in
         guard let self = self, self.activeShortcuts[userShortcut.type] == true else { return }
+        guard self.isShortcutStillPressed(userShortcut) else {
+          self.stopTracking(userShortcut, action)
+          return
+        }
         event.cancel()
         MouseTracker.shared.startTracking(for: action, button: userShortcut.mouseButton)
       })
@@ -543,6 +547,10 @@ class ShortcutsManager {
       to: .cgEvents(upEvent),
       using: { [weak self] event in
         guard let self = self, self.activeShortcuts[userShortcut.type] == true else { return }
+        guard self.isShortcutStillPressed(userShortcut) else {
+          self.stopTracking(userShortcut, action)
+          return
+        }
         event.cancel()
         MouseTracker.shared.stopTracking(for: action)
       })
@@ -555,6 +563,11 @@ class ShortcutsManager {
     MouseTracker.shared.stopTracking(for: action)
     cleanupMouseSubscriptions(action: action)
     activeShortcuts[userShortcut.type] = false
+  }
+
+  private func isShortcutStillPressed(_ userShortcut: UserShortcut) -> Bool {
+    guard let keyboardShortcut = userShortcut.keyboardShortcut else { return false }
+    return NSEvent.modifierFlags.swiftShiftShortcutFlags == keyboardShortcut.modifierFlags
   }
 
   private func cleanupMouseSubscriptions(action: MouseAction) {
