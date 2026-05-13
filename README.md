@@ -44,6 +44,16 @@ directly from the command line:
 make run
 ```
 
+### Website
+
+The marketing site lives in `www/` and is deployed by Vercel with Root Directory set to `www`.
+
+```bash
+cd www
+bun install
+bun run dev
+```
+
 ### Accessibility permissions running locally
 
 Local Debug builds use a separate app identity (`Swift Shift Dev` / `com.pablopunk.Swift-Shift.dev`), so they can coexist with the released app without reusing the same Accessibility permission entry.

@@ -1,0 +1,51 @@
+---
+import { Image } from "astro:assets"
+type Props =
+  | {
+      type: "image"
+      src: ImageMetadata[]
+    }
+  | {
+      type: "video"
+      src: string[]
+    }
+
+const { type, src } = Astro.props
+---
+<div class="flex w-full flex-col items-center gap-4 lg:w-1/2">
+  {
+    type === "video" ? (
+				["light", "dark"].map((theme) => (
+					<video
+						class:list={[
+							"w-full max-w-sm rounded-md transition-all lg:max-w-lg",
+              {
+                "dark:hidden": theme === "light",
+                "hidden dark:block": theme === "dark",
+              }
+						]}
+						autoplay
+						loop
+						muted
+						playsinline
+						preload="metadata"
+						src={theme === "light" ? src[0] : src[1] ?? src[0]}
+					/>
+				))
+    ):
+    ["light", "dark"].map((theme) => (
+      <Image
+        src={theme === "light" ? src[0] : src[1] ?? src[0] ?? src[0]}
+        alt="Screenshot"
+        class:list={[
+          "max-w-xs rounded-md lg:max-w-lg",
+          {
+            "dark:hidden": theme === "light",
+            "hidden dark:block": theme === "dark",
+          }
+        ]}
+        loading="eager"
+      />
+    ))
+  }
+</div>

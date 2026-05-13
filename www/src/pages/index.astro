@@ -1,0 +1,253 @@
+---
+import { Image } from "astro:assets"
+import CommunityQuotes from "@/components/CommunityQuotes.astro"
+import Feature from "@/components/Feature.astro"
+import FeatureDetails from "@/components/FeatureDetails.astro"
+import FeatureVisual from "@/components/FeatureVisual.astro"
+import GradientText from "@/components/GradientText.astro"
+import HeaderDark from "@/images/header-dark.jpg"
+import HeaderLight from "@/images/header-light.jpg"
+import MouseDark from "@/images/mouse-dark.jpg"
+import MouseLight from "@/images/mouse-light.jpg"
+import ScreenshotDark from "@/images/screenshot-dark.jpg"
+import ScreenshotLight from "@/images/screenshot-light.jpg"
+import Layout from "@/layouts/Layout.astro"
+import site from "@/site"
+---
+
+<Layout>
+	<section class="mx-auto flex max-w-screen-lg flex-col">
+		<div class="flex items-center justify-center">
+			{
+				["light", "dark"].map((theme) => (
+					<Image
+						src={theme === "light" ? HeaderLight : HeaderDark}
+						alt="Header"
+						width={400}
+						class:list={theme === "light" ? "dark:hidden" : "hidden dark:block"}
+						loading="eager"
+					/>
+				))
+			}
+		</div>
+		<Feature>
+      <FeatureDetails align="left">
+				<h1 class="text-4xl font-bold">Swift Shift</h1>
+        <GradientText>
+				<h2
+					class="text-center text-2xl font-bold"
+				>
+					Manage your macOS windows like a pro
+				</h2>
+        </GradientText>
+				<p class="max-w-lg text-lg text-center lg:!text-pretty">
+					{site.SITE_DESC}
+				</p>
+				<div class="flex flex-col gap-3 lg:flex-row">
+					<a
+						href="https://pablopunk.lemonsqueezy.com/checkout/buy/3f0a94d5-c49d-4d40-b847-dae2388f60f4"
+						class="lemonsqueezy-button flex items-center justify-center gap-2 rounded-md bg-gradient-to-r from-accent-11 to-accent2-11 px-4 py-2 text-lg font-bold text-neutral-3 shadow-md shadow-accent-5 transition-all hover:scale-105 hover:to-accent-11"
+					>
+						<svg
+							stroke="currentColor"
+							fill="currentColor"
+							stroke-width="0"
+							viewBox="0 0 32 32"
+							height="1em"
+							width="1em"
+							xmlns="http://www.w3.org/2000/svg"
+							data-darkreader-inline-fill=""
+							data-darkreader-inline-stroke=""
+							style="--darkreader-inline-fill: currentColor; --darkreader-inline-stroke: currentColor;"
+							><path
+								d="M 16 6 C 13.351563 6 11.050781 7.238281 9.40625 9.0625 C 9.269531 9.046875 9.148438 9 9 9 C 6.800781 9 5 10.800781 5 13 C 3.269531 14.054688 2 15.835938 2 18 C 2 21.300781 4.699219 24 8 24 L 13 24 L 13 22 L 8 22 C 5.78125 22 4 20.21875 4 18 C 4 16.339844 5.007813 14.921875 6.4375 14.3125 L 7.125 14.03125 L 7.03125 13.28125 C 7.011719 13.117188 7 13.023438 7 13 C 7 11.882813 7.882813 11 9 11 C 9.140625 11 9.296875 11.019531 9.46875 11.0625 L 10.09375 11.21875 L 10.46875 10.71875 C 11.75 9.074219 13.75 8 16 8 C 19.277344 8 22.011719 10.253906 22.78125 13.28125 L 22.96875 14.0625 L 23.8125 14.03125 C 24.023438 14.019531 24.070313 14 24 14 C 26.21875 14 28 15.78125 28 18 C 28 20.21875 26.21875 22 24 22 L 19 22 L 19 24 L 24 24 C 27.300781 24 30 21.300781 30 18 C 30 14.84375 27.511719 12.316406 24.40625 12.09375 C 23.183594 8.574219 19.925781 6 16 6 Z M 15 18 L 15 26 L 12 26 L 16 30 L 20 26 L 17 26 L 17 18 Z"
+							></path></svg
+						>
+						<span>Pay what you want</span>
+					</a>
+					<a
+						href="https://github.com/pablopunk/SwiftShift"
+						class="github-button flex cursor-pointer items-center justify-center gap-2 rounded-md border bg-neutral-1 px-4 py-2 text-lg font-bold text-neutral-12 shadow-md transition-all hover:scale-105 hover:border-accent-11 hover:text-accent-11 dark:border-neutral-4 dark:bg-gradient-to-r dark:from-neutral-4 hover:dark:from-neutral-2"
+					>
+						<svg
+							stroke="currentColor"
+							fill="currentColor"
+							stroke-width="0"
+							viewBox="0 0 24 24"
+							height="1em"
+							width="1em"
+							xmlns="http://www.w3.org/2000/svg"
+							data-darkreader-inline-fill=""
+							data-darkreader-inline-stroke=""
+							><path
+								d="M12 0a12 12 0 1 0 0 24 12 12 0 0 0 0-24zm3.163 21.783h-.093a.513.513 0 0 1-.382-.14.513.513 0 0 1-.14-.372v-1.406c.006-.467.01-.94.01-1.416a3.693 3.693 0 0 0-.151-1.028 1.832 1.832 0 0 0-.542-.875 8.014 8.014 0 0 0 2.038-.471 4.051 4.051 0 0 0 1.466-.964c.407-.427.71-.943.885-1.506a6.77 6.77 0 0 0 .3-2.13 4.138 4.138 0 0 0-.26-1.476 3.892 3.892 0 0 0-.795-1.284 2.81 2.81 0 0 0 .162-.582c.033-.2.05-.402.05-.604 0-.26-.03-.52-.09-.773a5.309 5.309 0 0 0-.221-.763.293.293 0 0 0-.111-.02h-.11c-.23.002-.456.04-.674.111a5.34 5.34 0 0 0-.703.26 6.503 6.503 0 0 0-.661.343c-.215.127-.405.249-.573.362a9.578 9.578 0 0 0-5.143 0 13.507 13.507 0 0 0-.572-.362 6.022 6.022 0 0 0-.672-.342 4.516 4.516 0 0 0-.705-.261 2.203 2.203 0 0 0-.662-.111h-.11a.29.29 0 0 0-.11.02 5.844 5.844 0 0 0-.23.763c-.054.254-.08.513-.081.773 0 .202.017.404.051.604.033.199.086.394.16.582A3.888 3.888 0 0 0 5.702 10a4.142 4.142 0 0 0-.263 1.476 6.871 6.871 0 0 0 .292 2.12c.181.563.483 1.08.884 1.516.415.422.915.75 1.466.964.653.25 1.337.41 2.033.476a1.828 1.828 0 0 0-.452.633 2.99 2.99 0 0 0-.2.744 2.754 2.754 0 0 1-1.175.27 1.788 1.788 0 0 1-1.065-.3 2.904 2.904 0 0 1-.752-.824 3.1 3.1 0 0 0-.292-.382 2.693 2.693 0 0 0-.372-.343 1.841 1.841 0 0 0-.432-.24 1.2 1.2 0 0 0-.481-.101c-.04.001-.08.005-.12.01a.649.649 0 0 0-.162.02.408.408 0 0 0-.13.06.116.116 0 0 0-.06.1.33.33 0 0 0 .14.242c.093.074.17.131.232.171l.03.021c.133.103.261.214.382.333.112.098.213.209.3.33.09.119.168.246.231.381.073.134.15.288.231.463.188.474.522.875.954 1.145.453.243.961.364 1.476.351.174 0 .349-.01.522-.03.172-.028.343-.057.515-.091v1.743a.5.5 0 0 1-.533.521h-.062a10.286 10.286 0 1 1 6.324 0v.005z"
+							></path></svg
+						>
+						<span>Download for free</span>
+					</a>
+				</div>
+      </FeatureDetails>
+      <FeatureVisual type="video" src={["demo-light.mp4", "demo-dark.mp4"]} />
+		</Feature>
+  </section>
+	<section class="second-section mx-auto flex max-w-screen-lg flex-col">
+    <Feature>
+      <FeatureDetails>
+				<h3 class="text-2xl font-bold">Launch once and forget.</h3>
+				<p class="max-w-sm text-lg">
+					Swift Shift runs in the background, setup your shortcuts and go on with your day.
+				</p>
+				{
+					["Want to launch at login?", "Want to hide the menubar icon?"].map((question) => (
+						<p class="text-md flex max-w-sm gap-1 font-bold">
+							{question}
+							<GradientText>No problem</GradientText>
+						</p>
+					))
+				}
+			</FeatureDetails>
+      <FeatureVisual type="image" src={[ScreenshotLight, ScreenshotDark]} />
+		</Feature>
+    <Feature>
+			<FeatureDetails>
+        <h3 class="text-2xl font-bold">Use the <GradientText>mouse buttons</GradientText> too</h3>
+				<p class="max-w-md text-lg text-pretty">
+        If you want to match the behavior of some <span class="text-accent2-11 font-bold">Linux</span> distros, you can include the mouse buttons in your shortcuts to move/resize windows.
+				</p>
+			</FeatureDetails>
+      <FeatureVisual type="image" src={[MouseLight, MouseDark]} />
+		</Feature>
+    <Feature>
+      <FeatureDetails>
+        <h3 class="text-2xl font-bold">Smart resizing with <GradientText>Quadrants</GradientText></h3>
+        <p class="max-w-md text-lg text-pretty">
+        By default, it will resize the window from the bottom-right corner.
+        </p>
+        <p class="max-w-md text-lg text-pretty">
+        But, you can choose to use <b class="text-accent-11">quadrants</b>, which will resize the window from the edge/corner that's closer to your mouse. <sup>(<a class="text-accent2-11 hover:text-accent2-12 transition-colors" href="https://github.com/pablopunk/SwiftShift/issues/51">explanation</a>)</sup>
+         </p>
+      </FeatureDetails>
+      <FeatureVisual type="video" src={["quadrants-light.mp4", "quadrants-dark.mp4"]} />
+      </div>
+    </Feature>
+		<Feature>
+			<FeatureDetails>
+				<h3 class="text-2xl font-bold">Free as in freedom.</h3>
+				<p class="max-w-lg text-pretty text-lg">
+					I made this project cause it{"'"}s something I always wanted to have.
+					<b> I had no idea about Swift or macOS APIs</b>, I learned most of it using ChatGPT and
+					looking at other open source projects.
+				</p>
+				<p class="max-w-lg text-pretty text-lg text-accent-11 dark:text-accent2-11">
+					Feel free to checkout the <b>code</b>, open an <b>issue</b>, or contribute with a <b>PR</b
+					>.
+				</p>
+				<a
+					href="https://github.com/pablopunk/SwiftShift"
+					class="github-button flex items-center justify-center gap-2 rounded-md border-2 border-accent-7 bg-gradient-to-r from-accent-11 to-accent2-11 px-4 py-2 text-lg font-bold text-neutral-3 shadow-md shadow-accent-5 transition-all hover:scale-105 hover:to-accent-11 dark:border-accent-12"
+				>
+					<svg
+						stroke="currentColor"
+						fill="currentColor"
+						stroke-width="0"
+						viewBox="0 0 24 24"
+						height="1em"
+						width="1em"
+						xmlns="http://www.w3.org/2000/svg"
+						data-darkreader-inline-fill=""
+						data-darkreader-inline-stroke=""
+						><path
+							d="M12 0a12 12 0 1 0 0 24 12 12 0 0 0 0-24zm3.163 21.783h-.093a.513.513 0 0 1-.382-.14.513.513 0 0 1-.14-.372v-1.406c.006-.467.01-.94.01-1.416a3.693 3.693 0 0 0-.151-1.028 1.832 1.832 0 0 0-.542-.875 8.014 8.014 0 0 0 2.038-.471 4.051 4.051 0 0 0 1.466-.964c.407-.427.71-.943.885-1.506a6.77 6.77 0 0 0 .3-2.13 4.138 4.138 0 0 0-.26-1.476 3.892 3.892 0 0 0-.795-1.284 2.81 2.81 0 0 0 .162-.582c.033-.2.05-.402.05-.604 0-.26-.03-.52-.09-.773a5.309 5.309 0 0 0-.221-.763.293.293 0 0 0-.111-.02h-.11c-.23.002-.456.04-.674.111a5.34 5.34 0 0 0-.703.26 6.503 6.503 0 0 0-.661.343c-.215.127-.405.249-.573.362a9.578 9.578 0 0 0-5.143 0 13.507 13.507 0 0 0-.572-.362 6.022 6.022 0 0 0-.672-.342 4.516 4.516 0 0 0-.705-.261 2.203 2.203 0 0 0-.662-.111h-.11a.29.29 0 0 0-.11.02 5.844 5.844 0 0 0-.23.763c-.054.254-.08.513-.081.773 0 .202.017.404.051.604.033.199.086.394.16.582A3.888 3.888 0 0 0 5.702 10a4.142 4.142 0 0 0-.263 1.476 6.871 6.871 0 0 0 .292 2.12c.181.563.483 1.08.884 1.516.415.422.915.75 1.466.964.653.25 1.337.41 2.033.476a1.828 1.828 0 0 0-.452.633 2.99 2.99 0 0 0-.2.744 2.754 2.754 0 0 1-1.175.27 1.788 1.788 0 0 1-1.065-.3 2.904 2.904 0 0 1-.752-.824 3.1 3.1 0 0 0-.292-.382 2.693 2.693 0 0 0-.372-.343 1.841 1.841 0 0 0-.432-.24 1.2 1.2 0 0 0-.481-.101c-.04.001-.08.005-.12.01a.649.649 0 0 0-.162.02.408.408 0 0 0-.13.06.116.116 0 0 0-.06.1.33.33 0 0 0 .14.242c.093.074.17.131.232.171l.03.021c.133.103.261.214.382.333.112.098.213.209.3.33.09.119.168.246.231.381.073.134.15.288.231.463.188.474.522.875.954 1.145.453.243.961.364 1.476.351.174 0 .349-.01.522-.03.172-.028.343-.057.515-.091v1.743a.5.5 0 0 1-.533.521h-.062a10.286 10.286 0 1 1 6.324 0v.005z"
+						></path></svg
+					>
+					<span>Open GitHub</span>
+				</a>
+      </FeatureDetails>
+			<div
+				class="blob relative z-10 flex h-[300px] w-full max-w-lg flex-col items-center justify-center rounded-md bg-accent-1 transition-all lg:w-1/2"
+			>
+				<div
+					class="flex flex-col items-center justify-center bg-gradient-to-r from-accent-11 to-accent2-11 bg-clip-text text-4xl font-bold text-transparent"
+				>
+					<p>🩵</p>
+					<p>Open</p>
+					<p>Source</p>
+				</div>
+			</div>
+		</Feature>
+	</section>
+	<CommunityQuotes />
+</Layout>
+
+<script>
+	document.querySelectorAll(".lemonsqueezy-button").forEach((button) => {
+		button.addEventListener("click", () => {
+			;(window as any).goatcounter?.count({
+				path: "/buy",
+			}) || console.warn("goatcounter not found")
+		})
+	})
+	document.querySelectorAll(".github-button").forEach((button) => {
+		button.addEventListener("click", () => {
+			;(window as any).goatcounter?.count({
+				path: "/github",
+			}) || console.warn("goatcounter not found")
+		})
+	})
+</script>
+
+<style>
+	.blob {
+		overflow: hidden;
+	}
+
+	.blob::before,
+	.blob::after {
+		transition:
+			width 0.4s,
+			height 0.4s,
+			filter 0.4s;
+	}
+
+	:global(.dark) {
+		.blob:hover::before,
+		.blob:hover::after {
+			width: 15rem;
+			height: 15rem;
+			filter: blur(80px);
+		}
+	}
+
+	:global(.light) {
+		.blob:hover::before,
+		.blob:hover::after {
+			width: 2rem;
+			height: 2rem;
+		}
+	}
+	.blob::before {
+		content: "";
+		position: absolute;
+		top: 0;
+		inset-inline-end: 0;
+		width: 6.25rem;
+		height: 6.25rem;
+		background: var(--accent-9);
+		border-radius: 100%;
+		filter: blur(70px);
+		opacity: 0.33;
+	}
+	.blob::after {
+		content: "";
+		position: absolute;
+		bottom: 2rem;
+		left: 2rem;
+		inset-inline-end: 0;
+		width: 100px;
+		height: 100px;
+		background: var(--accent-9);
+		border-radius: 100%;
+		filter: blur(60px);
+		opacity: 0.33;
+	}
+</style>

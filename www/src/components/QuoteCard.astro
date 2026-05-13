@@ -1,0 +1,51 @@
+---
+import type { Quote } from "../data/quotes"
+
+interface Props {
+  quote: Quote
+}
+
+const { quote } = Astro.props
+
+// Extract domain from URL for favicon
+function getDomain(url: string): string {
+  try {
+    return new URL(url).hostname.replace("www.", "")
+  } catch {
+    return "reddit.com"
+  }
+}
+
+const domain = getDomain(quote.url)
+const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`
+---
+
+<div class="flex flex-col items-center gap-8 py-8 text-center lg:py-12">
+  {/* Quote text */}
+  <blockquote class="max-w-2xl text-xl font-medium leading-relaxed text-neutral-12 lg:text-2xl">
+    {quote.text}
+  </blockquote>
+
+  {/* Attribution with favicon */}
+  <div class="flex flex-col items-center gap-2">
+    <div class="flex items-center gap-2 text-neutral-11">
+      <img
+        src={faviconUrl}
+        alt=""
+        class="h-4 w-4 opacity-80"
+        width="16"
+        height="16"
+        loading="lazy"
+      />
+      <span class="font-semibold">{quote.attribution}</span>
+    </div>
+    <a
+      href={quote.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="text-sm text-neutral-10 underline transition-colors hover:text-accent-11"
+    >
+      View on {quote.platform}
+    </a>
+  </div>
+</div>
