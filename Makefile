@@ -5,7 +5,7 @@ build:
 		CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
 
 run-app:
-	open "./build/Debug/Swift Shift.app"
+	open "./build/Debug/Swift Shift Dev.app"
 
 run: build run-app
 
