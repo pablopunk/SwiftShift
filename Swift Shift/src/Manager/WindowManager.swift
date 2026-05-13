@@ -21,23 +21,22 @@ class WindowManager {
         var s: CGSize = .zero; AXValueGetValue(r as! AXValue, .cgSize, &s); return NSSize(width: s.width, height: s.height)
     }
     static func getVisibleWindowRects(excluding excludedWindow: AXUIElement? = nil) -> [CGRect] {
+        let excludedRect: CGRect? = {
+            guard let window = excludedWindow, let position = getPosition(window: window), let size = getSize(window: window) else { return nil }
+            return CGRect(origin: position, size: size)
+        }()
         let windowInfo = CGWindowListCopyWindowInfo([.excludeDesktopElements, .optionOnScreenOnly], kCGNullWindowID) as? [[String: AnyObject]] ?? []
-        var seenPIDs = Set<pid_t>()
-        var rects: [CGRect] = []
-        for info in windowInfo {
-            guard (info[kCGWindowLayer as String] as? Int ?? 0) == 0, let pid = info[kCGWindowOwnerPID as String] as? pid_t, pid != NSRunningApplication.current.processIdentifier, !seenPIDs.contains(pid) else { continue }
-            seenPIDs.insert(pid)
-            let app = AXUIElementCreateApplication(pid)
-            if let nsApp = getNSApplication(from: app), let bid = nsApp.bundleIdentifier, PreferencesManager.isAppIgnored(bid) { continue }
-            var value: AnyObject?
-            guard AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &value) == .success, let windows = value as? [AXUIElement] else { continue }
-            for window in windows {
-                if let excludedWindow = excludedWindow, CFEqual(window, excludedWindow) { continue }
-                guard let position = getPosition(window: window), let size = getSize(window: window), size.width > 1, size.height > 1 else { continue }
-                rects.append(CGRect(origin: position, size: size))
-            }
+        return windowInfo.compactMap { info in
+            guard (info[kCGWindowLayer as String] as? Int ?? 0) == 0,
+                  let pid = info[kCGWindowOwnerPID as String] as? pid_t,
+                  pid != NSRunningApplication.current.processIdentifier,
+                  let bounds = info[kCGWindowBounds as String] as? [String: CGFloat],
+                  let rect = CGRect(dictionaryRepresentation: bounds as CFDictionary),
+                  rect.width > 1, rect.height > 1 else { return nil }
+            if let bundleId = NSRunningApplication(processIdentifier: pid)?.bundleIdentifier, PreferencesManager.isAppIgnored(bundleId) { return nil }
+            if let excludedRect = excludedRect, rect.intersection(excludedRect).equalTo(excludedRect) { return nil }
+            return rect
         }
-        return rects
     }
     static func getCurrentWindow() -> AXUIElement? {
         guard let ev = CGEvent(source: nil) else { return nil }
