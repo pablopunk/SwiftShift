@@ -31,10 +31,11 @@ class PreferencesManager {
     }
     
     static func getUserIgnoredApps() -> [String] {
-        if let savedApps = UserDefaults.standard.array(forKey: PreferenceKey.ignoredApps.rawValue) as? [String] {
-            return savedApps
-        }
-        return DEFAULT_IGNORED_APP_BUNDLE_ID
+        let savedApps = UserDefaults.standard.array(forKey: PreferenceKey.ignoredApps.rawValue) as? [String] ?? []
+        // Merge saved apps with defaults (deduplicated)
+        var merged = Set(DEFAULT_IGNORED_APP_BUNDLE_ID)
+        merged.formUnion(savedApps)
+        return Array(merged)
     }
     
     static func setUserIgnoredApps(_ apps: [String]) {
