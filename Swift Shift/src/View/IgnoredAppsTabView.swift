@@ -4,7 +4,6 @@ import UniformTypeIdentifiers
 
 struct IgnoredAppsTabView: View {
   @State private var ignoredApps: [String] = []
-  @State private var defaultIgnoredApps: [String] = []
   @State private var appNames: [String: String] = [:]
 
   var body: some View {
@@ -70,7 +69,7 @@ struct IgnoredAppsTabView: View {
         }
       }
 
-      Text("Some system apps are ignored by default.")
+      Text("System apps like Notification Center are always ignored.")
         .font(.system(size: 10))
         .foregroundStyle(.quaternary)
     }
@@ -79,9 +78,8 @@ struct IgnoredAppsTabView: View {
   }
 
   private func loadApps() {
-    defaultIgnoredApps = IGNORE_APP_BUNDLE_ID
     ignoredApps = PreferencesManager.getUserIgnoredApps()
-    for bundleId in (defaultIgnoredApps + ignoredApps) {
+    for bundleId in ignoredApps {
       if let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId),
          let appBundle = Bundle(url: appURL),
          let appName = appBundle.object(forInfoDictionaryKey: "CFBundleName") as? String {
@@ -105,11 +103,9 @@ struct IgnoredAppsTabView: View {
       if let bundle = Bundle(url: selectedURL),
          let bundleIdentifier = bundle.bundleIdentifier {
         let appName = bundle.object(forInfoDictionaryKey: "CFBundleName") as? String ?? bundleIdentifier
-        if !defaultIgnoredApps.contains(bundleIdentifier) {
-          PreferencesManager.addIgnoredApp(bundleIdentifier)
-          appNames[bundleIdentifier] = appName
-          ignoredApps = PreferencesManager.getUserIgnoredApps()
-        }
+        PreferencesManager.addIgnoredApp(bundleIdentifier)
+        appNames[bundleIdentifier] = appName
+        ignoredApps = PreferencesManager.getUserIgnoredApps()
       }
     }
   }
