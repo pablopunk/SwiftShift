@@ -7,6 +7,7 @@ enum PreferenceKey: String {
     case requireMouseClick = "requireMouseClick"
     case fnShortcutWarningDismissed = "fnShortcutWarningDismissed"
     case ignoredApps = "ignoredApps"
+    case didMigrateDefaultIgnoredApps = "didMigrateDefaultIgnoredApps"
 }
 
 class PreferencesManager {
@@ -31,11 +32,27 @@ class PreferencesManager {
     }
     
     static func getUserIgnoredApps() -> [String] {
-        let savedApps = UserDefaults.standard.array(forKey: PreferenceKey.ignoredApps.rawValue) as? [String] ?? []
-        // Merge saved apps with defaults (deduplicated)
-        var merged = Set(DEFAULT_IGNORED_APP_BUNDLE_ID)
-        merged.formUnion(savedApps)
-        return Array(merged)
+        migrateDefaultIgnoredAppsIfNeeded()
+        if let savedApps = UserDefaults.standard.array(forKey: PreferenceKey.ignoredApps.rawValue) as? [String] {
+            return savedApps
+        }
+        return DEFAULT_IGNORED_APP_BUNDLE_ID
+    }
+    
+    private static func migrateDefaultIgnoredAppsIfNeeded() {
+        guard !UserDefaults.standard.bool(forKey: PreferenceKey.didMigrateDefaultIgnoredApps.rawValue) else { return }
+        
+        var savedApps = UserDefaults.standard.array(forKey: PreferenceKey.ignoredApps.rawValue) as? [String] ?? []
+        var merged = Set(savedApps)
+        let originalCount = merged.count
+        merged.formUnion(DEFAULT_IGNORED_APP_BUNDLE_ID)
+        
+        // Only save if we actually added new defaults
+        if merged.count > originalCount {
+            UserDefaults.standard.set(Array(merged), forKey: PreferenceKey.ignoredApps.rawValue)
+        }
+        
+        UserDefaults.standard.set(true, forKey: PreferenceKey.didMigrateDefaultIgnoredApps.rawValue)
     }
     
     static func setUserIgnoredApps(_ apps: [String]) {
