@@ -169,7 +169,6 @@ private struct ShortcutRecorderView: NSViewRepresentable {
 
   func updateNSView(_ nsView: FnShortcutRecorderControl, context: Context) {
     nsView.shortcut = shortcut
-    nsView.translatesAutoresizingMaskIntoConstraints = false
   }
 
   func makeCoordinator() -> Coordinator {

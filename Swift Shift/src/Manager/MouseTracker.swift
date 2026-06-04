@@ -2,6 +2,7 @@ import Cocoa
 import Accessibility
 enum MouseAction: String { case move, resize, none }
 enum Quadrant { case topLeft, top, topRight, left, center, right, bottomLeft, bottom, bottomRight }
+private enum MouseLocationCoordinateSpace { case appKit, coreGraphics }
 class MouseTracker {
     static let shared = MouseTracker()
     private var mouseEventMonitor: Any?, initialMouseLocation, initialWindowLocation: NSPoint?
@@ -13,6 +14,7 @@ class MouseTracker {
     private var lastAppliedOrigin: NSPoint?, lastAppliedSize: CGSize?
     private var snapRects: [CGRect] = []
     private let snapDistance: CGFloat = 10
+    private var mouseLocationCoordinateSpace: MouseLocationCoordinateSpace = .appKit
     private let trackingQueue = DispatchQueue(label: "com.swiftshift.mousetracker")
     private init() { registerForSpaceChangeNotifications() }
     deinit { unregisterForSpaceChangeNotifications() }
@@ -26,8 +28,19 @@ class MouseTracker {
     }
     func startTracking(for action: MouseAction, button: MouseButton) {
         if currentAction != .none { stopTracking(for: currentAction) }
-        prepareTracking(for: action)
+        prepareTracking(for: action, mouseLocation: NSEvent.mouseLocation, coordinateSpace: .appKit)
         if trackedWindow != nil { registerMouseEventMonitor(button: button); startTrackingTimer(); isTracking = true }
+    }
+    @discardableResult
+    func startTrackingForExternalMouseUpdates(for action: MouseAction, initialMouseLocation: NSPoint) -> Bool {
+        if currentAction != .none { stopTracking(for: currentAction) }
+        prepareTracking(for: action, mouseLocation: initialMouseLocation, coordinateSpace: .coreGraphics)
+        guard trackedWindow != nil else {
+            return false
+        }
+        isTracking = true
+        startTrackingTimer()
+        return true
     }
     func stopTracking(for action: MouseAction) {
         guard currentAction == action else { return }
@@ -35,7 +48,7 @@ class MouseTracker {
     }
     func forceResetTracking() {
         guard currentAction != .none, let window = trackedWindow else { return }
-        initialMouseLocation = NSEvent.mouseLocation
+        initialMouseLocation = currentMouseLocation()
         initialWindowLocation = WindowManager.getPosition(window: window)
         windowSize = WindowManager.getSize(window: window)
         pendingMouseLocation = nil
@@ -45,11 +58,13 @@ class MouseTracker {
             quadrant = determineQuadrant(mouseLocation: m, windowSize: s, windowLocation: w)
         }
     }
-    private func prepareTracking(for action: MouseAction) {
-        guard let currentWindow = WindowManager.getCurrentWindow(), !shouldIgnore(window: currentWindow) else { trackedWindow = nil; return }
+    private func prepareTracking(for action: MouseAction, mouseLocation: NSPoint, coordinateSpace: MouseLocationCoordinateSpace) {
+        mouseLocationCoordinateSpace = coordinateSpace
+        let currentWindow = coordinateSpace == .coreGraphics ? WindowManager.getCurrentWindow(at: mouseLocation) : WindowManager.getCurrentWindow()
+        guard let currentWindow = currentWindow, !shouldIgnore(window: currentWindow) else { trackedWindow = nil; return }
         shouldFocusWindow = PreferencesManager.loadBool(for: .focusOnApp)
         shouldUseQuadrants = PreferencesManager.loadBool(for: .useQuadrants)
-        trackedWindowIsFocused = false; currentAction = action; initialMouseLocation = NSEvent.mouseLocation
+        trackedWindowIsFocused = false; currentAction = action; initialMouseLocation = mouseLocation
         trackedWindow = currentWindow; initialWindowLocation = WindowManager.getPosition(window: currentWindow)
         windowSize = WindowManager.getSize(window: currentWindow); pendingMouseLocation = nil; lastUpdateTime = 0
         snapRects = WindowManager.getVisibleWindowRects(excluding: currentWindow)
@@ -92,11 +107,22 @@ class MouseTracker {
         }
     }
     private func handleMouseMoved(_ event: NSEvent) {
-        guard isTracking, let _ = initialMouseLocation, let _ = initialWindowLocation, let _ = trackedWindow else { return }
-        if checkForKeyPresses() { pauseTracking(); return }
+        updateTrackingFromCurrentMouseLocation(timestamp: event.timestamp)
+    }
+    func updateTrackingFromCurrentMouseLocation(timestamp: TimeInterval) {
+        updateTracking(withMouseLocation: currentMouseLocation(), timestamp: timestamp)
+    }
+    func updateTracking(withMouseLocation mouseLocation: NSPoint, timestamp: TimeInterval, allowsKeyInterruption: Bool = true) {
+        guard isTracking, let _ = initialMouseLocation, let _ = initialWindowLocation, let _ = trackedWindow else {
+            return
+        }
+        if allowsKeyInterruption && checkForKeyPresses() {
+            pauseTracking()
+            return
+        }
         if shouldFocusWindow && !trackedWindowIsFocused, let w = trackedWindow { WindowManager.focus(window: w); trackedWindowIsFocused = true }
-        pendingMouseLocation = NSEvent.mouseLocation
-        if event.timestamp - lastUpdateTime >= minimumUpdateInterval { flushPendingMouseUpdate(at: event.timestamp) }
+        pendingMouseLocation = mouseLocation
+        if timestamp - lastUpdateTime >= minimumUpdateInterval { flushPendingMouseUpdate(at: timestamp) }
     }
     private func flushPendingMouseUpdate(at timestamp: TimeInterval? = nil) {
         guard let loc = pendingMouseLocation else { return }; pendingMouseLocation = nil
@@ -106,9 +132,13 @@ class MouseTracker {
     private func moveWindowBasedOnMouseLocation(_ loc: NSPoint) {
         guard let im = initialMouseLocation, let iw = initialWindowLocation, let w = trackedWindow else { return }
         let dx = loc.x - im.x, dy = loc.y - im.y
-        var newO = NSPoint(x: iw.x + dx, y: iw.y - dy)
+        let newY = mouseLocationCoordinateSpace == .coreGraphics ? iw.y + dy : iw.y - dy
+        var newO = NSPoint(x: iw.x + dx, y: newY)
         if let size = windowSize { newO = snappedOrigin(forMoving: CGRect(origin: newO, size: size)) }
-        if !pointsApproximatelyEqual(newO, lastAppliedOrigin) { lastAppliedOrigin = newO; WindowManager.move(window: w, to: newO) }
+        if !pointsApproximatelyEqual(newO, lastAppliedOrigin) {
+            let result = WindowManager.move(window: w, to: newO)
+            if result == .success { lastAppliedOrigin = newO }
+        }
     }
     private func resizeWindowBasedOnMouseLocation(_ loc: NSPoint) {
         guard let s = windowSize, let im = initialMouseLocation, let iw = initialWindowLocation, let w = trackedWindow else { return }
@@ -192,7 +222,7 @@ class MouseTracker {
     }
     private func invalidateTrackingTimer() { trackingTimer?.invalidate(); trackingTimer = nil }
     private func removeMouseEventMonitor() { if let m = mouseEventMonitor { NSEvent.removeMonitor(m); mouseEventMonitor = nil } }
-    private func resetTrackingVariables() { pendingMouseLocation = nil; lastUpdateTime = 0; lastAppliedOrigin = nil; lastAppliedSize = nil; snapRects = []; trackedWindow = nil; initialMouseLocation = nil; initialWindowLocation = nil; currentAction = .none; quadrant = nil; windowSize = nil }
+    private func resetTrackingVariables() { pendingMouseLocation = nil; lastUpdateTime = 0; lastAppliedOrigin = nil; lastAppliedSize = nil; snapRects = []; trackedWindow = nil; initialMouseLocation = nil; initialWindowLocation = nil; currentAction = .none; quadrant = nil; windowSize = nil; mouseLocationCoordinateSpace = .appKit }
     func pauseTracking() { isTracking = false }
     func resumeTracking() { if currentAction != .none && trackedWindow != nil { isTracking = true } }
     private func checkForKeyPresses() -> Bool {
@@ -205,5 +235,11 @@ class MouseTracker {
     }
     private func sizesApproximatelyEqual(_ a: CGSize?, _ b: CGSize?) -> Bool {
         guard let a = a, let b = b else { return false }; return abs(a.width - b.width) < 0.5 && abs(a.height - b.height) < 0.5
+    }
+    private func currentMouseLocation() -> NSPoint {
+        if mouseLocationCoordinateSpace == .coreGraphics, let event = CGEvent(source: nil) {
+            return event.location
+        }
+        return NSEvent.mouseLocation
     }
 }

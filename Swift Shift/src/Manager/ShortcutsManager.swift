@@ -169,6 +169,9 @@ class ShortcutsManager {
   private(set) var activeShortcuts: [ShortcutType: Bool] = [:]
   private var mouseSubscriptions: Set<String> = []
   private var workspaceNotificationObserver: Any?
+  var hasActiveShortcut: Bool {
+    activeShortcuts.values.contains(true)
+  }
 
   private init() {
     for type in ShortcutType.allCases {
@@ -588,5 +591,164 @@ class ShortcutsManager {
 
     mouseSubscriptions.remove(downKey)
     mouseSubscriptions.remove(upKey)
+  }
+}
+
+class MouseChordMoveManager {
+  static let shared = MouseChordMoveManager()
+
+  private let subscriberKey = "moveWithBothMouseButtons_mouseChord"
+  private var isSubscribed = false
+  private var isMoveActive = false
+  private var leftButtonIsDown = false
+  private var rightButtonIsDown = false
+  private var workspaceNotificationObserver: Any?
+
+  private init() {
+    registerForWorkspaceNotifications()
+  }
+
+  deinit {
+    cleanup()
+  }
+
+  func updateSubscriptions() {
+    if PreferencesManager.loadBool(for: .moveWithBothMouseButtons) {
+      subscribeIfNeeded()
+    } else {
+      stopChordMove(resetButtons: true)
+      unsubscribe()
+    }
+  }
+
+  func cleanup() {
+    stopChordMove(resetButtons: true)
+    unsubscribe()
+    unregisterForWorkspaceNotifications()
+  }
+
+  private func registerForWorkspaceNotifications() {
+    let notificationCenter = NSWorkspace.shared.notificationCenter
+    workspaceNotificationObserver = notificationCenter.addObserver(
+      forName: NSWorkspace.activeSpaceDidChangeNotification,
+      object: nil,
+      queue: .main) { [weak self] _ in
+        self?.stopChordMove(resetButtons: true)
+      }
+  }
+
+  private func unregisterForWorkspaceNotifications() {
+    if let observer = workspaceNotificationObserver {
+      NSWorkspace.shared.notificationCenter.removeObserver(observer)
+      workspaceNotificationObserver = nil
+    }
+  }
+
+  private func subscribeIfNeeded() {
+    guard !isSubscribed else {
+      return
+    }
+
+    CGEventSupervisor.shared.subscribe(
+      as: subscriberKey,
+      to: .cgEvents(.leftMouseDown, .leftMouseUp, .rightMouseDown, .rightMouseUp, .leftMouseDragged, .rightMouseDragged),
+      using: { [weak self] event in
+        self?.handle(event)
+      })
+
+    isSubscribed = true
+  }
+
+  private func unsubscribe() {
+    guard isSubscribed else {
+      return
+    }
+    CGEventSupervisor.shared.cancel(subscriber: subscriberKey)
+    isSubscribed = false
+  }
+
+  private func handle(_ event: CGEvent) {
+    guard PreferencesManager.loadBool(for: .moveWithBothMouseButtons) else {
+      stopChordMove(resetButtons: true)
+      unsubscribe()
+      return
+    }
+
+    switch event.type {
+    case .leftMouseDown:
+      leftButtonIsDown = true
+      handleButtonDown(event)
+    case .rightMouseDown:
+      rightButtonIsDown = true
+      handleButtonDown(event)
+    case .leftMouseUp:
+      leftButtonIsDown = false
+      handleButtonUp(event)
+    case .rightMouseUp:
+      rightButtonIsDown = false
+      handleButtonUp(event)
+    case .leftMouseDragged, .rightMouseDragged:
+      handleDrag(event)
+    default:
+      break
+    }
+  }
+
+  private func handleButtonDown(_ event: CGEvent) {
+    if isMoveActive {
+      event.cancel()
+      return
+    }
+
+    startChordMoveIfReady(eventToCancelOnSuccess: event)
+  }
+
+  private func handleButtonUp(_ event: CGEvent) {
+    if isMoveActive {
+      event.cancel()
+      stopChordMove(resetButtons: false)
+    }
+  }
+
+  private func handleDrag(_ event: CGEvent) {
+    if isMoveActive {
+      guard leftButtonIsDown && rightButtonIsDown && !ShortcutsManager.shared.hasActiveShortcut else {
+        stopChordMove(resetButtons: false)
+        return
+      }
+
+      MouseTracker.shared.updateTracking(withMouseLocation: event.location, timestamp: ProcessInfo.processInfo.systemUptime, allowsKeyInterruption: false)
+      event.cancel()
+      return
+    }
+
+    startChordMoveIfReady(eventToCancelOnSuccess: event)
+  }
+
+  private func startChordMoveIfReady(eventToCancelOnSuccess event: CGEvent) {
+    guard leftButtonIsDown && rightButtonIsDown else {
+      return
+    }
+
+    guard !ShortcutsManager.shared.hasActiveShortcut else {
+      return
+    }
+
+    if MouseTracker.shared.startTrackingForExternalMouseUpdates(for: .move, initialMouseLocation: event.location) {
+      isMoveActive = true
+      event.cancel()
+    }
+  }
+
+  private func stopChordMove(resetButtons: Bool) {
+    if isMoveActive {
+      MouseTracker.shared.stopTracking(for: .move)
+      isMoveActive = false
+    }
+
+    if resetButtons {
+      leftButtonIsDown = false
+      rightButtonIsDown = false
+    }
   }
 }
