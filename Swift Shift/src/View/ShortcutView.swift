@@ -238,6 +238,7 @@ private struct TriggerToggleButton: View {
   let icon: String
   let isOn: Bool
   let canTurnOff: Bool
+  let isFlashingError: Bool
   let onToggle: (Bool) -> Void
 
   var body: some View {
@@ -255,18 +256,36 @@ private struct TriggerToggleButton: View {
       .padding(.vertical, 6)
       .background(
         Capsule()
-          .fill(isOn ? Color.teal.opacity(0.2) : Color.primary.opacity(0.05))
+          .fill(triggerBackgroundColor)
       )
       .clipShape(Capsule())
     }
     .buttonStyle(.plain)
-    .foregroundStyle(isOn ? .teal : .secondary)
+    .foregroundStyle(isFlashingError ? .red : (isOn ? .teal : .secondary))
+    .animation(.easeInOut(duration: 0.18), value: isFlashingError)
     .help(isOn && !canTurnOff ? "At least one trigger is required" : "")
   }
+
+  private var triggerBackgroundColor: Color {
+    if isFlashingError {
+      return .red.opacity(0.28)
+    }
+
+    return isOn ? Color.teal.opacity(0.2) : Color.primary.opacity(0.05)
+  }
+}
+
+private enum TriggerKind {
+  case keyboard
+  case mouse
 }
 
 struct ShortcutView: View {
   @State private var shortcut: UserShortcut
+  @State private var keyboardTriggerErrorPulse = false
+  @State private var mouseTriggerErrorPulse = false
+  @State private var errorToastVisible = false
+  @State private var errorToastMessage = ""
   let onShortcutChanged: () -> Void
 
   init(type: ShortcutType, onShortcutChanged: @escaping () -> Void = {}) {
@@ -291,6 +310,11 @@ struct ShortcutView: View {
         keyboardRow
         mouseRow
       }
+
+      if errorToastVisible {
+        errorToast
+          .transition(.opacity.combined(with: .scale(scale: 0.98)))
+      }
     }
     .padding(10)
     .background(Color.primary.opacity(0.035), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -313,6 +337,7 @@ struct ShortcutView: View {
         icon: "keyboard",
         isOn: shortcut.keyboardEnabled,
         canTurnOff: shortcut.mouseEnabled,
+        isFlashingError: keyboardTriggerErrorPulse,
         onToggle: setKeyboardEnabled
       )
       .frame(width: 116)
@@ -351,6 +376,7 @@ struct ShortcutView: View {
         icon: "computermouse",
         isOn: shortcut.mouseEnabled,
         canTurnOff: shortcut.keyboardEnabled,
+        isFlashingError: mouseTriggerErrorPulse,
         onToggle: setMouseEnabled
       )
       .frame(width: 116)
@@ -362,6 +388,22 @@ struct ShortcutView: View {
         .animation(.easeInOut(duration: 0.18), value: shortcut.mouseEnabled)
     }
     .animation(.easeInOut(duration: 0.18), value: shortcut.mouseEnabled)
+  }
+
+  private var errorToast: some View {
+    HStack(spacing: 6) {
+      Image(systemName: "exclamationmark.triangle.fill")
+        .font(.system(size: 10, weight: .semibold))
+      Text(errorToastMessage)
+        .font(.system(size: 10, weight: .medium))
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
+    }
+    .foregroundStyle(.red)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(.horizontal, 8)
+    .padding(.vertical, 5)
+    .background(Color.red.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
   }
 
   private var mouseButtonPicker: some View {
@@ -400,6 +442,11 @@ struct ShortcutView: View {
   private func setKeyboardEnabled(_ enabled: Bool) {
     guard enabled || shortcut.mouseEnabled else { return }
 
+    if !enabled && shortcut.mouseEnabled && hasOtherMouseOnlyAction() {
+      showTriggerConflict(on: .keyboard)
+      return
+    }
+
     shortcut.keyboardEnabled = enabled
     if !enabled {
       shortcut.mouseEnabled = true
@@ -413,6 +460,11 @@ struct ShortcutView: View {
 
   private func setMouseEnabled(_ enabled: Bool) {
     guard enabled || shortcut.keyboardEnabled else { return }
+
+    if enabled && !shortcut.keyboardEnabled && hasOtherMouseOnlyAction() {
+      showTriggerConflict(on: .mouse)
+      return
+    }
 
     shortcut.mouseEnabled = enabled
     if enabled {
@@ -428,6 +480,40 @@ struct ShortcutView: View {
     }
 
     saveShortcut()
+  }
+
+  private func showTriggerConflict(on trigger: TriggerKind) {
+    errorToastMessage = "You cannot use the same trigger for both actions"
+
+    withAnimation(.easeIn(duration: 0.08)) {
+      errorToastVisible = true
+      switch trigger {
+      case .keyboard:
+        keyboardTriggerErrorPulse = true
+      case .mouse:
+        mouseTriggerErrorPulse = true
+      }
+    }
+
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.14) {
+      withAnimation(.easeOut(duration: 0.45)) {
+        keyboardTriggerErrorPulse = false
+        mouseTriggerErrorPulse = false
+      }
+    }
+
+    DispatchQueue.main.asyncAfter(deadline: .now() + 2.4) {
+      withAnimation(.easeOut(duration: 0.2)) {
+        errorToastVisible = false
+      }
+    }
+  }
+
+  private func hasOtherMouseOnlyAction() -> Bool {
+    ShortcutType.allCases.contains { type in
+      guard type != shortcut.type, let other = ShortcutsManager.shared.load(for: type) else { return false }
+      return !other.keyboardEnabled && other.mouseEnabled
+    }
   }
 
   private func saveShortcut() {

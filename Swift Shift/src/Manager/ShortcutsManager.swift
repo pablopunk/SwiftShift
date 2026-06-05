@@ -263,7 +263,6 @@ class ShortcutsManager {
     UserDefaults.standard.set(userShortcut.mouseButton.rawValue, forKey: mouseButtonKey(for: userShortcut.type))
     UserDefaults.standard.set(userShortcut.keyboardEnabled, forKey: keyboardEnabledKey(for: userShortcut.type))
     UserDefaults.standard.set(userShortcut.mouseEnabled, forKey: mouseEnabledKey(for: userShortcut.type))
-    enforceMouseOnlyExclusivity(for: userShortcut)
 
     updateGlobalShortcuts()
     MouseChordActionManager.shared.updateSubscriptions()
@@ -373,17 +372,6 @@ class ShortcutsManager {
   private func loadTriggerBool(forKey key: String, defaultValue: Bool) -> Bool {
     guard UserDefaults.standard.object(forKey: key) != nil else { return defaultValue }
     return UserDefaults.standard.bool(forKey: key)
-  }
-
-  private func enforceMouseOnlyExclusivity(for userShortcut: UserShortcut) {
-    guard !userShortcut.keyboardEnabled && userShortcut.mouseEnabled else { return }
-
-    for type in ShortcutType.allCases where type != userShortcut.type {
-      guard let other = load(for: type), !other.keyboardEnabled, other.mouseEnabled else { continue }
-      UserDefaults.standard.set(true, forKey: keyboardEnabledKey(for: type))
-      UserDefaults.standard.set(false, forKey: mouseEnabledKey(for: type))
-      UserDefaults.standard.set(MouseButton.none.rawValue, forKey: mouseButtonKey(for: type))
-    }
   }
 
   private func loadLegacyShortcut(for type: ShortcutType) -> Shortcut? {
