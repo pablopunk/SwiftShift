@@ -43,6 +43,6 @@ class UpdatesManager: NSObject, SPUStandardUserDriverDelegate {
   }
 
   private func clearUpdateAttention() {
-    NSApp.dockTile.badgeLabel = ""
+    NSApp.dockTile.badgeLabel = nil
   }
 }

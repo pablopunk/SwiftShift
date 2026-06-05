@@ -44,17 +44,19 @@ class WindowManager {
         return getCurrentWindow(at: ev.location)
     }
     static func getCurrentWindow(at mouseLocation: NSPoint) -> AXUIElement? {
+        let currentPID = NSRunningApplication.current.processIdentifier
         let sys = AXUIElementCreateSystemWide(); var el: AXUIElement?
         if AXUIElementCopyElementAtPosition(sys, Float(mouseLocation.x), Float(mouseLocation.y), &el) == .success, let el = el, let w = getWindow(from: el) {
             var pid: pid_t = 0; AXUIElementGetPid(w, &pid)
-            if pid != NSRunningApplication.current.processIdentifier { return w }
+            if pid != currentPID { return w }
         }
-        return getTopWindowAtCursorUsingCGWindowList(mouseLocation: mouseLocation)
+        return getTopWindowAtCursorUsingCGWindowList(mouseLocation: mouseLocation, excludingProcessID: currentPID)
     }
-    private static func getTopWindowAtCursorUsingCGWindowList(mouseLocation: NSPoint) -> AXUIElement? {
+    private static func getTopWindowAtCursorUsingCGWindowList(mouseLocation: NSPoint, excludingProcessID: pid_t? = nil) -> AXUIElement? {
         let list = CGWindowListCopyWindowInfo([.excludeDesktopElements, .optionOnScreenOnly], kCGNullWindowID) as? [[String: AnyObject]] ?? []
         for e in list.sorted(by: { ($0[kCGWindowLayer as String] as? Int ?? 0) < ($1[kCGWindowLayer as String] as? Int ?? 0) }) {
             if let bDict = e[kCGWindowBounds as String] as? [String: CGFloat], let b = CGRect(dictionaryRepresentation: bDict as CFDictionary), b.contains(mouseLocation), let pid = e[kCGWindowOwnerPID as String] as? pid_t {
+                if pid == excludingProcessID { continue }
                 let app = AXUIElementCreateApplication(pid); var val: AnyObject?
                 if let nsApp = getNSApplication(from: app), let bid = nsApp.bundleIdentifier, PreferencesManager.isAppIgnored(bid) { continue }
                 if AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &val) == .success, let wList = val as? [AXUIElement] {

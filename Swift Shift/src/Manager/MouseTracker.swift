@@ -55,7 +55,7 @@ class MouseTracker {
         lastAppliedOrigin = initialWindowLocation
         lastAppliedSize = windowSize
         if currentAction == .resize, shouldUseQuadrants, let m = initialMouseLocation, let w = initialWindowLocation, let s = windowSize {
-            quadrant = determineQuadrant(mouseLocation: m, windowSize: s, windowLocation: w)
+            quadrant = determineQuadrant(mouseLocation: windowBoundsMouseLocation(m), windowSize: s, windowLocation: w)
         }
     }
     private func prepareTracking(for action: MouseAction, mouseLocation: NSPoint, coordinateSpace: MouseLocationCoordinateSpace) {
@@ -70,12 +70,28 @@ class MouseTracker {
         snapRects = WindowManager.getVisibleWindowRects(excluding: currentWindow)
         lastAppliedOrigin = initialWindowLocation; lastAppliedSize = windowSize
         if action == .resize && shouldUseQuadrants, let m = initialMouseLocation, let w = initialWindowLocation, let s = windowSize {
-            quadrant = determineQuadrant(mouseLocation: m, windowSize: s, windowLocation: w)
+            quadrant = determineQuadrant(mouseLocation: windowBoundsMouseLocation(m), windowSize: s, windowLocation: w)
         }
     }
     private func shouldIgnore(window: AXUIElement) -> Bool {
         guard let app = WindowManager.getNSApplication(from: window), let bid = app.bundleIdentifier, PreferencesManager.isAppIgnored(bid) else { return false }
         return true
+    }
+    private func verticalDelta(from initial: NSPoint, to current: NSPoint) -> CGFloat {
+        switch mouseLocationCoordinateSpace {
+        case .appKit:
+            return current.y - initial.y
+        case .coreGraphics:
+            return initial.y - current.y
+        }
+    }
+    private func windowBoundsMouseLocation(_ mouseLocation: NSPoint) -> NSPoint {
+        switch mouseLocationCoordinateSpace {
+        case .appKit:
+            return mouseLocation
+        case .coreGraphics:
+            return WindowManager.convertYCoordinateBecauseTheAreTwoFuckingCoordinateSystems(point: mouseLocation)
+        }
     }
     private func determineQuadrant(mouseLocation: NSPoint, windowSize: CGSize, windowLocation: NSPoint) -> Quadrant {
         let b = WindowManager.getWindowBounds(windowLocation: windowLocation, windowSize: windowSize)
@@ -154,7 +170,7 @@ class MouseTracker {
         guard let s = windowSize, let im = initialMouseLocation, let iw = initialWindowLocation, let w = trackedWindow else { return }
         var nw = s.width, nh = s.height, no = iw
         if shouldUseQuadrants, let q = quadrant {
-            let dx = loc.x - im.x, dy = loc.y - im.y
+            let dx = loc.x - im.x, dy = verticalDelta(from: im, to: loc)
             switch q {
                 case .topLeft: nw -= dx; nh += dy; no.x += dx; no.y -= dy
                 case .top: nh += dy; no.y -= dy
@@ -167,7 +183,7 @@ class MouseTracker {
                 case .bottomRight: nw += dx; nh -= dy
             }
         } else {
-            nw = s.width + (loc.x - im.x); nh = s.height - (loc.y - im.y)
+            nw = s.width + (loc.x - im.x); nh = s.height - verticalDelta(from: im, to: loc)
         }
         nw = max(nw, 1); nh = max(nh, 1)
         let snapped = snappedResize(origin: no, size: CGSize(width: nw, height: nh))

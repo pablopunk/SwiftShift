@@ -706,6 +706,8 @@ class MouseChordActionManager {
   private let subscriberKey = "mouseOnlyBothButtonsChord"
   private var isSubscribed = false
   private var activeAction: MouseAction?
+  private var cachedMouseOnlyAction: MouseAction?
+  private var isChordSuppressed = false
   private var leftButtonIsDown = false
   private var rightButtonIsDown = false
   private var workspaceNotificationObserver: Any?
@@ -719,7 +721,9 @@ class MouseChordActionManager {
   }
 
   func updateSubscriptions() {
-    if configuredMouseOnlyAction() != nil {
+    cachedMouseOnlyAction = configuredMouseOnlyAction()
+
+    if cachedMouseOnlyAction != nil {
       subscribeIfNeeded()
     } else {
       stopChordAction(resetButtons: true)
@@ -774,7 +778,7 @@ class MouseChordActionManager {
   }
 
   private func handle(_ event: CGEvent) {
-    guard configuredMouseOnlyAction() != nil else {
+    guard cachedMouseOnlyAction != nil else {
       stopChordAction(resetButtons: true)
       unsubscribe()
       return
@@ -801,7 +805,7 @@ class MouseChordActionManager {
   }
 
   private func handleButtonDown(_ event: CGEvent) {
-    if activeAction != nil {
+    if activeAction != nil || isChordSuppressed {
       event.cancel()
       return
     }
@@ -810,20 +814,22 @@ class MouseChordActionManager {
   }
 
   private func handleButtonUp(_ event: CGEvent) {
-    if activeAction != nil {
+    if activeAction != nil || isChordSuppressed {
       event.cancel()
-      stopChordAction(resetButtons: false)
+      stopActiveChordAction()
+      clearSuppressionIfChordEnded()
     }
   }
 
   private func handleDrag(_ event: CGEvent) {
-    if activeAction != nil {
-      guard leftButtonIsDown && rightButtonIsDown && !ShortcutsManager.shared.hasActiveShortcut else {
-        stopChordAction(resetButtons: false)
-        return
+    if activeAction != nil || isChordSuppressed {
+      if leftButtonIsDown && rightButtonIsDown && !ShortcutsManager.shared.hasActiveShortcut, activeAction != nil {
+        MouseTracker.shared.updateTracking(withMouseLocation: event.location, timestamp: ProcessInfo.processInfo.systemUptime, allowsKeyInterruption: false)
+      } else {
+        stopActiveChordAction()
+        clearSuppressionIfChordEnded()
       }
 
-      MouseTracker.shared.updateTracking(withMouseLocation: event.location, timestamp: ProcessInfo.processInfo.systemUptime, allowsKeyInterruption: false)
       event.cancel()
       return
     }
@@ -836,25 +842,39 @@ class MouseChordActionManager {
       return
     }
 
-    guard !ShortcutsManager.shared.hasActiveShortcut, let action = configuredMouseOnlyAction() else {
+    guard !ShortcutsManager.shared.hasActiveShortcut, let action = cachedMouseOnlyAction else {
       return
     }
 
     if MouseTracker.shared.startTrackingForExternalMouseUpdates(for: action, initialMouseLocation: event.location) {
       activeAction = action
+      isChordSuppressed = true
       event.cancel()
     }
   }
 
   private func stopChordAction(resetButtons: Bool) {
-    if let activeAction {
-      MouseTracker.shared.stopTracking(for: activeAction)
-      self.activeAction = nil
-    }
+    stopActiveChordAction()
 
     if resetButtons {
       leftButtonIsDown = false
       rightButtonIsDown = false
+      isChordSuppressed = false
+    } else {
+      clearSuppressionIfChordEnded()
+    }
+  }
+
+  private func stopActiveChordAction() {
+    if let activeAction {
+      MouseTracker.shared.stopTracking(for: activeAction)
+      self.activeAction = nil
+    }
+  }
+
+  private func clearSuppressionIfChordEnded() {
+    if !leftButtonIsDown && !rightButtonIsDown {
+      isChordSuppressed = false
     }
   }
 
