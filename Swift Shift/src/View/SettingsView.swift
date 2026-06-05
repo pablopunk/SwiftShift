@@ -18,7 +18,6 @@ struct SettingsView: View {
   @State private var hasPermissions = false
   @State private var hasFunctionKeyShortcut = false
   @State private var hadFunctionKeyShortcut = false
-  @AppStorage(PreferenceKey.requireMouseClick.rawValue) var requireMouseClick = false
   @AppStorage(PreferenceKey.fnShortcutWarningDismissed.rawValue) var fnShortcutWarningDismissed = false
   private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
@@ -26,7 +25,8 @@ struct SettingsView: View {
     self._hasPermissions = State(initialValue: hasPermissions)
 
     let hasFnShortcut = ShortcutType.allCases.contains { type in
-      ShortcutsManager.shared.load(for: type)?.keyboardShortcut?.usesFunctionModifier == true
+      guard let shortcut = ShortcutsManager.shared.load(for: type), shortcut.keyboardEnabled else { return false }
+      return shortcut.keyboardShortcut?.usesFunctionModifier == true
     }
     self._hasFunctionKeyShortcut = State(initialValue: hasFnShortcut)
     self._hadFunctionKeyShortcut = State(initialValue: hasFnShortcut)
@@ -38,7 +38,8 @@ struct SettingsView: View {
 
   private func refreshFunctionKeyWarning() {
     let hasFnShortcut = ShortcutType.allCases.contains { type in
-      ShortcutsManager.shared.load(for: type)?.keyboardShortcut?.usesFunctionModifier == true
+      guard let shortcut = ShortcutsManager.shared.load(for: type), shortcut.keyboardEnabled else { return false }
+      return shortcut.keyboardShortcut?.usesFunctionModifier == true
     }
 
     if !hasFnShortcut {
@@ -68,7 +69,7 @@ struct SettingsView: View {
 
         if hasPermissions {
           VStack(alignment: .leading, spacing: 8) {
-            VStack(spacing: requireMouseClick ? 16 : 4) {
+            VStack(spacing: 12) {
               ForEach(Array(ShortcutType.allCases), id: \.self) { type in
                 ShortcutView(type: type, onShortcutChanged: refreshFunctionKeyWarning)
               }
@@ -80,8 +81,10 @@ struct SettingsView: View {
               }
             }
           }
+          .padding(.top, 8)
         } else {
           PermissionRequestView()
+            .padding(.top, 8)
         }
       }
 

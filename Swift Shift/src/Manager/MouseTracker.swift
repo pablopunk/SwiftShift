@@ -96,7 +96,17 @@ class MouseTracker {
     }
     private func registerMouseEventMonitor(button: MouseButton) {
         removeMouseEventMonitor()
-        let mask: NSEvent.EventTypeMask = button == .left ? .leftMouseDragged : (button == .right ? .rightMouseDragged : .mouseMoved)
+        let mask: NSEvent.EventTypeMask
+        switch button {
+        case .left:
+            mask = .leftMouseDragged
+        case .right:
+            mask = .rightMouseDragged
+        case .both:
+            mask = [.leftMouseDragged, .rightMouseDragged]
+        case .none:
+            mask = .mouseMoved
+        }
         mouseEventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [mask]) { [weak self] e in self?.handleMouseMoved(e) }
     }
     private func startTrackingTimer() {

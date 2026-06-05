@@ -35,8 +35,6 @@ struct PreferencesView: View {
   @AppStorage(PreferenceKey.showMenuBarIcon.rawValue) var showMenuBarIcon = true
   @AppStorage(PreferenceKey.focusOnApp.rawValue) var focusOnApp = true
   @AppStorage(PreferenceKey.useQuadrants.rawValue) var useQuadrants = false
-  @AppStorage(PreferenceKey.requireMouseClick.rawValue) var requireMouseClick = false
-  @AppStorage(PreferenceKey.moveWithBothMouseButtons.rawValue) var moveWithBothMouseButtons = false
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
@@ -75,28 +73,6 @@ struct PreferencesView: View {
         subtitle: "Resize from nearest edge/corner",
         icon: "rectangle.split.2x2"
       )
-
-      PreferenceToggle(
-        isOn: $requireMouseClick,
-        title: "Require mouse click",
-        subtitle: "Use mouse buttons in shortcuts",
-        icon: "computermouse"
-      )
-      .onChange(of: requireMouseClick) { newValue in
-        if newValue == false {
-          ShortcutsManager.shared.removeClickActionsForAll()
-        }
-      }
-
-      PreferenceToggle(
-        isOn: $moveWithBothMouseButtons,
-        title: "Move with both mouse buttons",
-        subtitle: "No keyboard shortcut required",
-        icon: "cursorarrow.click.2"
-      )
-      .onChange(of: moveWithBothMouseButtons) { _ in
-        MouseChordMoveManager.shared.updateSubscriptions()
-      }
     }
   }
 }

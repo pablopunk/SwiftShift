@@ -233,9 +233,40 @@ struct ShortcutFnWarningView: View {
   }
 }
 
+private struct TriggerToggleButton: View {
+  let title: String
+  let icon: String
+  let isOn: Bool
+  let canTurnOff: Bool
+  let onToggle: (Bool) -> Void
+
+  var body: some View {
+    Button {
+      if isOn && !canTurnOff { return }
+      onToggle(!isOn)
+    } label: {
+      HStack(spacing: 4) {
+        Image(systemName: icon)
+          .font(.system(size: 10))
+        Text(title)
+          .font(.system(size: 10, weight: isOn ? .semibold : .regular))
+      }
+      .frame(maxWidth: .infinity)
+      .padding(.vertical, 6)
+      .background(
+        Capsule()
+          .fill(isOn ? Color.teal.opacity(0.2) : Color.primary.opacity(0.05))
+      )
+      .clipShape(Capsule())
+    }
+    .buttonStyle(.plain)
+    .foregroundStyle(isOn ? .teal : .secondary)
+    .help(isOn && !canTurnOff ? "At least one trigger is required" : "")
+  }
+}
+
 struct ShortcutView: View {
   @State private var shortcut: UserShortcut
-  @AppStorage(PreferenceKey.requireMouseClick.rawValue) private var requireMouseClick = false
   let onShortcutChanged: () -> Void
 
   init(type: ShortcutType, onShortcutChanged: @escaping () -> Void = {}) {
@@ -245,82 +276,163 @@ struct ShortcutView: View {
   }
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      HStack(alignment: .center, spacing: 8) {
+    VStack(alignment: .leading, spacing: 10) {
+      HStack(spacing: 8) {
         Image(systemName: actionIcon())
-          .font(.system(size: 14, weight: .medium))
+          .font(.system(size: 15, weight: .medium))
           .foregroundStyle(.tint)
           .frame(width: 22)
 
         Text(shortcut.type.rawValue)
-          .font(.system(size: 13, weight: .semibold))
-          .frame(width: 50, alignment: .leading)
+          .font(.system(size: 15, weight: .semibold))
+      }
 
+      VStack(spacing: 6) {
+        keyboardRow
+        mouseRow
+      }
+    }
+    .padding(10)
+    .background(Color.primary.opacity(0.035), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+    .overlay(
+      RoundedRectangle(cornerRadius: 12, style: .continuous)
+        .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+    )
+    .onAppear {
+      loadShortcutFromStorage()
+    }
+    .onReceive(NotificationCenter.default.publisher(for: .shortcutsDidChange)) { _ in
+      loadShortcutFromStorage()
+    }
+  }
+
+  private var keyboardRow: some View {
+    HStack(spacing: 8) {
+      TriggerToggleButton(
+        title: "Keyboard",
+        icon: "keyboard",
+        isOn: shortcut.keyboardEnabled,
+        canTurnOff: shortcut.mouseEnabled,
+        onToggle: setKeyboardEnabled
+      )
+      .frame(width: 116)
+
+      HStack(spacing: 4) {
         ShortcutRecorderView(shortcut: $shortcut.keyboardShortcut)
           .onChange(of: shortcut.keyboardShortcut) { newValue in
             shortcut.shortcut = newValue?.shortcutRecorderShortcut
-            if newValue == nil {
-              ShortcutsManager.shared.delete(for: shortcut.type)
-            } else {
-              ShortcutsManager.shared.save(shortcut)
-            }
-            onShortcutChanged()
+            saveShortcut()
           }
-          .frame(maxWidth: .infinity, alignment: .leading)
+          .disabled(!shortcut.keyboardEnabled)
 
         Button {
           shortcut.shortcut = nil
           shortcut.keyboardShortcut = nil
-          onShortcutChanged()
+          saveShortcut()
         } label: {
           Image(systemName: "xmark.circle.fill")
             .font(.system(size: 13))
             .foregroundStyle(.tertiary)
         }
         .buttonStyle(.plain)
+        .disabled(!shortcut.keyboardEnabled)
       }
+      .frame(maxWidth: .infinity)
+      .opacity(shortcut.keyboardEnabled ? 1 : 0.25)
+      .animation(.easeInOut(duration: 0.18), value: shortcut.keyboardEnabled)
+    }
+    .animation(.easeInOut(duration: 0.18), value: shortcut.keyboardEnabled)
+  }
 
-      if requireMouseClick {
-        HStack(spacing: 6) {
-          Image(systemName: "computermouse")
-            .font(.system(size: 11))
-            .foregroundStyle(.tertiary)
-            .frame(width: 22)
+  private var mouseRow: some View {
+    HStack(spacing: 8) {
+      TriggerToggleButton(
+        title: "Mouse",
+        icon: "computermouse",
+        isOn: shortcut.mouseEnabled,
+        canTurnOff: shortcut.keyboardEnabled,
+        onToggle: setMouseEnabled
+      )
+      .frame(width: 116)
 
-          HStack(spacing: 4) {
-            ForEach(Array(MouseButton.allCases), id: \.self) { mouseButton in
-              let selected = mouseButton == shortcut.mouseButton
-              Button {
-                shortcut.mouseButton = mouseButton
-                ShortcutsManager.shared.save(shortcut)
-                onShortcutChanged()
-              } label: {
-                HStack(spacing: 3) {
-                  if mouseButton != .none {
-                    Image(systemName: clickIcon(mouseButton))
-                      .font(.system(size: 9))
-                  }
-                  Text(mouseButton.rawValue)
-                    .font(.system(size: 10, weight: selected ? .semibold : .regular))
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 4)
-                .background(
-                  Capsule()
-                    .fill(selected ? Color.teal.opacity(0.2) : Color.primary.opacity(0.05))
-                )
-                .clipShape(Capsule())
-              }
-              .buttonStyle(.plain)
-              .foregroundStyle(selected ? .teal : .secondary)
-            }
+      mouseButtonPicker
+        .frame(maxWidth: .infinity)
+        .disabled(!shortcut.mouseEnabled)
+        .opacity(shortcut.mouseEnabled ? 1 : 0.25)
+        .animation(.easeInOut(duration: 0.18), value: shortcut.mouseEnabled)
+    }
+    .animation(.easeInOut(duration: 0.18), value: shortcut.mouseEnabled)
+  }
+
+  private var mouseButtonPicker: some View {
+    HStack(spacing: 4) {
+      ForEach([MouseButton.left, .right, .both], id: \.self) { mouseButton in
+        let isAvailable = shortcut.keyboardEnabled || mouseButton == .both
+        let selected = mouseButton == shortcut.mouseButton || (!shortcut.keyboardEnabled && mouseButton == .both)
+        Button {
+          guard isAvailable else { return }
+          shortcut.mouseButton = mouseButton
+          saveShortcut()
+        } label: {
+          HStack(spacing: 3) {
+            Image(systemName: clickIcon(mouseButton))
+              .font(.system(size: 9))
+            Text(mouseButton.rawValue)
+              .font(.system(size: 10, weight: selected ? .semibold : .regular))
           }
+          .frame(maxWidth: .infinity)
+          .padding(.vertical, 4)
+          .background(
+            Capsule()
+              .fill(selected ? Color.teal.opacity(0.2) : Color.primary.opacity(0.05))
+          )
+          .clipShape(Capsule())
         }
-        .onAppear {
-          loadShortcutFromStorage()
-        }
+        .buttonStyle(.plain)
+        .foregroundStyle(selected ? .teal : .secondary)
+        .opacity(isAvailable ? 1 : 0.35)
+        .animation(.easeInOut(duration: 0.18), value: isAvailable)
+        .disabled(!isAvailable)
       }
     }
+  }
+
+  private func setKeyboardEnabled(_ enabled: Bool) {
+    guard enabled || shortcut.mouseEnabled else { return }
+
+    shortcut.keyboardEnabled = enabled
+    if !enabled {
+      shortcut.mouseEnabled = true
+      shortcut.mouseButton = .both
+    } else if shortcut.mouseEnabled && shortcut.mouseButton == .none {
+      shortcut.mouseButton = .left
+    }
+
+    saveShortcut()
+  }
+
+  private func setMouseEnabled(_ enabled: Bool) {
+    guard enabled || shortcut.keyboardEnabled else { return }
+
+    shortcut.mouseEnabled = enabled
+    if enabled {
+      if shortcut.keyboardEnabled {
+        if shortcut.mouseButton == .none {
+          shortcut.mouseButton = .left
+        }
+      } else {
+        shortcut.mouseButton = .both
+      }
+    } else {
+      shortcut.mouseButton = .none
+    }
+
+    saveShortcut()
+  }
+
+  private func saveShortcut() {
+    ShortcutsManager.shared.save(shortcut)
+    onShortcutChanged()
   }
 
   private func loadShortcutFromStorage() {
@@ -339,6 +451,7 @@ struct ShortcutView: View {
     switch clickType {
     case .left: return "capsule.lefthalf.filled"
     case .right: return "capsule.righthalf.filled"
+    case .both: return "capsule.fill"
     case .none: return ""
     }
   }
