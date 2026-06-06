@@ -36,6 +36,7 @@ struct PreferencesView: View {
   @AppStorage(PreferenceKey.focusOnApp.rawValue) var focusOnApp = true
   @AppStorage(PreferenceKey.useQuadrants.rawValue) var useQuadrants = false
   @AppStorage(PreferenceKey.requireMouseClick.rawValue) var requireMouseClick = false
+  @AppStorage(PreferenceKey.enableSnapping.rawValue) var enableSnapping = true
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
@@ -86,6 +87,13 @@ struct PreferencesView: View {
           ShortcutsManager.shared.removeClickActionsForAll()
         }
       }
+
+      PreferenceToggle(
+        isOn: $enableSnapping,
+        title: "Enable snapping",
+        subtitle: "Snap windows to edges and corners",
+        icon: "dot.squareshape.split.2x2"
+      )
     }
   }
 }
