@@ -73,7 +73,19 @@ class WindowManager {
         if let parent = p { return getWindow(from: parent as! AXUIElement) }
         return nil
     }
-    static func focus(window: AXUIElement) { AXUIElementPerformAction(window, kAXRaiseAction as CFString); getNSApplication(from: window)?.activate() }
+    static func focus(window: AXUIElement) {
+        guard let app = getNSApplication(from: window) else { return }
+        let axApp = AXUIElementCreateApplication(app.processIdentifier)
+        let trueValue = kCFBooleanTrue!
+
+        app.activate(options: [.activateIgnoringOtherApps])
+        AXUIElementSetAttributeValue(axApp, kAXFrontmostAttribute as CFString, trueValue)
+        AXUIElementPerformAction(window, kAXRaiseAction as CFString)
+        AXUIElementSetAttributeValue(axApp, kAXMainWindowAttribute as CFString, window)
+        AXUIElementSetAttributeValue(axApp, kAXFocusedWindowAttribute as CFString, window)
+        AXUIElementSetAttributeValue(window, kAXMainAttribute as CFString, trueValue)
+        AXUIElementSetAttributeValue(window, kAXFocusedAttribute as CFString, trueValue)
+    }
     static func getNSApplication(from element: AXUIElement) -> NSRunningApplication? {
         var pid: pid_t = 0; AXUIElementGetPid(element, &pid); return NSRunningApplication(processIdentifier: pid)
     }
@@ -89,4 +101,3 @@ class WindowManager {
         return WindowBounds(topLeft: fixed, topRight: NSPoint(x: fixed.x + windowSize.width, y: fixed.y), bottomLeft: NSPoint(x: fixed.x, y: fixed.y - windowSize.height), bottomRight: NSPoint(x: fixed.x + windowSize.width, y: fixed.y - windowSize.height))
     }
 }
-
