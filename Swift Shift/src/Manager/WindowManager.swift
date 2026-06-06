@@ -38,6 +38,17 @@ class WindowManager {
             return rect
         }
     }
+    static func getScreenSnapRects() -> [CGRect] {
+        // NSScreen frames use Cocoa's bottom-left origin, while the snap math
+        // operates in CG's top-left origin (same space as getVisibleWindowRects),
+        // so flip each visibleFrame onto the primary display's height.
+        let primaryHeight = CGDisplayBounds(CGMainDisplayID()).height
+        return NSScreen.screens.map { screen in
+            let frame = screen.visibleFrame
+            let flippedY = primaryHeight - frame.origin.y - frame.height
+            return CGRect(x: frame.origin.x, y: flippedY, width: frame.width, height: frame.height)
+        }
+    }
     static func getCurrentWindow() -> AXUIElement? {
         guard let ev = CGEvent(source: nil) else { return nil }
         let sys = AXUIElementCreateSystemWide(); var el: AXUIElement?
@@ -80,6 +91,10 @@ class WindowManager {
     static func convertYCoordinateBecauseTheAreTwoFuckingCoordinateSystems(point: NSPoint) -> NSPoint {
         return NSPoint(x: point.x, y: CGDisplayBounds(CGMainDisplayID()).height - point.y)
     }
+    static func convertCGFrameToCocoaFrame(_ frame: CGRect) -> CGRect {
+        let primaryHeight = CGDisplayBounds(CGMainDisplayID()).height
+        return CGRect(x: frame.origin.x, y: primaryHeight - frame.origin.y - frame.height, width: frame.width, height: frame.height)
+    }
     static func getPosition(window: AXUIElement) -> NSPoint? {
         var r: CFTypeRef?; guard AXUIElementCopyAttributeValue(window, kAXPositionAttribute as CFString, &r) == .success else { return nil }
         var p: CGPoint = .zero; AXValueGetValue(r as! AXValue, .cgPoint, &p); return NSPoint(x: p.x, y: p.y)
@@ -89,4 +104,3 @@ class WindowManager {
         return WindowBounds(topLeft: fixed, topRight: NSPoint(x: fixed.x + windowSize.width, y: fixed.y), bottomLeft: NSPoint(x: fixed.x, y: fixed.y - windowSize.height), bottomRight: NSPoint(x: fixed.x + windowSize.width, y: fixed.y - windowSize.height))
     }
 }
-
