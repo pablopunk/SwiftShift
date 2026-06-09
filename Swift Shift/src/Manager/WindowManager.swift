@@ -12,10 +12,12 @@ class WindowManager {
         var p = point; let v = AXValueCreate(.cgPoint, &p)!
         return AXUIElementSetAttributeValue(window, kAXPositionAttribute as CFString, v)
     }
-    static func resize(window: AXUIElement, to s: CGSize, from o: NSPoint, shouldMoveOrigin: Bool = true) {
-        if shouldMoveOrigin { move(window: window, to: o) }
+    @discardableResult
+    static func resize(window: AXUIElement, to s: CGSize, from o: NSPoint, shouldMoveOrigin: Bool = true) -> Bool {
+        let moveResult = shouldMoveOrigin ? move(window: window, to: o) : .success
         var sz = s; let v = AXValueCreate(.cgSize, &sz)!
-        AXUIElementSetAttributeValue(window, kAXSizeAttribute as CFString, v)
+        let sizeResult = AXUIElementSetAttributeValue(window, kAXSizeAttribute as CFString, v)
+        return moveResult == .success && sizeResult == .success
     }
     static func getSize(window: AXUIElement) -> NSSize? {
         var r: CFTypeRef?; guard AXUIElementCopyAttributeValue(window, kAXSizeAttribute as CFString, &r) == .success else { return nil }

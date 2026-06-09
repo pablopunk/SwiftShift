@@ -789,6 +789,8 @@ class MouseChordActionManager {
       return
     }
 
+    syncButtonStateFromSystem()
+
     guard cachedMouseOnlyAction != nil else {
       stopChordAction(resetButtons: true)
       unsubscribe()
@@ -813,6 +815,8 @@ class MouseChordActionManager {
     default:
       break
     }
+
+    recoverIfGestureEnded()
   }
 
   private func handleButtonDown(_ event: CGEvent) {
@@ -865,7 +869,7 @@ class MouseChordActionManager {
   private func handleDrag(_ event: CGEvent) {
     if activeAction != nil || isChordSuppressed {
       if leftButtonIsDown && rightButtonIsDown && !ShortcutsManager.shared.hasActiveShortcut, activeAction != nil {
-        MouseTracker.shared.updateTracking(withMouseLocation: event.location, timestamp: ProcessInfo.processInfo.systemUptime, allowsKeyInterruption: false)
+        MouseTracker.shared.queueExternalMouseUpdate(withMouseLocation: event.location, timestamp: ProcessInfo.processInfo.systemUptime)
       } else {
         stopActiveChordAction()
         clearSuppressionIfChordEnded()
@@ -978,6 +982,21 @@ class MouseChordActionManager {
   private func clearPassThroughIfGestureEnded() {
     if !leftButtonIsDown && !rightButtonIsDown {
       isPassingThroughMouseGesture = false
+    }
+  }
+
+  private func syncButtonStateFromSystem() {
+    let leftIsPressed = CGEventSource.buttonState(.hidSystemState, button: .left)
+    let rightIsPressed = CGEventSource.buttonState(.hidSystemState, button: .right)
+    leftButtonIsDown = leftIsPressed
+    rightButtonIsDown = rightIsPressed
+  }
+
+  private func recoverIfGestureEnded() {
+    syncButtonStateFromSystem()
+
+    if !leftButtonIsDown && !rightButtonIsDown {
+      stopChordAction(resetButtons: true)
     }
   }
 

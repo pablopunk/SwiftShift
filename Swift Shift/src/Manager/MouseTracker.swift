@@ -16,6 +16,8 @@ class MouseTracker {
     private let snapDistance: CGFloat = 10
     private var mouseLocationCoordinateSpace: MouseLocationCoordinateSpace = .appKit
     private let trackingQueue = DispatchQueue(label: "com.swiftshift.mousetracker")
+    private var queuedExternalMouseUpdate: (location: NSPoint, timestamp: TimeInterval)?
+    private var queuedExternalMouseUpdateScheduled = false
     private init() { registerForSpaceChangeNotifications() }
     deinit { unregisterForSpaceChangeNotifications() }
     private func registerForSpaceChangeNotifications() {
@@ -44,7 +46,7 @@ class MouseTracker {
     }
     func stopTracking(for action: MouseAction) {
         guard currentAction == action else { return }
-        flushPendingMouseUpdate(); invalidateTrackingTimer(); removeMouseEventMonitor(); resetTrackingVariables(); isTracking = false
+        flushQueuedExternalMouseUpdate(); flushPendingMouseUpdate(); invalidateTrackingTimer(); removeMouseEventMonitor(); resetTrackingVariables(); clearQueuedExternalMouseUpdate(); isTracking = false
     }
     func forceResetTracking() {
         guard currentAction != .none, let window = trackedWindow else { return }
@@ -138,6 +140,15 @@ class MouseTracker {
     func updateTrackingFromCurrentMouseLocation(timestamp: TimeInterval) {
         updateTracking(withMouseLocation: currentMouseLocation(), timestamp: timestamp)
     }
+    func queueExternalMouseUpdate(withMouseLocation mouseLocation: NSPoint, timestamp: TimeInterval) {
+        trackingQueue.async { [weak self] in
+            guard let self = self else { return }
+            self.queuedExternalMouseUpdate = (mouseLocation, timestamp)
+            guard !self.queuedExternalMouseUpdateScheduled else { return }
+            self.queuedExternalMouseUpdateScheduled = true
+            DispatchQueue.main.async { [weak self] in self?.drainQueuedExternalMouseUpdate() }
+        }
+    }
     func updateTracking(withMouseLocation mouseLocation: NSPoint, timestamp: TimeInterval, allowsKeyInterruption: Bool = true) {
         guard isTracking, let _ = initialMouseLocation, let _ = initialWindowLocation, let _ = trackedWindow else {
             return
@@ -149,6 +160,36 @@ class MouseTracker {
         if shouldFocusWindow && !trackedWindowIsFocused, let w = trackedWindow { WindowManager.focus(window: w); trackedWindowIsFocused = true }
         pendingMouseLocation = mouseLocation
         if timestamp - lastUpdateTime >= minimumUpdateInterval { flushPendingMouseUpdate(at: timestamp) }
+    }
+    private func drainQueuedExternalMouseUpdate() {
+        guard let update = takeQueuedExternalMouseUpdate() else { return }
+        updateTracking(withMouseLocation: update.location, timestamp: update.timestamp, allowsKeyInterruption: false)
+        trackingQueue.async { [weak self] in
+            guard let self = self else { return }
+            if self.queuedExternalMouseUpdate != nil {
+                DispatchQueue.main.async { [weak self] in self?.drainQueuedExternalMouseUpdate() }
+            } else {
+                self.queuedExternalMouseUpdateScheduled = false
+            }
+        }
+    }
+    private func flushQueuedExternalMouseUpdate() {
+        guard let update = takeQueuedExternalMouseUpdate() else { return }
+        updateTracking(withMouseLocation: update.location, timestamp: update.timestamp, allowsKeyInterruption: false)
+    }
+    private func takeQueuedExternalMouseUpdate() -> (location: NSPoint, timestamp: TimeInterval)? {
+        trackingQueue.sync {
+            let update = queuedExternalMouseUpdate
+            queuedExternalMouseUpdate = nil
+            if update == nil { queuedExternalMouseUpdateScheduled = false }
+            return update
+        }
+    }
+    private func clearQueuedExternalMouseUpdate() {
+        trackingQueue.sync {
+            queuedExternalMouseUpdate = nil
+            queuedExternalMouseUpdateScheduled = false
+        }
     }
     private func flushPendingMouseUpdate(at timestamp: TimeInterval? = nil) {
         guard let loc = pendingMouseLocation else { return }; pendingMouseLocation = nil
@@ -191,7 +232,9 @@ class MouseTracker {
         let ns = CGSize(width: nw, height: nh)
         let moveO = !pointsApproximatelyEqual(no, lastAppliedOrigin)
         if moveO || !sizesApproximatelyEqual(ns, lastAppliedSize) {
-            lastAppliedOrigin = no; lastAppliedSize = ns; WindowManager.resize(window: w, to: ns, from: no, shouldMoveOrigin: moveO)
+            if WindowManager.resize(window: w, to: ns, from: no, shouldMoveOrigin: moveO) {
+                lastAppliedOrigin = no; lastAppliedSize = ns
+            }
         }
     }
     private func snappedOrigin(forMoving rect: CGRect) -> NSPoint {
