@@ -641,12 +641,11 @@ class ShortcutsManager {
           rightButtonIsDown = true
         }
 
+        event.cancel()
+
         if leftButtonIsDown && rightButtonIsDown && !isMouseTracking {
           isMouseTracking = true
-          event.cancel()
           MouseTracker.shared.startTracking(for: action, button: .both)
-        } else if isMouseTracking {
-          event.cancel()
         }
       })
 
@@ -666,8 +665,9 @@ class ShortcutsManager {
           rightButtonIsDown = false
         }
 
+        event.cancel()
+
         if isMouseTracking {
-          event.cancel()
           MouseTracker.shared.stopTracking(for: action)
           isMouseTracking = false
         }
@@ -703,11 +703,18 @@ class ShortcutsManager {
 class MouseChordActionManager {
   static let shared = MouseChordActionManager()
 
+  private struct PendingMouseDown {
+    let event: CGEvent
+  }
+
   private let subscriberKey = "mouseOnlyBothButtonsChord"
+  private let replayedMouseEventMarker: Int64 = 0x5357465453484946
   private var isSubscribed = false
   private var activeAction: MouseAction?
   private var cachedMouseOnlyAction: MouseAction?
   private var isChordSuppressed = false
+  private var isPassingThroughMouseGesture = false
+  private var pendingInitialMouseDown: PendingMouseDown?
   private var leftButtonIsDown = false
   private var rightButtonIsDown = false
   private var workspaceNotificationObserver: Any?
@@ -778,6 +785,10 @@ class MouseChordActionManager {
   }
 
   private func handle(_ event: CGEvent) {
+    guard !isReplayedMouseEvent(event) else {
+      return
+    }
+
     guard cachedMouseOnlyAction != nil else {
       stopChordAction(resetButtons: true)
       unsubscribe()
@@ -810,7 +821,24 @@ class MouseChordActionManager {
       return
     }
 
-    startChordActionIfReady(eventToCancelOnSuccess: event)
+    if isPassingThroughMouseGesture {
+      return
+    }
+
+    guard pendingInitialMouseDown != nil else {
+      if capturePendingInitialMouseDown(event) {
+        event.cancel()
+      }
+      return
+    }
+
+    if startChordActionIfReady(eventToCancelOnSuccess: event) {
+      pendingInitialMouseDown = nil
+      return
+    }
+
+    replayPendingInitialMouseDown()
+    isPassingThroughMouseGesture = true
   }
 
   private func handleButtonUp(_ event: CGEvent) {
@@ -818,6 +846,19 @@ class MouseChordActionManager {
       event.cancel()
       stopActiveChordAction()
       clearSuppressionIfChordEnded()
+      return
+    }
+
+    if pendingInitialMouseDown != nil {
+      replayPendingInitialMouseDown()
+      replayMouseEvent(event)
+      event.cancel()
+      clearPassThroughIfGestureEnded()
+      return
+    }
+
+    if isPassingThroughMouseGesture {
+      clearPassThroughIfGestureEnded()
     }
   }
 
@@ -834,27 +875,83 @@ class MouseChordActionManager {
       return
     }
 
-    startChordActionIfReady(eventToCancelOnSuccess: event)
+    if isPassingThroughMouseGesture {
+      return
+    }
+
+    if pendingInitialMouseDown != nil {
+      if startChordActionIfReady(eventToCancelOnSuccess: event) {
+        pendingInitialMouseDown = nil
+        return
+      }
+
+      replayPendingInitialMouseDown()
+      replayMouseEvent(event)
+      event.cancel()
+      isPassingThroughMouseGesture = true
+      return
+    }
+
+    _ = startChordActionIfReady(eventToCancelOnSuccess: event)
   }
 
-  private func startChordActionIfReady(eventToCancelOnSuccess event: CGEvent) {
+  @discardableResult
+  private func startChordActionIfReady(eventToCancelOnSuccess event: CGEvent) -> Bool {
     guard leftButtonIsDown && rightButtonIsDown else {
-      return
+      return false
     }
 
     guard !ShortcutsManager.shared.hasActiveShortcut, let action = cachedMouseOnlyAction else {
-      return
+      return false
     }
 
-    if MouseTracker.shared.startTrackingForExternalMouseUpdates(for: action, initialMouseLocation: event.location) {
+    let initialMouseLocation = pendingInitialMouseDown?.event.location ?? event.location
+
+    if MouseTracker.shared.startTrackingForExternalMouseUpdates(for: action, initialMouseLocation: initialMouseLocation) {
       activeAction = action
       isChordSuppressed = true
       event.cancel()
+      return true
     }
+
+    return false
+  }
+
+  private func capturePendingInitialMouseDown(_ event: CGEvent) -> Bool {
+    guard let copiedEvent = event.copy() else {
+      return false
+    }
+
+    pendingInitialMouseDown = PendingMouseDown(event: copiedEvent)
+    return true
+  }
+
+  private func replayPendingInitialMouseDown() {
+    guard let pendingInitialMouseDown else {
+      return
+    }
+
+    replayMouseEvent(pendingInitialMouseDown.event)
+    self.pendingInitialMouseDown = nil
+  }
+
+  private func replayMouseEvent(_ event: CGEvent) {
+    guard let copiedEvent = event.copy() else {
+      return
+    }
+
+    copiedEvent.setIntegerValueField(.eventSourceUserData, value: replayedMouseEventMarker)
+    copiedEvent.post(tap: .cghidEventTap)
+  }
+
+  private func isReplayedMouseEvent(_ event: CGEvent) -> Bool {
+    event.getIntegerValueField(.eventSourceUserData) == replayedMouseEventMarker
   }
 
   private func stopChordAction(resetButtons: Bool) {
     stopActiveChordAction()
+    pendingInitialMouseDown = nil
+    isPassingThroughMouseGesture = false
 
     if resetButtons {
       leftButtonIsDown = false
@@ -875,6 +972,12 @@ class MouseChordActionManager {
   private func clearSuppressionIfChordEnded() {
     if !leftButtonIsDown && !rightButtonIsDown {
       isChordSuppressed = false
+    }
+  }
+
+  private func clearPassThroughIfGestureEnded() {
+    if !leftButtonIsDown && !rightButtonIsDown {
+      isPassingThroughMouseGesture = false
     }
   }
 
