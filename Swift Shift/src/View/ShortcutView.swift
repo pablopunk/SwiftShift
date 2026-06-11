@@ -331,7 +331,7 @@ struct ShortcutView: View {
   }
 
   private var keyboardRow: some View {
-    HStack(spacing: 8) {
+    LazyVGrid(columns: shortcutRowColumns, spacing: 0) {
       TriggerToggleButton(
         title: "Keyboard",
         icon: "keyboard",
@@ -340,10 +340,10 @@ struct ShortcutView: View {
         isFlashingError: keyboardTriggerErrorPulse,
         onToggle: setKeyboardEnabled
       )
-      .frame(width: 116)
 
       HStack(spacing: 4) {
         ShortcutRecorderView(shortcut: $shortcut.keyboardShortcut)
+          .frame(maxWidth: .infinity)
           .onChange(of: shortcut.keyboardShortcut) { newValue in
             shortcut.shortcut = newValue?.shortcutRecorderShortcut
             saveShortcut()
@@ -362,7 +362,6 @@ struct ShortcutView: View {
         .buttonStyle(.plain)
         .disabled(!shortcut.keyboardEnabled)
       }
-      .frame(maxWidth: .infinity)
       .opacity(shortcut.keyboardEnabled ? 1 : 0.25)
       .animation(.easeInOut(duration: 0.18), value: shortcut.keyboardEnabled)
     }
@@ -370,7 +369,7 @@ struct ShortcutView: View {
   }
 
   private var mouseRow: some View {
-    HStack(spacing: 8) {
+    LazyVGrid(columns: shortcutRowColumns, spacing: 0) {
       TriggerToggleButton(
         title: "Mouse",
         icon: "computermouse",
@@ -379,15 +378,20 @@ struct ShortcutView: View {
         isFlashingError: mouseTriggerErrorPulse,
         onToggle: setMouseEnabled
       )
-      .frame(width: 116)
 
       mouseButtonPicker
-        .frame(maxWidth: .infinity)
         .disabled(!shortcut.mouseEnabled)
         .opacity(shortcut.mouseEnabled ? 1 : 0.25)
         .animation(.easeInOut(duration: 0.18), value: shortcut.mouseEnabled)
     }
     .animation(.easeInOut(duration: 0.18), value: shortcut.mouseEnabled)
+  }
+
+  private var shortcutRowColumns: [GridItem] {
+    [
+      GridItem(.flexible(), spacing: 8),
+      GridItem(.flexible(), spacing: 0)
+    ]
   }
 
   private var errorToast: some View {
@@ -407,14 +411,29 @@ struct ShortcutView: View {
   }
 
   private var mouseButtonPicker: some View {
-    HStack(spacing: 4) {
-      ForEach([MouseButton.left, .right, .both], id: \.self) { mouseButton in
-        let isAvailable = shortcut.keyboardEnabled || mouseButton == .both
-        let selected = mouseButton == shortcut.mouseButton || (!shortcut.keyboardEnabled && mouseButton == .both)
+    LazyVGrid(
+      columns: [
+        GridItem(.flexible(), spacing: 4),
+        GridItem(.flexible(), spacing: 4)
+      ],
+      spacing: 4
+    ) {
+      ForEach([MouseButton.left, .right], id: \.self) { mouseButton in
+        let selected = isMouseButtonSelected(mouseButton)
         Button {
-          guard isAvailable else { return }
-          shortcut.mouseButton = mouseButton
-          saveShortcut()
+          var leftSelected = isMouseButtonSelected(.left)
+          var rightSelected = isMouseButtonSelected(.right)
+
+          switch mouseButton {
+          case .left:
+            leftSelected.toggle()
+          case .right:
+            rightSelected.toggle()
+          case .both, .none:
+            break
+          }
+
+          setMouseButtonSelection(left: leftSelected, right: rightSelected)
         } label: {
           HStack(spacing: 3) {
             Image(systemName: clickIcon(mouseButton))
@@ -431,12 +450,62 @@ struct ShortcutView: View {
           .clipShape(Capsule())
         }
         .buttonStyle(.plain)
+        .frame(maxWidth: .infinity)
         .foregroundStyle(selected ? .teal : .secondary)
-        .opacity(isAvailable ? 1 : 0.35)
-        .animation(.easeInOut(duration: 0.18), value: isAvailable)
-        .disabled(!isAvailable)
+        .accessibilityLabel("\(mouseButton.rawValue) mouse button")
+        .accessibilityValue(selected ? "On" : "Off")
+        .accessibilityAddTraits(selected ? .isSelected : [])
+        .help(mouseButton.rawValue)
       }
     }
+  }
+
+  private func isMouseButtonSelected(_ mouseButton: MouseButton) -> Bool {
+    if !shortcut.keyboardEnabled && shortcut.mouseEnabled {
+      return mouseButton == .left || mouseButton == .right || mouseButton == .both
+    }
+
+    switch mouseButton {
+    case .left:
+      return shortcut.mouseButton == .left || shortcut.mouseButton == .both
+    case .right:
+      return shortcut.mouseButton == .right || shortcut.mouseButton == .both
+    case .both:
+      return shortcut.mouseButton == .both
+    case .none:
+      return shortcut.mouseButton == .none
+    }
+  }
+
+  private func setMouseButtonSelection(left: Bool, right: Bool) {
+    if !shortcut.keyboardEnabled {
+      guard left && right else {
+        showTriggerError("Mouse-only shortcuts require both mouse buttons", on: .mouse)
+        return
+      }
+
+      shortcut.mouseEnabled = true
+      shortcut.mouseButton = .both
+      saveShortcut()
+      return
+    }
+
+    switch (left, right) {
+    case (true, true):
+      shortcut.mouseEnabled = true
+      shortcut.mouseButton = .both
+    case (true, false):
+      shortcut.mouseEnabled = true
+      shortcut.mouseButton = .left
+    case (false, true):
+      shortcut.mouseEnabled = true
+      shortcut.mouseButton = .right
+    case (false, false):
+      shortcut.mouseEnabled = false
+      shortcut.mouseButton = .none
+    }
+
+    saveShortcut()
   }
 
   private func setKeyboardEnabled(_ enabled: Bool) {
@@ -483,7 +552,11 @@ struct ShortcutView: View {
   }
 
   private func showTriggerConflict(on trigger: TriggerKind) {
-    errorToastMessage = "You cannot use the same trigger for both actions"
+    showTriggerError("You cannot use the same trigger for both actions", on: trigger)
+  }
+
+  private func showTriggerError(_ message: String, on trigger: TriggerKind) {
+    errorToastMessage = message
 
     withAnimation(.easeIn(duration: 0.08)) {
       errorToastVisible = true
