@@ -7,14 +7,17 @@ struct WindowBounds {
     let bottomRight: NSPoint
 }
 class WindowManager {
-    static func move(window: AXUIElement, to point: NSPoint) {
+    @discardableResult
+    static func move(window: AXUIElement, to point: NSPoint) -> AXError {
         var p = point; let v = AXValueCreate(.cgPoint, &p)!
-        AXUIElementSetAttributeValue(window, kAXPositionAttribute as CFString, v)
+        return AXUIElementSetAttributeValue(window, kAXPositionAttribute as CFString, v)
     }
-    static func resize(window: AXUIElement, to s: CGSize, from o: NSPoint, shouldMoveOrigin: Bool = true) {
-        if shouldMoveOrigin { move(window: window, to: o) }
+    @discardableResult
+    static func resize(window: AXUIElement, to s: CGSize, from o: NSPoint, shouldMoveOrigin: Bool = true) -> Bool {
+        let moveResult = shouldMoveOrigin ? move(window: window, to: o) : .success
         var sz = s; let v = AXValueCreate(.cgSize, &sz)!
-        AXUIElementSetAttributeValue(window, kAXSizeAttribute as CFString, v)
+        let sizeResult = AXUIElementSetAttributeValue(window, kAXSizeAttribute as CFString, v)
+        return moveResult == .success && sizeResult == .success
     }
     static func getSize(window: AXUIElement) -> NSSize? {
         var r: CFTypeRef?; guard AXUIElementCopyAttributeValue(window, kAXSizeAttribute as CFString, &r) == .success else { return nil }
@@ -40,17 +43,22 @@ class WindowManager {
     }
     static func getCurrentWindow() -> AXUIElement? {
         guard let ev = CGEvent(source: nil) else { return nil }
-        let sys = AXUIElementCreateSystemWide(); var el: AXUIElement?
-        if AXUIElementCopyElementAtPosition(sys, Float(ev.location.x), Float(ev.location.y), &el) == .success, let el = el, let w = getWindow(from: el) {
-            var pid: pid_t = 0; AXUIElementGetPid(w, &pid)
-            if pid != NSRunningApplication.current.processIdentifier { return w }
-        }
-        return getTopWindowAtCursorUsingCGWindowList(mouseLocation: ev.location)
+        return getCurrentWindow(at: ev.location)
     }
-    private static func getTopWindowAtCursorUsingCGWindowList(mouseLocation: NSPoint) -> AXUIElement? {
+    static func getCurrentWindow(at mouseLocation: NSPoint) -> AXUIElement? {
+        let currentPID = NSRunningApplication.current.processIdentifier
+        let sys = AXUIElementCreateSystemWide(); var el: AXUIElement?
+        if AXUIElementCopyElementAtPosition(sys, Float(mouseLocation.x), Float(mouseLocation.y), &el) == .success, let el = el, let w = getWindow(from: el) {
+            var pid: pid_t = 0; AXUIElementGetPid(w, &pid)
+            if pid != currentPID { return w }
+        }
+        return getTopWindowAtCursorUsingCGWindowList(mouseLocation: mouseLocation, excludingProcessID: currentPID)
+    }
+    private static func getTopWindowAtCursorUsingCGWindowList(mouseLocation: NSPoint, excludingProcessID: pid_t? = nil) -> AXUIElement? {
         let list = CGWindowListCopyWindowInfo([.excludeDesktopElements, .optionOnScreenOnly], kCGNullWindowID) as? [[String: AnyObject]] ?? []
         for e in list.sorted(by: { ($0[kCGWindowLayer as String] as? Int ?? 0) < ($1[kCGWindowLayer as String] as? Int ?? 0) }) {
             if let bDict = e[kCGWindowBounds as String] as? [String: CGFloat], let b = CGRect(dictionaryRepresentation: bDict as CFDictionary), b.contains(mouseLocation), let pid = e[kCGWindowOwnerPID as String] as? pid_t {
+                if pid == excludingProcessID { continue }
                 let app = AXUIElementCreateApplication(pid); var val: AnyObject?
                 if let nsApp = getNSApplication(from: app), let bid = nsApp.bundleIdentifier, PreferencesManager.isAppIgnored(bid) { continue }
                 if AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &val) == .success, let wList = val as? [AXUIElement] {
@@ -89,4 +97,3 @@ class WindowManager {
         return WindowBounds(topLeft: fixed, topRight: NSPoint(x: fixed.x + windowSize.width, y: fixed.y), bottomLeft: NSPoint(x: fixed.x, y: fixed.y - windowSize.height), bottomRight: NSPoint(x: fixed.x + windowSize.width, y: fixed.y - windowSize.height))
     }
 }
-

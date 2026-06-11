@@ -11,6 +11,7 @@ enum MouseButton: String, CaseIterable {
   case none = "None"
   case left = "Left"
   case right = "Right"
+  case both = "Both"
 
   static func parse(rawValue: String?) -> MouseButton {
     guard let rawValue = rawValue else { return .none }
@@ -154,13 +155,21 @@ struct UserShortcut {
   var shortcut: Shortcut?
   var keyboardShortcut: KeyboardShortcut?
   var mouseButton: MouseButton
+  var keyboardEnabled: Bool
+  var mouseEnabled: Bool
 
-  init(type: ShortcutType, shortcut: Shortcut? = nil, keyboardShortcut: KeyboardShortcut? = nil, mouseButton: MouseButton) {
+  init(type: ShortcutType, shortcut: Shortcut? = nil, keyboardShortcut: KeyboardShortcut? = nil, mouseButton: MouseButton, keyboardEnabled: Bool = true, mouseEnabled: Bool = false) {
     self.type = type
     self.shortcut = shortcut
     self.keyboardShortcut = keyboardShortcut ?? shortcut.map { KeyboardShortcut(shortcut: $0) }
     self.mouseButton = mouseButton
+    self.keyboardEnabled = keyboardEnabled
+    self.mouseEnabled = mouseEnabled
   }
+}
+
+extension Notification.Name {
+  static let shortcutsDidChange = Notification.Name("shortcutsDidChange")
 }
 
 class ShortcutsManager {
@@ -169,6 +178,9 @@ class ShortcutsManager {
   private(set) var activeShortcuts: [ShortcutType: Bool] = [:]
   private var mouseSubscriptions: Set<String> = []
   private var workspaceNotificationObserver: Any?
+  var hasActiveShortcut: Bool {
+    activeShortcuts.values.contains(true)
+  }
 
   private init() {
     for type in ShortcutType.allCases {
@@ -229,43 +241,56 @@ class ShortcutsManager {
   }
 
   func save(_ userShortcut: UserShortcut) {
-    guard let keyboardShortcut = userShortcut.keyboardShortcut else {
-      delete(for: userShortcut.type)
-      return
-    }
+    if let keyboardShortcut = userShortcut.keyboardShortcut {
+      do {
+        let data = try JSONEncoder().encode(keyboardShortcut)
+        UserDefaults.standard.set(data, forKey: keyboardShortcutKey(for: userShortcut.type))
 
-    do {
-      let data = try JSONEncoder().encode(keyboardShortcut)
-      UserDefaults.standard.set(data, forKey: keyboardShortcutKey(for: userShortcut.type))
-      UserDefaults.standard.set(userShortcut.mouseButton.rawValue, forKey: mouseButtonKey(for: userShortcut.type))
-
-      if let shortcut = userShortcut.shortcut ?? keyboardShortcut.shortcutRecorderShortcut {
-        let data = try NSKeyedArchiver.archivedData(withRootObject: shortcut, requiringSecureCoding: false)
-        UserDefaults.standard.set(data, forKey: userShortcut.type.rawValue)
-      } else {
-        UserDefaults.standard.removeObject(forKey: userShortcut.type.rawValue)
+        if let shortcut = userShortcut.shortcut ?? keyboardShortcut.shortcutRecorderShortcut {
+          let data = try NSKeyedArchiver.archivedData(withRootObject: shortcut, requiringSecureCoding: false)
+          UserDefaults.standard.set(data, forKey: userShortcut.type.rawValue)
+        } else {
+          UserDefaults.standard.removeObject(forKey: userShortcut.type.rawValue)
+        }
+      } catch {
+        print("Error: \(error)")
       }
-    } catch {
-      print("Error: \(error)")
+    } else {
+      UserDefaults.standard.removeObject(forKey: keyboardShortcutKey(for: userShortcut.type))
+      UserDefaults.standard.removeObject(forKey: userShortcut.type.rawValue)
     }
+
+    UserDefaults.standard.set(userShortcut.mouseButton.rawValue, forKey: mouseButtonKey(for: userShortcut.type))
+    UserDefaults.standard.set(userShortcut.keyboardEnabled, forKey: keyboardEnabledKey(for: userShortcut.type))
+    UserDefaults.standard.set(userShortcut.mouseEnabled, forKey: mouseEnabledKey(for: userShortcut.type))
+
     updateGlobalShortcuts()
+    MouseChordActionManager.shared.updateSubscriptions()
+    NotificationCenter.default.post(name: .shortcutsDidChange, object: userShortcut.type)
   }
 
   func load(for type: ShortcutType) -> UserShortcut? {
     let mouseButton = MouseButton.parse(rawValue: UserDefaults.standard.string(forKey: mouseButtonKey(for: type)))
+    let hasSavedKeyboardTrigger = UserDefaults.standard.object(forKey: keyboardEnabledKey(for: type)) != nil
+    let hasSavedMouseTrigger = UserDefaults.standard.object(forKey: mouseEnabledKey(for: type)) != nil
+    let keyboardEnabled = loadTriggerBool(forKey: keyboardEnabledKey(for: type), defaultValue: true)
+    let mouseEnabled = loadTriggerBool(
+      forKey: mouseEnabledKey(for: type),
+      defaultValue: !hasSavedKeyboardTrigger && !hasSavedMouseTrigger && PreferencesManager.loadBool(for: .requireMouseClick) && mouseButton != .none
+    )
 
     if let data = UserDefaults.standard.data(forKey: keyboardShortcutKey(for: type)) {
       do {
         let keyboardShortcut = try JSONDecoder().decode(KeyboardShortcut.self, from: data)
         let shortcut = loadLegacyShortcut(for: type) ?? keyboardShortcut.shortcutRecorderShortcut
-        return UserShortcut(type: type, shortcut: shortcut, keyboardShortcut: keyboardShortcut, mouseButton: mouseButton)
+        return UserShortcut(type: type, shortcut: shortcut, keyboardShortcut: keyboardShortcut, mouseButton: mouseButton, keyboardEnabled: keyboardEnabled, mouseEnabled: mouseEnabled)
       } catch {
         print("Error decoding shortcut: \(error.localizedDescription)")
       }
     }
 
     if let shortcut = loadLegacyShortcut(for: type) {
-      let migrated = UserShortcut(type: type, shortcut: shortcut, mouseButton: mouseButton)
+      let migrated = UserShortcut(type: type, shortcut: shortcut, mouseButton: mouseButton, keyboardEnabled: keyboardEnabled, mouseEnabled: mouseEnabled)
 
       if let keyboardShortcut = migrated.keyboardShortcut {
         do {
@@ -280,20 +305,25 @@ class ShortcutsManager {
       return migrated
     }
 
-    return nil
+    return UserShortcut(type: type, mouseButton: mouseButton, keyboardEnabled: keyboardEnabled, mouseEnabled: mouseEnabled)
   }
 
   func delete(for type: ShortcutType) {
     UserDefaults.standard.removeObject(forKey: keyboardShortcutKey(for: type))
     UserDefaults.standard.removeObject(forKey: type.rawValue)
     UserDefaults.standard.removeObject(forKey: mouseButtonKey(for: type))
+    UserDefaults.standard.removeObject(forKey: keyboardEnabledKey(for: type))
+    UserDefaults.standard.removeObject(forKey: mouseEnabledKey(for: type))
     updateGlobalShortcuts()
+    MouseChordActionManager.shared.updateSubscriptions()
+    NotificationCenter.default.post(name: .shortcutsDidChange, object: type)
   }
 
   func removeClickActionsForAll() {
     for type in ShortcutType.allCases {
       if var userShortcut = load(for: type) {
         userShortcut.mouseButton = .none
+        userShortcut.mouseEnabled = false
         self.save(userShortcut)
       }
     }
@@ -329,6 +359,19 @@ class ShortcutsManager {
 
   private func mouseButtonKey(for type: ShortcutType) -> String {
     "\(type.rawValue)_mouseButton"
+  }
+
+  private func keyboardEnabledKey(for type: ShortcutType) -> String {
+    "\(type.rawValue)_keyboardEnabled"
+  }
+
+  private func mouseEnabledKey(for type: ShortcutType) -> String {
+    "\(type.rawValue)_mouseEnabled"
+  }
+
+  private func loadTriggerBool(forKey key: String, defaultValue: Bool) -> Bool {
+    guard UserDefaults.standard.object(forKey: key) != nil else { return defaultValue }
+    return UserDefaults.standard.bool(forKey: key)
   }
 
   private func loadLegacyShortcut(for type: ShortcutType) -> Shortcut? {
@@ -503,7 +546,7 @@ class ShortcutsManager {
     clearActionsAndMonitors()
 
     for type in ShortcutType.allCases {
-      if let userShortcut = load(for: type), let keyboardShortcut = userShortcut.keyboardShortcut {
+      if let userShortcut = load(for: type), userShortcut.keyboardEnabled, let keyboardShortcut = userShortcut.keyboardShortcut {
         let mouseAction = type == .move ? MouseAction.move : MouseAction.resize
 
         if keyboardShortcut.usesFunctionModifier || userShortcut.shortcut == nil {
@@ -524,8 +567,13 @@ class ShortcutsManager {
   }
 
   private func startTracking(_ userShortcut: UserShortcut, _ action: MouseAction) {
-    if userShortcut.mouseButton == .none {
+    if !userShortcut.mouseEnabled || userShortcut.mouseButton == .none {
       MouseTracker.shared.startTracking(for: action, button: .none)
+      return
+    }
+
+    if userShortcut.mouseButton == .both {
+      startTrackingWithBothMouseButtons(userShortcut, action)
       return
     }
 
@@ -568,6 +616,67 @@ class ShortcutsManager {
     mouseSubscriptions.insert(upKey)
   }
 
+  private func startTrackingWithBothMouseButtons(_ userShortcut: UserShortcut, _ action: MouseAction) {
+    let downKey = "\(action.rawValue)_mouseDown"
+    let upKey = "\(action.rawValue)_mouseUp"
+    var leftButtonIsDown = false
+    var rightButtonIsDown = false
+    var isMouseTracking = false
+
+    cleanupMouseSubscriptions(action: action)
+
+    CGEventSupervisor.shared.subscribe(
+      as: downKey,
+      to: .cgEvents(.leftMouseDown, .rightMouseDown),
+      using: { [weak self] event in
+        guard let self = self, self.activeShortcuts[userShortcut.type] == true else { return }
+        guard self.isShortcutStillPressed(userShortcut) else {
+          self.stopTracking(userShortcut, action)
+          return
+        }
+
+        if event.type == .leftMouseDown {
+          leftButtonIsDown = true
+        } else if event.type == .rightMouseDown {
+          rightButtonIsDown = true
+        }
+
+        event.cancel()
+
+        if leftButtonIsDown && rightButtonIsDown && !isMouseTracking {
+          isMouseTracking = true
+          MouseTracker.shared.startTracking(for: action, button: .both)
+        }
+      })
+
+    CGEventSupervisor.shared.subscribe(
+      as: upKey,
+      to: .cgEvents(.leftMouseUp, .rightMouseUp),
+      using: { [weak self] event in
+        guard let self = self, self.activeShortcuts[userShortcut.type] == true else { return }
+        guard self.isShortcutStillPressed(userShortcut) else {
+          self.stopTracking(userShortcut, action)
+          return
+        }
+
+        if event.type == .leftMouseUp {
+          leftButtonIsDown = false
+        } else if event.type == .rightMouseUp {
+          rightButtonIsDown = false
+        }
+
+        event.cancel()
+
+        if isMouseTracking {
+          MouseTracker.shared.stopTracking(for: action)
+          isMouseTracking = false
+        }
+      })
+
+    mouseSubscriptions.insert(downKey)
+    mouseSubscriptions.insert(upKey)
+  }
+
   private func stopTracking(_ userShortcut: UserShortcut, _ action: MouseAction) {
     MouseTracker.shared.stopTracking(for: action)
     cleanupMouseSubscriptions(action: action)
@@ -588,5 +697,317 @@ class ShortcutsManager {
 
     mouseSubscriptions.remove(downKey)
     mouseSubscriptions.remove(upKey)
+  }
+}
+
+class MouseChordActionManager {
+  static let shared = MouseChordActionManager()
+
+  private struct PendingMouseDown {
+    let event: CGEvent
+  }
+
+  private let subscriberKey = "mouseOnlyBothButtonsChord"
+  private let replayedMouseEventMarker: Int64 = 0x5357465453484946
+  private var isSubscribed = false
+  private var activeAction: MouseAction?
+  private var cachedMouseOnlyAction: MouseAction?
+  private var isChordSuppressed = false
+  private var isPassingThroughMouseGesture = false
+  private var pendingInitialMouseDown: PendingMouseDown?
+  private var leftButtonIsDown = false
+  private var rightButtonIsDown = false
+  private var workspaceNotificationObserver: Any?
+
+  private init() {
+    registerForWorkspaceNotifications()
+  }
+
+  deinit {
+    cleanup()
+  }
+
+  func updateSubscriptions() {
+    cachedMouseOnlyAction = configuredMouseOnlyAction()
+
+    if cachedMouseOnlyAction != nil {
+      subscribeIfNeeded()
+    } else {
+      stopChordAction(resetButtons: true)
+      unsubscribe()
+    }
+  }
+
+  func cleanup() {
+    stopChordAction(resetButtons: true)
+    unsubscribe()
+    unregisterForWorkspaceNotifications()
+  }
+
+  private func registerForWorkspaceNotifications() {
+    let notificationCenter = NSWorkspace.shared.notificationCenter
+    workspaceNotificationObserver = notificationCenter.addObserver(
+      forName: NSWorkspace.activeSpaceDidChangeNotification,
+      object: nil,
+      queue: .main) { [weak self] _ in
+        self?.stopChordAction(resetButtons: true)
+      }
+  }
+
+  private func unregisterForWorkspaceNotifications() {
+    if let observer = workspaceNotificationObserver {
+      NSWorkspace.shared.notificationCenter.removeObserver(observer)
+      workspaceNotificationObserver = nil
+    }
+  }
+
+  private func subscribeIfNeeded() {
+    guard !isSubscribed else {
+      return
+    }
+
+    CGEventSupervisor.shared.subscribe(
+      as: subscriberKey,
+      to: .cgEvents(.leftMouseDown, .leftMouseUp, .rightMouseDown, .rightMouseUp, .leftMouseDragged, .rightMouseDragged),
+      using: { [weak self] event in
+        self?.handle(event)
+      })
+
+    isSubscribed = true
+  }
+
+  private func unsubscribe() {
+    guard isSubscribed else {
+      return
+    }
+    CGEventSupervisor.shared.cancel(subscriber: subscriberKey)
+    isSubscribed = false
+  }
+
+  private func handle(_ event: CGEvent) {
+    guard !isReplayedMouseEvent(event) else {
+      return
+    }
+
+    syncButtonStateFromSystem()
+
+    guard cachedMouseOnlyAction != nil else {
+      stopChordAction(resetButtons: true)
+      unsubscribe()
+      return
+    }
+
+    switch event.type {
+    case .leftMouseDown:
+      leftButtonIsDown = true
+      handleButtonDown(event)
+    case .rightMouseDown:
+      rightButtonIsDown = true
+      handleButtonDown(event)
+    case .leftMouseUp:
+      leftButtonIsDown = false
+      handleButtonUp(event)
+    case .rightMouseUp:
+      rightButtonIsDown = false
+      handleButtonUp(event)
+    case .leftMouseDragged, .rightMouseDragged:
+      handleDrag(event)
+    default:
+      break
+    }
+
+    recoverIfGestureEnded()
+  }
+
+  private func handleButtonDown(_ event: CGEvent) {
+    if activeAction != nil || isChordSuppressed {
+      event.cancel()
+      return
+    }
+
+    if isPassingThroughMouseGesture {
+      return
+    }
+
+    guard pendingInitialMouseDown != nil else {
+      if capturePendingInitialMouseDown(event) {
+        event.cancel()
+      }
+      return
+    }
+
+    if startChordActionIfReady(eventToCancelOnSuccess: event) {
+      pendingInitialMouseDown = nil
+      return
+    }
+
+    replayPendingInitialMouseDown()
+    isPassingThroughMouseGesture = true
+  }
+
+  private func handleButtonUp(_ event: CGEvent) {
+    if activeAction != nil || isChordSuppressed {
+      event.cancel()
+      stopActiveChordAction()
+      clearSuppressionIfChordEnded()
+      return
+    }
+
+    if pendingInitialMouseDown != nil {
+      replayPendingInitialMouseDown()
+      replayMouseEvent(event)
+      event.cancel()
+      clearPassThroughIfGestureEnded()
+      return
+    }
+
+    if isPassingThroughMouseGesture {
+      clearPassThroughIfGestureEnded()
+    }
+  }
+
+  private func handleDrag(_ event: CGEvent) {
+    if activeAction != nil || isChordSuppressed {
+      if leftButtonIsDown && rightButtonIsDown && !ShortcutsManager.shared.hasActiveShortcut, activeAction != nil {
+        MouseTracker.shared.queueExternalMouseUpdate(withMouseLocation: event.location, timestamp: ProcessInfo.processInfo.systemUptime)
+      } else {
+        stopActiveChordAction()
+        clearSuppressionIfChordEnded()
+      }
+
+      event.cancel()
+      return
+    }
+
+    if isPassingThroughMouseGesture {
+      return
+    }
+
+    if pendingInitialMouseDown != nil {
+      if startChordActionIfReady(eventToCancelOnSuccess: event) {
+        pendingInitialMouseDown = nil
+        return
+      }
+
+      replayPendingInitialMouseDown()
+      replayMouseEvent(event)
+      event.cancel()
+      isPassingThroughMouseGesture = true
+      return
+    }
+
+    _ = startChordActionIfReady(eventToCancelOnSuccess: event)
+  }
+
+  @discardableResult
+  private func startChordActionIfReady(eventToCancelOnSuccess event: CGEvent) -> Bool {
+    guard leftButtonIsDown && rightButtonIsDown else {
+      return false
+    }
+
+    guard !ShortcutsManager.shared.hasActiveShortcut, let action = cachedMouseOnlyAction else {
+      return false
+    }
+
+    let initialMouseLocation = pendingInitialMouseDown?.event.location ?? event.location
+
+    if MouseTracker.shared.startTrackingForExternalMouseUpdates(for: action, initialMouseLocation: initialMouseLocation) {
+      activeAction = action
+      isChordSuppressed = true
+      event.cancel()
+      return true
+    }
+
+    return false
+  }
+
+  private func capturePendingInitialMouseDown(_ event: CGEvent) -> Bool {
+    guard let copiedEvent = event.copy() else {
+      return false
+    }
+
+    pendingInitialMouseDown = PendingMouseDown(event: copiedEvent)
+    return true
+  }
+
+  private func replayPendingInitialMouseDown() {
+    guard let pendingInitialMouseDown else {
+      return
+    }
+
+    replayMouseEvent(pendingInitialMouseDown.event)
+    self.pendingInitialMouseDown = nil
+  }
+
+  private func replayMouseEvent(_ event: CGEvent) {
+    guard let copiedEvent = event.copy() else {
+      return
+    }
+
+    copiedEvent.setIntegerValueField(.eventSourceUserData, value: replayedMouseEventMarker)
+    copiedEvent.post(tap: .cghidEventTap)
+  }
+
+  private func isReplayedMouseEvent(_ event: CGEvent) -> Bool {
+    event.getIntegerValueField(.eventSourceUserData) == replayedMouseEventMarker
+  }
+
+  private func stopChordAction(resetButtons: Bool) {
+    stopActiveChordAction()
+    pendingInitialMouseDown = nil
+    isPassingThroughMouseGesture = false
+
+    if resetButtons {
+      leftButtonIsDown = false
+      rightButtonIsDown = false
+      isChordSuppressed = false
+    } else {
+      clearSuppressionIfChordEnded()
+    }
+  }
+
+  private func stopActiveChordAction() {
+    if let activeAction {
+      MouseTracker.shared.stopTracking(for: activeAction)
+      self.activeAction = nil
+    }
+  }
+
+  private func clearSuppressionIfChordEnded() {
+    if !leftButtonIsDown && !rightButtonIsDown {
+      isChordSuppressed = false
+    }
+  }
+
+  private func clearPassThroughIfGestureEnded() {
+    if !leftButtonIsDown && !rightButtonIsDown {
+      isPassingThroughMouseGesture = false
+    }
+  }
+
+  private func syncButtonStateFromSystem() {
+    let leftIsPressed = CGEventSource.buttonState(.hidSystemState, button: .left)
+    let rightIsPressed = CGEventSource.buttonState(.hidSystemState, button: .right)
+    leftButtonIsDown = leftIsPressed
+    rightButtonIsDown = rightIsPressed
+  }
+
+  private func recoverIfGestureEnded() {
+    syncButtonStateFromSystem()
+
+    if !leftButtonIsDown && !rightButtonIsDown {
+      stopChordAction(resetButtons: true)
+    }
+  }
+
+  private func configuredMouseOnlyAction() -> MouseAction? {
+    for type in ShortcutType.allCases {
+      guard let shortcut = ShortcutsManager.shared.load(for: type), !shortcut.keyboardEnabled, shortcut.mouseEnabled else {
+        continue
+      }
+      return type == .move ? .move : .resize
+    }
+
+    return nil
   }
 }
