@@ -20,7 +20,8 @@ There are several ways:
 
 ## Features
 
-<img src="https://github.com/user-attachments/assets/efa3a42b-e8d3-42d3-b420-18a0a2f18986" width="380" />
+<img src="https://github.com/pablopunk/SwiftShift/blob/main/www/src/images/screenshot-dark.jpg?raw=true#gh-dark-mode-only" width="700" />
+<img src="https://github.com/pablopunk/SwiftShift/blob/main/www/src/images/screenshot-light.jpg?raw=true#gh-light-mode-only" width="700" />
 
 * Launch at login
 * Hide menubar icon
