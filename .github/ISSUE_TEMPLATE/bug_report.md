@@ -28,12 +28,12 @@ assignees: ''
 - [ ] Show menubar icon
 - [ ] Focus on window
 - [ ] Use quadrants
-- [ ] Require mouse click
-
 #### Shortcuts
 
-Move: <!-- e.g cmd+alt -->
-Click: <!-- if relevant -->
+* Move:
+Keyboard: <!-- e.g cmd+alt -->
+Mouse: <!-- none|left|right|both -->
 
-Resize: <!-- e.g cmd+shift -->
-Click: <!-- if relevant -->
+* Resize:
+Keyboard: <!-- e.g cmd+shift -->
+Mouse: <!-- none|left|right|both -->
