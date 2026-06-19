@@ -7,3 +7,4 @@ build/
 www/node_modules/
 www/dist/
 www/.astro/
+Swift Shift/packages/CGEventSupervisor/.build/
