@@ -178,6 +178,7 @@ class ShortcutsManager {
   private(set) var activeShortcuts: [ShortcutType: Bool] = [:]
   private var mouseSubscriptions: Set<String> = []
   private var workspaceNotificationObserver: Any?
+  private var systemEventObservers: [Any] = []
   var hasActiveShortcut: Bool {
     activeShortcuts.values.contains(true)
   }
@@ -187,11 +188,13 @@ class ShortcutsManager {
       activeShortcuts[type] = false
     }
     registerForWorkspaceNotifications()
+    registerForSystemEventNotifications()
     updateGlobalShortcuts()
   }
 
   deinit {
     unregisterForWorkspaceNotifications()
+    unregisterForSystemEventNotifications()
   }
 
   private func registerForWorkspaceNotifications() {
@@ -209,6 +212,67 @@ class ShortcutsManager {
       NSWorkspace.shared.notificationCenter.removeObserver(observer)
       workspaceNotificationObserver = nil
     }
+  }
+
+  /// Register for system events that can silently disable the CGEventTap.
+  /// macOS kills event taps on sleep/wake, display changes, and session
+  /// transitions without notifying the app. We rebuild all input hooks
+  /// when these occur — the same effect as restarting the app.
+  private func registerForSystemEventNotifications() {
+    let nc = NSWorkspace.shared.notificationCenter
+
+    let wakeObserver = nc.addObserver(
+      forName: NSWorkspace.didWakeNotification,
+      object: nil,
+      queue: .main) { [weak self] _ in
+        self?.rebuildAllInputHooks()
+      }
+    systemEventObservers.append(wakeObserver)
+
+    let sessionObserver = nc.addObserver(
+      forName: NSWorkspace.sessionDidBecomeActiveNotification,
+      object: nil,
+      queue: .main) { [weak self] _ in
+        self?.rebuildAllInputHooks()
+      }
+    systemEventObservers.append(sessionObserver)
+
+    let screensObserver = NotificationCenter.default.addObserver(
+      forName: NSApplication.didChangeScreenParametersNotification,
+      object: nil,
+      queue: .main) { [weak self] _ in
+        self?.rebuildAllInputHooks()
+      }
+    systemEventObservers.append(screensObserver)
+  }
+
+  private func unregisterForSystemEventNotifications() {
+    let workspaceCenter = NSWorkspace.shared.notificationCenter
+    let defaultCenter = NotificationCenter.default
+    for observer in systemEventObservers {
+      workspaceCenter.removeObserver(observer)
+      defaultCenter.removeObserver(observer)
+    }
+    systemEventObservers = []
+  }
+
+  /// Fully tear down and rebuild all input interception infrastructure.
+  /// Call this when the CGEventTap may have been disabled by the system
+  /// (sleep, display change, session lock, etc.).
+  private func rebuildAllInputHooks() {
+    // Clear active shortcut state — after a system event we can't
+    // trust that modifier keys are still held. Let next key event
+    // re-establish tracking naturally.
+    for type in ShortcutType.allCases where activeShortcuts[type] == true {
+      let action: MouseAction = type == .move ? .move : .resize
+      MouseTracker.shared.stopTracking(for: action)
+      cleanupMouseSubscriptions(action: action)
+      activeShortcuts[type] = false
+    }
+
+    CGEventSupervisor.shared.cancelAll()
+    updateGlobalShortcuts()
+    MouseChordActionManager.shared.forceRebuild()
   }
 
   private func handleSpaceChange() {
@@ -718,9 +782,11 @@ class MouseChordActionManager {
   private var leftButtonIsDown = false
   private var rightButtonIsDown = false
   private var workspaceNotificationObserver: Any?
+  private var healthCheckTimer: Timer?
 
   private init() {
     registerForWorkspaceNotifications()
+    startHealthCheckTimer()
   }
 
   deinit {
@@ -738,7 +804,34 @@ class MouseChordActionManager {
     }
   }
 
+  /// Force teardown and rebuild of mouse-only chord subscriptions.
+  /// Use after system events (sleep, display change, session lock)
+  /// that may have disabled the CGEventTap without our knowledge.
+  func forceRebuild() {
+    stopChordAction(resetButtons: true)
+    unsubscribe()
+    cachedMouseOnlyAction = nil
+    updateSubscriptions()
+  }
+
+  /// Periodic health check for the CGEventTap. macOS can silently disable
+  /// taps during Secure Input sessions (password prompts, sudo in Terminal)
+  /// with no notification. This timer ensures we recover within 60 seconds.
+  private func startHealthCheckTimer() {
+    healthCheckTimer?.invalidate()
+    healthCheckTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+      guard let self = self, self.isSubscribed else { return }
+      // Don't rebuild mid-gesture — would drop pending mouse events
+      // activeAction is set during an active chord drag;
+      // pendingInitialMouseDown is set between the first and second button press
+      guard self.activeAction == nil, self.pendingInitialMouseDown == nil else { return }
+      self.forceRebuild()
+    }
+  }
+
   func cleanup() {
+    healthCheckTimer?.invalidate()
+    healthCheckTimer = nil
     stopChordAction(resetButtons: true)
     unsubscribe()
     unregisterForWorkspaceNotifications()

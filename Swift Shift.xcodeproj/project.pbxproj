@@ -220,7 +220,7 @@
 				177FB2462B31FE7F00B11BA3 /* XCRemoteSwiftPackageReference "ShortcutRecorder" */,
 				17F33F282B37026400F85E01 /* XCRemoteSwiftPackageReference "LaunchAtLogin-Modern" */,
 				E23633212B44749C00C0E61F /* XCRemoteSwiftPackageReference "Sparkle" */,
-				3364410F2C189812000A1C90 /* XCRemoteSwiftPackageReference "CGEventSupervisor" */,
+				3364410F2C189812000A1C90 /* XCLocalSwiftPackageReference "CGEventSupervisor" */,
 			);
 			productRefGroup = 1781A5DF2B31EE4900F27910 /* Products */;
 			projectDirPath = "";
@@ -501,13 +501,9 @@
 				kind = branch;
 			};
 		};
-		3364410F2C189812000A1C90 /* XCRemoteSwiftPackageReference "CGEventSupervisor" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/stephancasas/CGEventSupervisor";
-			requirement = {
-				branch = main;
-				kind = branch;
-			};
+		3364410F2C189812000A1C90 /* XCLocalSwiftPackageReference "CGEventSupervisor" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "Swift Shift/packages/CGEventSupervisor";
 		};
 		E23633212B44749C00C0E61F /* XCRemoteSwiftPackageReference "Sparkle" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -522,7 +518,7 @@
 /* Begin XCSwiftPackageProductDependency section */
 		336441102C189812000A1C90 /* CGEventSupervisor */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 3364410F2C189812000A1C90 /* XCRemoteSwiftPackageReference "CGEventSupervisor" */;
+			package = 3364410F2C189812000A1C90 /* XCLocalSwiftPackageReference "CGEventSupervisor" */;
 			productName = CGEventSupervisor;
 		};
 		338FBF5A2C1855AE00D1ECA6 /* ShortcutRecorder */ = {
