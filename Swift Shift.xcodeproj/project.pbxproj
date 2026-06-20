@@ -91,7 +91,7 @@
 		E2D8CFB82B3C3B9B00EBB047 /* PermissionsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsManager.swift; sourceTree = "<group>"; };
 		E2E6F5E92B3EF03C005B0D96 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		F400D7AF72C65A047C5C9D19 /* Constants.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Constants.swift; path = "Swift Shift/src/Constants.swift"; sourceTree = "<group>"; };
-		F8B92CDB5F568BDAA9756F45 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		F8B92CDB5F568BDAA9756F45 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -602,7 +602,7 @@
 					"$(inherited)",
 					"@loader_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.pablopunk.SwiftShiftTests;
 				PRODUCT_NAME = SwiftShiftTests;
 				SWIFT_VERSION = 5.0;
@@ -620,7 +620,7 @@
 					"$(inherited)",
 					"@loader_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.pablopunk.SwiftShiftTests;
 				PRODUCT_NAME = SwiftShiftTests;
 				SWIFT_VERSION = 5.0;
