@@ -1,5 +1,8 @@
 name: Build & Test
 
+permissions:
+  contents: read
+
 on:
   pull_request:
     paths-ignore:
@@ -15,13 +18,17 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
       - run: make build
 
   test:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
       - name: Build and run tests
         run: |
           xcodebuild test \

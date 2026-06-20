@@ -28,7 +28,7 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "D76A70D72EB4AAB358AE0D75"
+               BlueprintIdentifier = "4F0E66367D37633ED8A08262"
                BuildableName = "SwiftShiftTests.xctest"
                BlueprintName = "SwiftShiftTests"
                ReferencedContainer = "container:Swift Shift.xcodeproj">
@@ -48,7 +48,7 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "D76A70D72EB4AAB358AE0D75"
+               BlueprintIdentifier = "4F0E66367D37633ED8A08262"
                BuildableName = "SwiftShiftTests.xctest"
                BlueprintName = "SwiftShiftTests"
                ReferencedContainer = "container:Swift Shift.xcodeproj">

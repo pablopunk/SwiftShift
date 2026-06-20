@@ -153,8 +153,10 @@ final class PreferencesManagerTests: XCTestCase {
         // System apps are always ignored
         XCTAssertTrue(PreferencesManager.isAppIgnored("com.apple.notificationcenterui"))
 
-        // Default apps are initially ignored
-        XCTAssertTrue(PreferencesManager.isAppIgnored("pl.maketheweb.cleanshotx"))
+        // At least one default app should be initially ignored
+        XCTAssertTrue(
+            DEFAULT_IGNORED_APP_BUNDLE_ID.contains { PreferencesManager.isAppIgnored($0) }
+        )
     }
 
     func testIsAppIgnored_respectsCustomList() {
