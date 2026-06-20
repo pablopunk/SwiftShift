@@ -1,4 +1,4 @@
-name: Build
+name: Build & Test
 
 on:
   pull_request:
@@ -17,3 +17,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: make build
+
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and run tests
+        run: |
+          xcodebuild test \
+            -project "Swift Shift.xcodeproj" \
+            -scheme "Swift Shift" \
+            -destination "platform=macOS" \
+            -only-testing:SwiftShiftTests \
+            -enableCodeCoverage NO \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO

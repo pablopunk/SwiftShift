@@ -20,6 +20,20 @@
                ReferencedContainer = "container:Swift Shift.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "D76A70D72EB4AAB358AE0D75"
+               BuildableName = "SwiftShiftTests.xctest"
+               BlueprintName = "SwiftShiftTests"
+               ReferencedContainer = "container:Swift Shift.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -27,7 +41,20 @@
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES"
-      shouldAutocreateTestPlan = "YES">
+      shouldAutocreateTestPlan = "YES"
+      codeCoverageEnabled = "NO">
+      <Testables>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "D76A70D72EB4AAB358AE0D75"
+               BuildableName = "SwiftShiftTests.xctest"
+               BlueprintName = "SwiftShiftTests"
+               ReferencedContainer = "container:Swift Shift.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+      </Testables>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
