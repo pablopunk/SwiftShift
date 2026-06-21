@@ -30,9 +30,16 @@ class WindowManager {
     }
     static func getSize(window: AXUIElement) -> NSSize? {
         var r: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(window, kAXSizeAttribute as CFString, &r) == .success, let r = r else { return nil }
+        guard AXUIElementCopyAttributeValue(window, kAXSizeAttribute as CFString, &r) == .success,
+              let r = r, CFGetTypeID(r) == AXValueGetTypeID() else {
+            os_log("WindowManager: AXValueCopyAttributeValue failed for kAXSizeAttribute", log: .default, type: .error)
+            return nil
+        }
         var s: CGSize = .zero
-        AXValueGetValue(r as! AXValue, .cgSize, &s)
+        guard AXValueGetValue(r as! AXValue, .cgSize, &s) else {
+            os_log("WindowManager: AXValueGetValue failed for cgSize", log: .default, type: .error)
+            return nil
+        }
         return NSSize(width: s.width, height: s.height)
     }
     static func getVisibleWindowRects(excluding excludedWindow: AXUIElement? = nil) -> [CGRect] {
@@ -90,8 +97,11 @@ class WindowManager {
         var r: AnyObject?; AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &r)
         if r as? String == kAXWindowRole { return element }
         var p: AnyObject?; AXUIElementCopyAttributeValue(element, kAXParentAttribute as CFString, &p)
-        if let p = p { return getWindow(from: p as! AXUIElement) }
-        return nil
+        guard let p = p, CFGetTypeID(p as CFTypeRef) == AXUIElementGetTypeID() else {
+            os_log("WindowManager: getWindow parent is not an AXUIElement", log: .default, type: .error)
+            return nil
+        }
+        return getWindow(from: p as! AXUIElement)
     }
     static func focus(window: AXUIElement) { AXUIElementPerformAction(window, kAXRaiseAction as CFString); getNSApplication(from: window)?.activate() }
     static func getNSApplication(from element: AXUIElement) -> NSRunningApplication? {
@@ -102,9 +112,16 @@ class WindowManager {
     }
     static func getPosition(window: AXUIElement) -> NSPoint? {
         var r: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(window, kAXPositionAttribute as CFString, &r) == .success, let r = r else { return nil }
+        guard AXUIElementCopyAttributeValue(window, kAXPositionAttribute as CFString, &r) == .success,
+              let r = r, CFGetTypeID(r) == AXValueGetTypeID() else {
+            os_log("WindowManager: AXValueCopyAttributeValue failed for kAXPositionAttribute", log: .default, type: .error)
+            return nil
+        }
         var p: CGPoint = .zero
-        AXValueGetValue(r as! AXValue, .cgPoint, &p)
+        guard AXValueGetValue(r as! AXValue, .cgPoint, &p) else {
+            os_log("WindowManager: AXValueGetValue failed for cgPoint", log: .default, type: .error)
+            return nil
+        }
         return NSPoint(x: p.x, y: p.y)
     }
     static func getWindowBounds(windowLocation: NSPoint, windowSize: CGSize) -> WindowBounds {
