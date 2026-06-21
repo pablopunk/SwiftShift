@@ -36,4 +36,5 @@ jobs:
             -scheme "Swift Shift" \
             -destination "platform=macOS" \
             -only-testing:SwiftShiftTests \
+            -enableCodeCoverage NO \
             CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
