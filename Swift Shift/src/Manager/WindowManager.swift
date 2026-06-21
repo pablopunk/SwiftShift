@@ -1,5 +1,6 @@
 import Cocoa
 import Accessibility
+import os.log
 struct WindowBounds {
     let topLeft: NSPoint
     let topRight: NSPoint
@@ -9,19 +10,31 @@ struct WindowBounds {
 class WindowManager {
     @discardableResult
     static func move(window: AXUIElement, to point: NSPoint) -> AXError {
-        var p = point; let v = AXValueCreate(.cgPoint, &p)!
+        var p = point
+        guard let v = AXValueCreate(.cgPoint, &p) else {
+            os_log(.error, "WindowManager: AXValueCreate failed for cgPoint")
+            return .cannotComplete
+        }
         return AXUIElementSetAttributeValue(window, kAXPositionAttribute as CFString, v)
     }
     @discardableResult
     static func resize(window: AXUIElement, to s: CGSize, from o: NSPoint, shouldMoveOrigin: Bool = true) -> Bool {
         let moveResult = shouldMoveOrigin ? move(window: window, to: o) : .success
-        var sz = s; let v = AXValueCreate(.cgSize, &sz)!
+        var sz = s
+        guard let v = AXValueCreate(.cgSize, &sz) else {
+            os_log(.error, "WindowManager: AXValueCreate failed for cgSize")
+            return false
+        }
         let sizeResult = AXUIElementSetAttributeValue(window, kAXSizeAttribute as CFString, v)
         return moveResult == .success && sizeResult == .success
     }
     static func getSize(window: AXUIElement) -> NSSize? {
         var r: CFTypeRef?; guard AXUIElementCopyAttributeValue(window, kAXSizeAttribute as CFString, &r) == .success else { return nil }
-        var s: CGSize = .zero; AXValueGetValue(r as! AXValue, .cgSize, &s); return NSSize(width: s.width, height: s.height)
+        guard let axValue = r as? AXValue else {
+            os_log(.error, "WindowManager: failed to cast CFTypeRef to AXValue in getSize")
+            return nil
+        }
+        var s: CGSize = .zero; AXValueGetValue(axValue, .cgSize, &s); return NSSize(width: s.width, height: s.height)
     }
     static func getVisibleWindowRects(excluding excludedWindow: AXUIElement? = nil) -> [CGRect] {
         let excludedRect: CGRect? = {
@@ -78,7 +91,7 @@ class WindowManager {
         var r: AnyObject?; AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &r)
         if r as? String == kAXWindowRole { return element }
         var p: AnyObject?; AXUIElementCopyAttributeValue(element, kAXParentAttribute as CFString, &p)
-        if let parent = p { return getWindow(from: parent as! AXUIElement) }
+        if let parent = p as? AXUIElement { return getWindow(from: parent) }
         return nil
     }
     static func focus(window: AXUIElement) { AXUIElementPerformAction(window, kAXRaiseAction as CFString); getNSApplication(from: window)?.activate() }
@@ -90,7 +103,11 @@ class WindowManager {
     }
     static func getPosition(window: AXUIElement) -> NSPoint? {
         var r: CFTypeRef?; guard AXUIElementCopyAttributeValue(window, kAXPositionAttribute as CFString, &r) == .success else { return nil }
-        var p: CGPoint = .zero; AXValueGetValue(r as! AXValue, .cgPoint, &p); return NSPoint(x: p.x, y: p.y)
+        guard let axValue = r as? AXValue else {
+            os_log(.error, "WindowManager: failed to cast CFTypeRef to AXValue in getPosition")
+            return nil
+        }
+        var p: CGPoint = .zero; AXValueGetValue(axValue, .cgPoint, &p); return NSPoint(x: p.x, y: p.y)
     }
     static func getWindowBounds(windowLocation: NSPoint, windowSize: CGSize) -> WindowBounds {
         let fixed = convertYCoordinateBecauseTheAreTwoFuckingCoordinateSystems(point: windowLocation)
