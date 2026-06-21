@@ -12,7 +12,7 @@ class WindowManager {
     static func move(window: AXUIElement, to point: NSPoint) -> AXError {
         var p = point
         guard let v = AXValueCreate(.cgPoint, &p) else {
-            os_log(.error, "WindowManager: AXValueCreate failed for cgPoint")
+            os_log("WindowManager: AXValueCreate failed for cgPoint", log: .default, type: .error)
             return .cannotComplete
         }
         return AXUIElementSetAttributeValue(window, kAXPositionAttribute as CFString, v)
@@ -22,7 +22,7 @@ class WindowManager {
         let moveResult = shouldMoveOrigin ? move(window: window, to: o) : .success
         var sz = s
         guard let v = AXValueCreate(.cgSize, &sz) else {
-            os_log(.error, "WindowManager: AXValueCreate failed for cgSize")
+            os_log("WindowManager: AXValueCreate failed for cgSize", log: .default, type: .error)
             return false
         }
         let sizeResult = AXUIElementSetAttributeValue(window, kAXSizeAttribute as CFString, v)
@@ -31,7 +31,7 @@ class WindowManager {
     static func getSize(window: AXUIElement) -> NSSize? {
         var r: CFTypeRef?; guard AXUIElementCopyAttributeValue(window, kAXSizeAttribute as CFString, &r) == .success else { return nil }
         guard let axValue = r as? AXValue else {
-            os_log(.error, "WindowManager: failed to cast CFTypeRef to AXValue in getSize")
+            os_log("WindowManager: failed to cast CFTypeRef to AXValue in getSize", log: .default, type: .error)
             return nil
         }
         var s: CGSize = .zero; AXValueGetValue(axValue, .cgSize, &s); return NSSize(width: s.width, height: s.height)
@@ -104,7 +104,7 @@ class WindowManager {
     static func getPosition(window: AXUIElement) -> NSPoint? {
         var r: CFTypeRef?; guard AXUIElementCopyAttributeValue(window, kAXPositionAttribute as CFString, &r) == .success else { return nil }
         guard let axValue = r as? AXValue else {
-            os_log(.error, "WindowManager: failed to cast CFTypeRef to AXValue in getPosition")
+            os_log("WindowManager: failed to cast CFTypeRef to AXValue in getPosition", log: .default, type: .error)
             return nil
         }
         var p: CGPoint = .zero; AXValueGetValue(axValue, .cgPoint, &p); return NSPoint(x: p.x, y: p.y)
