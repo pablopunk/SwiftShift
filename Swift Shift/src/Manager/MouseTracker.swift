@@ -18,6 +18,8 @@ class MouseTracker {
     private let trackingQueue = DispatchQueue(label: "com.swiftshift.mousetracker")
     private var queuedExternalMouseUpdate: (location: NSPoint, timestamp: TimeInterval)?
     private var queuedExternalMouseUpdateScheduled = false
+    private var enhancedUIApp: AXUIElement?
+    private var enhancedUIPrev: Bool?
     private init() { registerForSpaceChangeNotifications() }
     deinit { unregisterForSpaceChangeNotifications() }
     private func registerForSpaceChangeNotifications() {
@@ -46,7 +48,33 @@ class MouseTracker {
     }
     func stopTracking(for action: MouseAction) {
         guard currentAction == action else { return }
+        restoreEnhancedUIForTrackedApp()
         flushQueuedExternalMouseUpdate(); flushPendingMouseUpdate(); invalidateTrackingTimer(); removeMouseEventMonitor(); resetTrackingVariables(); clearQueuedExternalMouseUpdate(); isTracking = false
+    }
+    // Chromium/Electron apps turn on AXEnhancedUserInterface while an AX client is
+    // active, which makes AX position/size changes slow and non-live (laggy drag/resize), even
+    // though native title-bar drag / corner-resize of the same window is smooth. Disable it for
+    // the tracked app during the gesture and restore it on mouse-up. Public AX API, no SIP.
+    private static let enhancedUIAttribute = "AXEnhancedUserInterface" as CFString
+    private func disableEnhancedUIForTrackedApp() {
+        guard let window = trackedWindow else { return }
+        var pid: pid_t = 0
+        guard AXUIElementGetPid(window, &pid) == .success, pid > 0 else { return }
+        let app = AXUIElementCreateApplication(pid)
+        var value: CFTypeRef?
+        let readOK = AXUIElementCopyAttributeValue(app, MouseTracker.enhancedUIAttribute, &value) == .success
+        var wasOn = false
+        if readOK, let v = value, CFGetTypeID(v) == CFBooleanGetTypeID() { wasOn = CFBooleanGetValue((v as! CFBoolean)) }
+        enhancedUIApp = app
+        enhancedUIPrev = readOK ? wasOn : nil
+        if wasOn { AXUIElementSetAttributeValue(app, MouseTracker.enhancedUIAttribute, kCFBooleanFalse) }
+    }
+    private func restoreEnhancedUIForTrackedApp() {
+        if let app = enhancedUIApp, enhancedUIPrev == true {
+            AXUIElementSetAttributeValue(app, MouseTracker.enhancedUIAttribute, kCFBooleanTrue)
+        }
+        enhancedUIApp = nil
+        enhancedUIPrev = nil
     }
     func forceResetTracking() {
         guard currentAction != .none, let window = trackedWindow else { return }
@@ -74,6 +102,7 @@ class MouseTracker {
         if action == .resize && shouldUseQuadrants, let m = initialMouseLocation, let w = initialWindowLocation, let s = windowSize {
             quadrant = determineQuadrant(mouseLocation: windowBoundsMouseLocation(m), windowSize: s, windowLocation: w)
         }
+        disableEnhancedUIForTrackedApp()
     }
     private func shouldIgnore(window: AXUIElement) -> Bool {
         guard let app = WindowManager.getNSApplication(from: window), let bid = app.bundleIdentifier, PreferencesManager.isAppIgnored(bid) else { return false }
