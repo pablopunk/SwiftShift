@@ -103,7 +103,21 @@ class WindowManager {
         }
         return getWindow(from: p as! AXUIElement)
     }
-    static func focus(window: AXUIElement) { AXUIElementPerformAction(window, kAXRaiseAction as CFString); getNSApplication(from: window)?.activate() }
+    static func focus(window: AXUIElement) {
+        guard let app = getNSApplication(from: window) else { return }
+        let axApp = AXUIElementCreateApplication(app.processIdentifier)
+        let trueValue = kCFBooleanTrue!
+
+        AXUIElementPerformAction(window, kAXRaiseAction as CFString)
+        AXUIElementSetAttributeValue(axApp, kAXMainWindowAttribute as CFString, window)
+        AXUIElementSetAttributeValue(axApp, kAXFocusedWindowAttribute as CFString, window)
+        AXUIElementSetAttributeValue(window, kAXMainAttribute as CFString, trueValue)
+        AXUIElementSetAttributeValue(window, kAXFocusedAttribute as CFString, trueValue)
+
+        AXUIElementSetAttributeValue(axApp, kAXFrontmostAttribute as CFString, trueValue)
+        // TODO: evaluate whether this works on sandboxed/Electron apps that ignore AX attributes.
+        app.activate(options: [.activateIgnoringOtherApps])
+    }
     static func getNSApplication(from element: AXUIElement) -> NSRunningApplication? {
         var pid: pid_t = 0; AXUIElementGetPid(element, &pid); return NSRunningApplication(processIdentifier: pid)
     }
