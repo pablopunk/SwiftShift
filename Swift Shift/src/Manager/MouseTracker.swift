@@ -48,14 +48,19 @@ class MouseTracker {
     }
     func stopTracking(for action: MouseAction) {
         guard currentAction == action else { return }
+        // Apply the final pending move/resize while Enhanced UI is still disabled (fast path),
+        // then restore the attribute, then run the remaining cleanup.
+        flushQueuedExternalMouseUpdate(); flushPendingMouseUpdate()
         restoreEnhancedUIForTrackedApp()
-        flushQueuedExternalMouseUpdate(); flushPendingMouseUpdate(); invalidateTrackingTimer(); removeMouseEventMonitor(); resetTrackingVariables(); clearQueuedExternalMouseUpdate(); isTracking = false
+        invalidateTrackingTimer(); removeMouseEventMonitor(); resetTrackingVariables(); clearQueuedExternalMouseUpdate(); isTracking = false
     }
-    // Chromium/Electron apps turn on AXEnhancedUserInterface while an AX client is
-    // active, which makes AX position/size changes slow and non-live (laggy drag/resize), even
-    // though native title-bar drag / corner-resize of the same window is smooth. Disable it for
-    // the tracked app during the gesture and restore it on mouse-up. Public AX API, no SIP.
     private static let enhancedUIAttribute = "AXEnhancedUserInterface" as CFString
+    /// Disables `AXEnhancedUserInterface` on the tracked window's app for the duration of a
+    /// move/resize gesture, remembering the previous value so it can be restored on mouse-up.
+    /// Chromium/Electron apps enable this attribute while an AX client is active, which makes
+    /// AX `kAXPosition`/`kAXSize` updates slow and non-live (laggy drag/resize) even though native
+    /// title-bar drag / corner-resize of the same window stays smooth. Apps that don't set the
+    /// attribute (most native AppKit apps) are unaffected. Public AX API, no SIP.
     private func disableEnhancedUIForTrackedApp() {
         guard let window = trackedWindow else { return }
         var pid: pid_t = 0
@@ -69,6 +74,8 @@ class MouseTracker {
         enhancedUIPrev = readOK ? wasOn : nil
         if wasOn { AXUIElementSetAttributeValue(app, MouseTracker.enhancedUIAttribute, kCFBooleanFalse) }
     }
+    /// Restores the tracked app's `AXEnhancedUserInterface` to the value captured when the gesture
+    /// began (only when it was originally enabled) and clears the saved reference.
     private func restoreEnhancedUIForTrackedApp() {
         if let app = enhancedUIApp, enhancedUIPrev == true {
             AXUIElementSetAttributeValue(app, MouseTracker.enhancedUIAttribute, kCFBooleanTrue)
