@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		17087D952DD254890006852C /* IgnoredAppsTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17087D942DD254890006852C /* IgnoredAppsTabView.swift */; };
 		172E0BD52B32F36300D5CDA7 /* MouseTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 172E0BD42B32F36300D5CDA7 /* MouseTracker.swift */; };
+		172E0BD62B32F36300D5CDA8 /* AXWindowWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 172E0BD72B32F36300D5CDA9 /* AXWindowWriter.swift */; };
 		173C0E832C123CF700654527 /* DrawCircle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 173C0E822C123CF700654527 /* DrawCircle.swift */; };
 		174652CE2B33345200241CE6 /* WindowManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 174652CD2B33345200241CE6 /* WindowManager.swift */; };
 		1751BFD42C19DBBC00559AC7 /* UIButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1751BFD32C19DBBC00559AC7 /* UIButton.swift */; };
@@ -54,6 +55,7 @@
 		1500434D466F0EB81368D3B9 /* PermissionsManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PermissionsManager.swift; path = "Swift Shift/src/Manager/PermissionsManager.swift"; sourceTree = "<group>"; };
 		17087D942DD254890006852C /* IgnoredAppsTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IgnoredAppsTabView.swift; sourceTree = "<group>"; };
 		172E0BD42B32F36300D5CDA7 /* MouseTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MouseTracker.swift; sourceTree = "<group>"; };
+		172E0BD72B32F36300D5CDA9 /* AXWindowWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AXWindowWriter.swift; sourceTree = "<group>"; };
 		173C0E822C123CF700654527 /* DrawCircle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawCircle.swift; sourceTree = "<group>"; };
 		174652CD2B33345200241CE6 /* WindowManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowManager.swift; sourceTree = "<group>"; };
 		1751BFD32C19DBBC00559AC7 /* UIButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIButton.swift; sourceTree = "<group>"; };
@@ -140,6 +142,7 @@
 				E2CABBA72B44D69B00D66D43 /* UpdatesManager.swift */,
 				E2D8CFB82B3C3B9B00EBB047 /* PermissionsManager.swift */,
 				172E0BD42B32F36300D5CDA7 /* MouseTracker.swift */,
+				172E0BD72B32F36300D5CDA9 /* AXWindowWriter.swift */,
 				174652CD2B33345200241CE6 /* WindowManager.swift */,
 			);
 			path = Manager;
@@ -367,6 +370,7 @@
 				E23633202B4466F800C0E61F /* PreferencesView.swift in Sources */,
 				177FB24C2B31FF1E00B11BA3 /* ShortcutView.swift in Sources */,
 				172E0BD52B32F36300D5CDA7 /* MouseTracker.swift in Sources */,
+				172E0BD62B32F36300D5CDA8 /* AXWindowWriter.swift in Sources */,
 				1781A5E42B31EE4A00F27910 /* AppView.swift in Sources */,
 				173C0E832C123CF700654527 /* DrawCircle.swift in Sources */,
 				E2CABBA52B447AEA00D66D43 /* UpdatesView.swift in Sources */,
