@@ -8,9 +8,9 @@ class MouseTracker {
     private var mouseEventMonitor: Any?, initialMouseLocation, initialWindowLocation: NSPoint?
     private var trackedWindow: AXUIElement?, trackedWindowIsFocused = false, shouldFocusWindow = false
     private var currentAction: MouseAction = .none, trackingTimer: Timer?
-    private let trackingTimeout: TimeInterval = 10, minimumUpdateInterval: TimeInterval = 1.0 / 120.0
+    private let trackingTimeout: TimeInterval = 10
     private var shouldUseQuadrants = false, quadrant: Quadrant?, windowSize: CGSize?, isTracking = false
-    private var spaceChangeObserver: Any?, pendingMouseLocation: NSPoint?, lastUpdateTime: TimeInterval = 0
+    private var spaceChangeObserver: Any?, pendingMouseLocation: NSPoint?
     private var snapRects: [CGRect] = []
     private let snapDistance: CGFloat = 10
     private var mouseLocationCoordinateSpace: MouseLocationCoordinateSpace = .appKit
@@ -107,7 +107,7 @@ class MouseTracker {
         shouldUseQuadrants = PreferencesManager.loadBool(for: .useQuadrants)
         trackedWindowIsFocused = false; currentAction = action; initialMouseLocation = mouseLocation
         trackedWindow = currentWindow; initialWindowLocation = WindowManager.getPosition(window: currentWindow)
-        windowSize = WindowManager.getSize(window: currentWindow); pendingMouseLocation = nil; lastUpdateTime = 0
+        windowSize = WindowManager.getSize(window: currentWindow); pendingMouseLocation = nil
         snapRects = WindowManager.getVisibleWindowRects(excluding: currentWindow)
         AXWindowWriter.shared.beginGesture(window: currentWindow, origin: initialWindowLocation, size: windowSize)
         if action == .resize && shouldUseQuadrants, let m = initialMouseLocation, let w = initialWindowLocation, let s = windowSize {
@@ -199,7 +199,9 @@ class MouseTracker {
         }
         if shouldFocusWindow && !trackedWindowIsFocused, let w = trackedWindow { WindowManager.focus(window: w); trackedWindowIsFocused = true }
         pendingMouseLocation = mouseLocation
-        if timestamp - lastUpdateTime >= minimumUpdateInterval { flushPendingMouseUpdate(at: timestamp) }
+        // No throttling here: the math below is trivial and AXWindowWriter
+        // self-paces (latest-wins), so every event improves temporal resolution.
+        flushPendingMouseUpdate()
     }
     private func drainQueuedExternalMouseUpdate() {
         guard let update = takeQueuedExternalMouseUpdate() else { return }
@@ -231,10 +233,9 @@ class MouseTracker {
             queuedExternalMouseUpdateScheduled = false
         }
     }
-    private func flushPendingMouseUpdate(at timestamp: TimeInterval? = nil) {
+    private func flushPendingMouseUpdate() {
         guard let loc = pendingMouseLocation else { return }; pendingMouseLocation = nil
         if currentAction == .move { moveWindowBasedOnMouseLocation(loc) } else if currentAction == .resize { resizeWindowBasedOnMouseLocation(loc) }
-        if let t = timestamp { lastUpdateTime = t }
     }
     private func moveWindowBasedOnMouseLocation(_ loc: NSPoint) {
         guard let im = initialMouseLocation, let iw = initialWindowLocation, trackedWindow != nil else { return }
@@ -322,7 +323,7 @@ class MouseTracker {
     }
     private func invalidateTrackingTimer() { trackingTimer?.invalidate(); trackingTimer = nil }
     private func removeMouseEventMonitor() { if let m = mouseEventMonitor { NSEvent.removeMonitor(m); mouseEventMonitor = nil } }
-    private func resetTrackingVariables() { pendingMouseLocation = nil; lastUpdateTime = 0; snapRects = []; trackedWindow = nil; initialMouseLocation = nil; initialWindowLocation = nil; currentAction = .none; quadrant = nil; windowSize = nil; mouseLocationCoordinateSpace = .appKit }
+    private func resetTrackingVariables() { pendingMouseLocation = nil; snapRects = []; trackedWindow = nil; initialMouseLocation = nil; initialWindowLocation = nil; currentAction = .none; quadrant = nil; windowSize = nil; mouseLocationCoordinateSpace = .appKit }
     func pauseTracking() { isTracking = false }
     func resumeTracking() { if currentAction != .none && trackedWindow != nil { isTracking = true } }
     private func checkForKeyPresses() -> Bool {
