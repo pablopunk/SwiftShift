@@ -86,7 +86,7 @@ If `GH_PAT` is available in the environment, the release script will use it to p
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=pablopunk/SwiftShift&type=date&legend=top-left)](https://www.star-history.com/#pablopunk/SwiftShift&type=date&legend=top-left)
+[![Star History Chart](https://star-history.dera.page/svg?repos=pablopunk/SwiftShift&type=date&legend=top-left)](https://star-history.dera.page/#pablopunk/SwiftShift&type=date&legend=top-left)
 
 ## License
 
