@@ -11,6 +11,7 @@ final class PreferencesManagerTests: XCTestCase {
         defaults.removeObject(forKey: PreferenceKey.focusOnApp.rawValue)
         defaults.removeObject(forKey: PreferenceKey.showMenuBarIcon.rawValue)
         defaults.removeObject(forKey: PreferenceKey.useQuadrants.rawValue)
+        defaults.removeObject(forKey: PreferenceKey.snapToWindows.rawValue)
         defaults.removeObject(forKey: PreferenceKey.requireMouseClick.rawValue)
         // Default to migration-complete to prevent tests from accidentally triggering migration
         defaults.set(true, forKey: PreferenceKey.didMigrateDefaultIgnoredApps.rawValue)
@@ -25,6 +26,7 @@ final class PreferencesManagerTests: XCTestCase {
         defaults.removeObject(forKey: PreferenceKey.focusOnApp.rawValue)
         defaults.removeObject(forKey: PreferenceKey.showMenuBarIcon.rawValue)
         defaults.removeObject(forKey: PreferenceKey.useQuadrants.rawValue)
+        defaults.removeObject(forKey: PreferenceKey.snapToWindows.rawValue)
         defaults.removeObject(forKey: PreferenceKey.requireMouseClick.rawValue)
         defaults.synchronize()
         PreferencesManager.invalidateIgnoredAppsCache()
@@ -36,6 +38,13 @@ final class PreferencesManagerTests: XCTestCase {
     func testLoadBool_defaultValue() {
         // UserDefaults returns false for unset keys
         XCTAssertFalse(PreferencesManager.loadBool(for: .useQuadrants))
+    }
+
+    func testLoadBool_customDefaultValue() {
+        XCTAssertTrue(PreferencesManager.loadBool(for: .snapToWindows, defaultValue: true))
+
+        UserDefaults.standard.set(false, forKey: PreferenceKey.snapToWindows.rawValue)
+        XCTAssertFalse(PreferencesManager.loadBool(for: .snapToWindows, defaultValue: true))
     }
 
     func testLoadBool_setAndRead() {

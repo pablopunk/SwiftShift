@@ -4,6 +4,7 @@ enum PreferenceKey: String {
     case focusOnApp = "focusOnApp"
     case showMenuBarIcon = "showMenuBarIcon"
     case useQuadrants = "useQuadrants"
+    case snapToWindows = "snapToWindows"
     case requireMouseClick = "requireMouseClick"
     case moveWithBothMouseButtons = "moveWithBothMouseButtons"
     case fnShortcutWarningDismissed = "fnShortcutWarningDismissed"
@@ -14,8 +15,8 @@ enum PreferenceKey: String {
 class PreferencesManager {
     private static var cachedIgnoredApps: Set<String>?
     
-    static func loadBool(for key: PreferenceKey) -> Bool {
-        return UserDefaults.standard.bool(forKey: key.rawValue)
+    static func loadBool(for key: PreferenceKey, defaultValue: Bool = false) -> Bool {
+        return UserDefaults.standard.object(forKey: key.rawValue) as? Bool ?? defaultValue
     }
     
     static func invalidateIgnoredAppsCache() {

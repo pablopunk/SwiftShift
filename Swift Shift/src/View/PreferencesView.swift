@@ -32,9 +32,10 @@ struct PreferenceToggle: View {
 }
 
 struct PreferencesView: View {
-  @AppStorage(PreferenceKey.showMenuBarIcon.rawValue) var showMenuBarIcon = true
-  @AppStorage(PreferenceKey.focusOnApp.rawValue) var focusOnApp = true
-  @AppStorage(PreferenceKey.useQuadrants.rawValue) var useQuadrants = false
+  @AppStorage(PreferenceKey.showMenuBarIcon.rawValue) private var showMenuBarIcon = true
+  @AppStorage(PreferenceKey.focusOnApp.rawValue) private var focusOnApp = true
+  @AppStorage(PreferenceKey.useQuadrants.rawValue) private var useQuadrants = false
+  @AppStorage(PreferenceKey.snapToWindows.rawValue) private var snapToWindows = true
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
@@ -72,6 +73,13 @@ struct PreferencesView: View {
         title: "Use quadrants",
         subtitle: "Resize from nearest edge/corner",
         icon: "rectangle.split.2x2"
+      )
+
+      PreferenceToggle(
+        isOn: $snapToWindows,
+        title: "Snap to nearby windows",
+        subtitle: "Add resistance near window edges",
+        icon: "rectangle.2.swap"
       )
     }
   }

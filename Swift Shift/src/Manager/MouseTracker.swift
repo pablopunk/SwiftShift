@@ -108,7 +108,9 @@ class MouseTracker {
         trackedWindowIsFocused = false; currentAction = action; initialMouseLocation = mouseLocation
         trackedWindow = currentWindow; initialWindowLocation = WindowManager.getPosition(window: currentWindow)
         windowSize = WindowManager.getSize(window: currentWindow); pendingMouseLocation = nil
-        snapRects = WindowManager.getVisibleWindowRects(excluding: currentWindow)
+        snapRects = PreferencesManager.loadBool(for: .snapToWindows, defaultValue: true)
+            ? WindowManager.getVisibleWindowRects(excluding: currentWindow)
+            : []
         AXWindowWriter.shared.beginGesture(window: currentWindow, origin: initialWindowLocation, size: windowSize)
         if action == .resize && shouldUseQuadrants, let m = initialMouseLocation, let w = initialWindowLocation, let s = windowSize {
             quadrant = determineQuadrant(mouseLocation: windowBoundsMouseLocation(m), windowSize: s, windowLocation: w)
