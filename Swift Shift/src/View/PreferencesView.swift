@@ -79,7 +79,7 @@ struct PreferencesView: View {
         isOn: $snapToWindows,
         title: "Snap to nearby windows",
         subtitle: "Add resistance near window edges",
-        icon: "rectangle.2.swap"
+        icon: "macwindow.on.rectangle"
       )
     }
   }
