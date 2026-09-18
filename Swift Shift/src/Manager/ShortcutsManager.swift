@@ -2,6 +2,17 @@ import ShortcutRecorder
 import CGEventSupervisor
 import AppKit
 
+fileprivate let swiftShiftReplayMarker: Int64 = 0x5357465453484946
+fileprivate let swiftShiftClickDragThreshold: CGFloat = 4
+fileprivate func isSwiftShiftReplay(_ event: CGEvent) -> Bool {
+  event.getIntegerValueField(.eventSourceUserData) == swiftShiftReplayMarker
+}
+fileprivate func postSwiftShiftReplay(_ event: CGEvent) {
+  guard let copy = event.copy() else { return }
+  copy.setIntegerValueField(.eventSourceUserData, value: swiftShiftReplayMarker)
+  copy.post(tap: .cghidEventTap)
+}
+
 enum ShortcutType: String, CaseIterable {
   case move = "Move"
   case resize = "Resize"
@@ -642,9 +653,14 @@ class ShortcutsManager {
     }
 
     let downEvent: CGEventType = userShortcut.mouseButton == .left ? .leftMouseDown : .rightMouseDown
+    let dragEvent: CGEventType = userShortcut.mouseButton == .left ? .leftMouseDragged : .rightMouseDragged
     let upEvent: CGEventType = userShortcut.mouseButton == .left ? .leftMouseUp : .rightMouseUp
     let downKey = "\(action.rawValue)_mouseDown"
+    let dragKey = "\(action.rawValue)_mouseDrag"
     let upKey = "\(action.rawValue)_mouseUp"
+    var pendingDown: CGEvent?
+    var pendingLocation: CGPoint = .zero
+    var didStartTracking = false
 
     // Be defensive: shortcut events can arrive repeatedly or cleanup can be skipped
     // by system state changes. Ensure we never accumulate duplicate event taps.
@@ -655,12 +671,36 @@ class ShortcutsManager {
       to: .cgEvents(downEvent),
       using: { [weak self] event in
         guard let self = self, self.activeShortcuts[userShortcut.type] == true else { return }
+        if isSwiftShiftReplay(event) { return }
         guard self.isShortcutStillPressed(userShortcut) else {
           self.stopTracking(userShortcut, action)
           return
         }
+        if WindowManager.isIgnoredApp(at: event.location) { return }
+        pendingDown = event.copy()
+        pendingLocation = event.location
+        didStartTracking = false
         event.cancel()
+      })
+
+    CGEventSupervisor.shared.subscribe(
+      as: dragKey,
+      to: .cgEvents(dragEvent),
+      using: { [weak self] event in
+        guard let self = self, self.activeShortcuts[userShortcut.type] == true else { return }
+        if isSwiftShiftReplay(event) { return }
+        guard self.isShortcutStillPressed(userShortcut) else { return }
+        guard pendingDown != nil, !didStartTracking else { return }
+        let dx = event.location.x - pendingLocation.x
+        let dy = event.location.y - pendingLocation.y
+        guard hypot(dx, dy) > swiftShiftClickDragThreshold else { return }
         MouseTracker.shared.startTracking(for: action, button: userShortcut.mouseButton)
+        if MouseTracker.shared.isActivelyTracking(for: action) {
+          didStartTracking = true
+        } else if let pending = pendingDown {
+          postSwiftShiftReplay(pending)
+          pendingDown = nil
+        }
       })
 
     CGEventSupervisor.shared.subscribe(
@@ -668,15 +708,25 @@ class ShortcutsManager {
       to: .cgEvents(upEvent),
       using: { [weak self] event in
         guard let self = self, self.activeShortcuts[userShortcut.type] == true else { return }
+        if isSwiftShiftReplay(event) { return }
         guard self.isShortcutStillPressed(userShortcut) else {
           self.stopTracking(userShortcut, action)
           return
         }
+        guard let pending = pendingDown else { return }
+        pendingDown = nil
         event.cancel()
-        MouseTracker.shared.stopTracking(for: action)
+        if didStartTracking {
+          didStartTracking = false
+          MouseTracker.shared.stopTracking(for: action)
+        } else {
+          postSwiftShiftReplay(pending)
+          postSwiftShiftReplay(event)
+        }
       })
 
     mouseSubscriptions.insert(downKey)
+    mouseSubscriptions.insert(dragKey)
     mouseSubscriptions.insert(upKey)
   }
 
@@ -685,6 +735,8 @@ class ShortcutsManager {
     let upKey = "\(action.rawValue)_mouseUp"
     var leftButtonIsDown = false
     var rightButtonIsDown = false
+    var leftDownEvent: CGEvent?
+    var rightDownEvent: CGEvent?
     var isMouseTracking = false
 
     cleanupMouseSubscriptions(action: action)
@@ -694,15 +746,20 @@ class ShortcutsManager {
       to: .cgEvents(.leftMouseDown, .rightMouseDown),
       using: { [weak self] event in
         guard let self = self, self.activeShortcuts[userShortcut.type] == true else { return }
+        if isSwiftShiftReplay(event) { return }
         guard self.isShortcutStillPressed(userShortcut) else {
           self.stopTracking(userShortcut, action)
           return
         }
 
+        if WindowManager.isIgnoredApp(at: event.location) { return }
+
         if event.type == .leftMouseDown {
           leftButtonIsDown = true
+          leftDownEvent = event.copy()
         } else if event.type == .rightMouseDown {
           rightButtonIsDown = true
+          rightDownEvent = event.copy()
         }
 
         event.cancel()
@@ -718,15 +775,22 @@ class ShortcutsManager {
       to: .cgEvents(.leftMouseUp, .rightMouseUp),
       using: { [weak self] event in
         guard let self = self, self.activeShortcuts[userShortcut.type] == true else { return }
+        if isSwiftShiftReplay(event) { return }
         guard self.isShortcutStillPressed(userShortcut) else {
           self.stopTracking(userShortcut, action)
           return
         }
 
+        let wasIntercepted = (event.type == .leftMouseUp && leftButtonIsDown) || (event.type == .rightMouseUp && rightButtonIsDown)
+        guard wasIntercepted else { return }
+
+        let pendingDown: CGEvent? = event.type == .leftMouseUp ? leftDownEvent : rightDownEvent
         if event.type == .leftMouseUp {
           leftButtonIsDown = false
+          leftDownEvent = nil
         } else if event.type == .rightMouseUp {
           rightButtonIsDown = false
+          rightDownEvent = nil
         }
 
         event.cancel()
@@ -734,6 +798,9 @@ class ShortcutsManager {
         if isMouseTracking {
           MouseTracker.shared.stopTracking(for: action)
           isMouseTracking = false
+        } else if let pending = pendingDown {
+          postSwiftShiftReplay(pending)
+          postSwiftShiftReplay(event)
         }
       })
 
@@ -754,12 +821,15 @@ class ShortcutsManager {
 
   private func cleanupMouseSubscriptions(action: MouseAction) {
     let downKey = "\(action.rawValue)_mouseDown"
+    let dragKey = "\(action.rawValue)_mouseDrag"
     let upKey = "\(action.rawValue)_mouseUp"
 
     CGEventSupervisor.shared.cancel(subscriber: downKey)
+    CGEventSupervisor.shared.cancel(subscriber: dragKey)
     CGEventSupervisor.shared.cancel(subscriber: upKey)
 
     mouseSubscriptions.remove(downKey)
+    mouseSubscriptions.remove(dragKey)
     mouseSubscriptions.remove(upKey)
   }
 }
@@ -772,7 +842,7 @@ class MouseChordActionManager {
   }
 
   private let subscriberKey = "mouseOnlyBothButtonsChord"
-  private let replayedMouseEventMarker: Int64 = 0x5357465453484946
+  private var replayedMouseEventMarker: Int64 { swiftShiftReplayMarker }
   private var isSubscribed = false
   private var activeAction: MouseAction?
   private var cachedMouseOnlyAction: MouseAction?
@@ -919,6 +989,13 @@ class MouseChordActionManager {
     }
 
     if isPassingThroughMouseGesture {
+      return
+    }
+
+    if ShortcutsManager.shared.hasActiveShortcut { return }
+
+    if pendingInitialMouseDown == nil, WindowManager.isIgnoredApp(at: event.location) {
+      isPassingThroughMouseGesture = true
       return
     }
 

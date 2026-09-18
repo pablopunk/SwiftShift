@@ -83,6 +83,9 @@ class MouseTracker {
         enhancedUIApp = nil
         enhancedUIPrev = nil
     }
+    func isActivelyTracking(for action: MouseAction) -> Bool {
+        currentAction == action && trackedWindow != nil
+    }
     func forceResetTracking() {
         guard currentAction != .none, let window = trackedWindow else { return }
         // Wait out any in-flight background write first, so the geometry read
