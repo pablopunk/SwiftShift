@@ -107,6 +107,33 @@ class WindowManager {
     static func getNSApplication(from element: AXUIElement) -> NSRunningApplication? {
         var pid: pid_t = 0; AXUIElementGetPid(element, &pid); return NSRunningApplication(processIdentifier: pid)
     }
+    static func isIgnoredApp(at mouseLocation: NSPoint) -> Bool {
+        guard let bid = bundleIdentifierAtLocation(mouseLocation) else { return true }
+        return PreferencesManager.isAppIgnored(bid)
+    }
+    static func bundleIdentifierAtLocation(_ mouseLocation: NSPoint) -> String? {
+        let sys = AXUIElementCreateSystemWide(); var el: AXUIElement?
+        if AXUIElementCopyElementAtPosition(sys, Float(mouseLocation.x), Float(mouseLocation.y), &el) == .success, let el = el {
+            var pid: pid_t = 0
+            if AXUIElementGetPid(el, &pid) == .success, pid != NSRunningApplication.current.processIdentifier,
+               let bid = NSRunningApplication(processIdentifier: pid)?.bundleIdentifier {
+                return bid
+            }
+        }
+        let list = CGWindowListCopyWindowInfo([.excludeDesktopElements, .optionOnScreenOnly], kCGNullWindowID) as? [[String: AnyObject]] ?? []
+        for e in list {
+            guard let bDict = e[kCGWindowBounds as String] as? [String: CGFloat],
+                  let b = CGRect(dictionaryRepresentation: bDict as CFDictionary),
+                  b.contains(mouseLocation),
+                  let pid = e[kCGWindowOwnerPID as String] as? pid_t,
+                  pid != NSRunningApplication.current.processIdentifier,
+                  let bid = NSRunningApplication(processIdentifier: pid)?.bundleIdentifier
+            else { continue }
+            if SYSTEM_IGNORED_APP_BUNDLE_ID.contains(bid) { continue }
+            return bid
+        }
+        return nil
+    }
     static func convertYCoordinateBecauseTheAreTwoFuckingCoordinateSystems(point: NSPoint) -> NSPoint {
         return NSPoint(x: point.x, y: CGDisplayBounds(CGMainDisplayID()).height - point.y)
     }
