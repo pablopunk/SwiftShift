@@ -42,6 +42,16 @@ extension NSEvent.ModifierFlags {
   }
 }
 
+enum ScrollResizeInput {
+  static func shouldResize(enabled: Bool, flags: CGEventFlags, vertical: CGFloat, horizontal: CGFloat, hasActiveShortcut: Bool) -> Bool {
+    let shortcutModifiers: CGEventFlags = [.maskControl, .maskCommand, .maskAlternate, .maskShift]
+    return enabled && !hasActiveShortcut &&
+      flags.intersection(shortcutModifiers) == .maskControl &&
+      vertical.isFinite && horizontal.isFinite && vertical != 0 &&
+      abs(vertical) >= abs(horizontal)
+  }
+}
+
 struct KeyboardShortcut: Codable, Equatable {
   var keyCode: UInt16?
   private var modifierFlagsRawValue: UInt
@@ -639,6 +649,32 @@ class ShortcutsManager {
         }
       }
     }
+    addScrollResizeSubscription()
+  }
+
+  private func addScrollResizeSubscription() {
+    let key = "controlScrollResize"
+    CGEventSupervisor.shared.subscribe(as: key, to: .cgEvents(.scrollWheel), using: { [weak self] event in
+      guard let self = self, let scrollEvent = NSEvent(cgEvent: event) else { return }
+      let enabled = PreferencesManager.loadBool(for: .resizeWithControlScroll)
+      let vertical = scrollEvent.scrollingDeltaY
+      let horizontal = scrollEvent.scrollingDeltaX
+      guard ScrollResizeInput.shouldResize(
+        enabled: enabled,
+        flags: event.flags,
+        vertical: vertical,
+        horizontal: horizontal,
+        hasActiveShortcut: self.hasActiveShortcut
+      ) else { return }
+      if scrollEvent.momentumPhase != [] {
+        if MouseTracker.shared.isScrollResizing { event.cancel() }
+        return
+      }
+      if MouseTracker.shared.resizeWithScroll(at: event.location, delta: vertical) {
+        event.cancel()
+      }
+    })
+    mouseSubscriptions.insert(key)
   }
 
   private func startTracking(_ userShortcut: UserShortcut, _ action: MouseAction) {

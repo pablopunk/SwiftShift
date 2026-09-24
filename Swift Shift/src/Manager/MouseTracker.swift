@@ -3,6 +3,21 @@ import Accessibility
 enum MouseAction: String { case move, resize, none }
 enum Quadrant { case topLeft, top, topRight, left, center, right, bottomLeft, bottom, bottomRight }
 private enum MouseLocationCoordinateSpace { case appKit, coreGraphics }
+
+enum ScrollResizeGeometry {
+    static func resized(origin: NSPoint, size: CGSize, scrollDelta: CGFloat) -> CGRect {
+        let change = scrollDelta * 10
+        let width = max(size.width + change, min(size.width, 100))
+        let height = max(size.height + change, min(size.height, 100))
+        return CGRect(
+            x: origin.x + (size.width - width) / 2,
+            y: origin.y + (size.height - height) / 2,
+            width: width,
+            height: height
+        )
+    }
+}
+
 class MouseTracker {
     static let shared = MouseTracker()
     private var mouseEventMonitor: Any?, initialMouseLocation, initialWindowLocation: NSPoint?
@@ -19,6 +34,9 @@ class MouseTracker {
     private var queuedExternalMouseUpdateScheduled = false
     private var enhancedUIApp: AXUIElement?
     private var enhancedUIPrev: Bool?
+    private var scrollResizeTimer: Timer?
+    private var scrollResizeDelta: CGFloat = 0
+    private(set) var isScrollResizing = false
     private init() { registerForSpaceChangeNotifications() }
     deinit { unregisterForSpaceChangeNotifications() }
     private func registerForSpaceChangeNotifications() {
@@ -27,7 +45,8 @@ class MouseTracker {
     private func unregisterForSpaceChangeNotifications() { if let obs = spaceChangeObserver { NSWorkspace.shared.notificationCenter.removeObserver(obs) } }
     private func handleSpaceChange() {
         guard currentAction != .none, trackedWindow != nil else { return }
-        if isTracking { forceResetTracking() }
+        if isScrollResizing { stopTracking(for: .resize) }
+        else if isTracking { forceResetTracking() }
     }
     func startTracking(for action: MouseAction, button: MouseButton) {
         if currentAction != .none { stopTracking(for: currentAction) }
@@ -52,7 +71,38 @@ class MouseTracker {
         flushQueuedExternalMouseUpdate(); flushPendingMouseUpdate()
         AXWindowWriter.shared.endGesture()
         restoreEnhancedUIForTrackedApp()
-        invalidateTrackingTimer(); removeMouseEventMonitor(); resetTrackingVariables(); clearQueuedExternalMouseUpdate(); isTracking = false
+        invalidateTrackingTimer(); scrollResizeTimer?.invalidate(); scrollResizeTimer = nil
+        removeMouseEventMonitor(); resetTrackingVariables(); clearQueuedExternalMouseUpdate(); isTracking = false
+    }
+
+    @discardableResult
+    func resizeWithScroll(at mouseLocation: NSPoint, delta: CGFloat) -> Bool {
+        guard delta.isFinite, delta != 0 else { return false }
+        if !isScrollResizing {
+            guard currentAction == .none else { return false }
+            prepareTracking(for: .resize, mouseLocation: mouseLocation, coordinateSpace: .coreGraphics)
+            guard trackedWindow != nil, initialWindowLocation != nil, windowSize != nil else {
+                stopTracking(for: .resize)
+                return false
+            }
+            isScrollResizing = true
+            isTracking = true
+        }
+        guard let origin = initialWindowLocation, let size = windowSize else { return false }
+        scrollResizeDelta += max(-10, min(10, delta))
+        let rect = ScrollResizeGeometry.resized(origin: origin, size: size, scrollDelta: scrollResizeDelta)
+        if shouldFocusWindow && !trackedWindowIsFocused, let window = trackedWindow {
+            WindowManager.focus(window: window)
+            trackedWindowIsFocused = true
+        }
+        AXWindowWriter.shared.requestResize(origin: rect.origin, size: rect.size)
+        scrollResizeTimer?.invalidate()
+        let timer = Timer(timeInterval: 0.3, repeats: false) { [weak self] _ in
+            self?.stopTracking(for: .resize)
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        scrollResizeTimer = timer
+        return true
     }
     private static let enhancedUIAttribute = "AXEnhancedUserInterface" as CFString
     /// Disables `AXEnhancedUserInterface` on the tracked window's app for the duration of a
@@ -328,7 +378,7 @@ class MouseTracker {
     }
     private func invalidateTrackingTimer() { trackingTimer?.invalidate(); trackingTimer = nil }
     private func removeMouseEventMonitor() { if let m = mouseEventMonitor { NSEvent.removeMonitor(m); mouseEventMonitor = nil } }
-    private func resetTrackingVariables() { pendingMouseLocation = nil; snapRects = []; trackedWindow = nil; initialMouseLocation = nil; initialWindowLocation = nil; currentAction = .none; quadrant = nil; windowSize = nil; mouseLocationCoordinateSpace = .appKit }
+    private func resetTrackingVariables() { pendingMouseLocation = nil; snapRects = []; trackedWindow = nil; initialMouseLocation = nil; initialWindowLocation = nil; currentAction = .none; quadrant = nil; windowSize = nil; mouseLocationCoordinateSpace = .appKit; isScrollResizing = false; scrollResizeDelta = 0 }
     func pauseTracking() { isTracking = false }
     func resumeTracking() { if currentAction != .none && trackedWindow != nil { isTracking = true } }
     private func checkForKeyPresses() -> Bool {

@@ -1,4 +1,5 @@
 import XCTest
+import Cocoa
 @testable import Swift_Shift_Dev
 
 final class WindowManagerTests: XCTestCase {
@@ -95,5 +96,43 @@ final class WindowManagerTests: XCTestCase {
         XCTAssertEqual(bounds.topLeft.y, 100)
         XCTAssertEqual(bounds.topRight.x, 100)
         XCTAssertEqual(bounds.bottomRight.y, 0)
+    }
+}
+
+final class ScrollResizeTests: XCTestCase {
+    func testScrollResizesAroundWindowCenter() {
+        let original = CGRect(x: 100, y: 200, width: 300, height: 400)
+        let larger = ScrollResizeGeometry.resized(origin: original.origin, size: original.size, scrollDelta: 2)
+        let smaller = ScrollResizeGeometry.resized(origin: original.origin, size: original.size, scrollDelta: -2)
+
+        XCTAssertEqual(larger.size.width, 320)
+        XCTAssertEqual(larger.size.height, 420)
+        XCTAssertEqual(smaller.size.width, 280)
+        XCTAssertEqual(smaller.size.height, 380)
+        XCTAssertEqual(larger.midX, original.midX)
+        XCTAssertEqual(larger.midY, original.midY)
+        XCTAssertEqual(smaller.midX, original.midX)
+        XCTAssertEqual(smaller.midY, original.midY)
+    }
+
+    func testScrollDoesNotShrinkBelowSafeSizeOrGrowSmallWindow() {
+        let normal = ScrollResizeGeometry.resized(origin: .zero, size: CGSize(width: 300, height: 250), scrollDelta: -100)
+        XCTAssertEqual(normal.size.width, 100)
+        XCTAssertEqual(normal.size.height, 100)
+
+        let small = ScrollResizeGeometry.resized(origin: .zero, size: CGSize(width: 70, height: 80), scrollDelta: -100)
+        XCTAssertEqual(small.size.width, 70)
+        XCTAssertEqual(small.size.height, 80)
+    }
+
+    func testOnlyControlAndVerticalScrollTriggerResize() {
+        let control: CGEventFlags = .maskControl
+        XCTAssertTrue(ScrollResizeInput.shouldResize(enabled: true, flags: control, vertical: 1, horizontal: 0, hasActiveShortcut: false))
+        XCTAssertFalse(ScrollResizeInput.shouldResize(enabled: false, flags: control, vertical: 1, horizontal: 0, hasActiveShortcut: false))
+        XCTAssertFalse(ScrollResizeInput.shouldResize(enabled: true, flags: [], vertical: 1, horizontal: 0, hasActiveShortcut: false))
+        XCTAssertFalse(ScrollResizeInput.shouldResize(enabled: true, flags: [.maskControl, .maskShift], vertical: 1, horizontal: 0, hasActiveShortcut: false))
+        XCTAssertFalse(ScrollResizeInput.shouldResize(enabled: true, flags: control, vertical: 0, horizontal: 1, hasActiveShortcut: false))
+        XCTAssertFalse(ScrollResizeInput.shouldResize(enabled: true, flags: control, vertical: 1, horizontal: 2, hasActiveShortcut: false))
+        XCTAssertFalse(ScrollResizeInput.shouldResize(enabled: true, flags: control, vertical: 1, horizontal: 0, hasActiveShortcut: true))
     }
 }

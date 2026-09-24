@@ -36,6 +36,7 @@ struct PreferencesView: View {
   @AppStorage(PreferenceKey.focusOnApp.rawValue) private var focusOnApp = true
   @AppStorage(PreferenceKey.useQuadrants.rawValue) private var useQuadrants = false
   @AppStorage(PreferenceKey.snapToWindows.rawValue) private var snapToWindows = true
+  @AppStorage(PreferenceKey.resizeWithControlScroll.rawValue) private var resizeWithControlScroll = false
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
@@ -80,6 +81,13 @@ struct PreferencesView: View {
         title: "Snap to nearby windows",
         subtitle: "Add resistance near window edges",
         icon: "macwindow.on.rectangle"
+      )
+
+      PreferenceToggle(
+        isOn: $resizeWithControlScroll,
+        title: "Resize with Control + scroll",
+        subtitle: "May conflict with macOS Accessibility Zoom",
+        icon: "arrow.up.left.and.arrow.down.right"
       )
     }
   }
