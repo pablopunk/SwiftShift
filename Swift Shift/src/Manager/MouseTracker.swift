@@ -106,7 +106,7 @@ class MouseTracker {
         mouseLocationCoordinateSpace = coordinateSpace
         let currentWindow = coordinateSpace == .coreGraphics ? WindowManager.getCurrentWindow(at: mouseLocation) : WindowManager.getCurrentWindow()
         guard let currentWindow = currentWindow, !shouldIgnore(window: currentWindow) else { trackedWindow = nil; return }
-        shouldFocusWindow = PreferencesManager.loadBool(for: .focusOnApp)
+        shouldFocusWindow = PreferencesManager.loadBool(for: .focusOnApp, defaultValue: true)
         shouldUseQuadrants = PreferencesManager.loadBool(for: .useQuadrants)
         trackedWindowIsFocused = false; currentAction = action; initialMouseLocation = mouseLocation
         trackedWindow = currentWindow; initialWindowLocation = WindowManager.getPosition(window: currentWindow)
