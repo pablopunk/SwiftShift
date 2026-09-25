@@ -5,6 +5,7 @@ enum PreferenceKey: String {
     case showMenuBarIcon = "showMenuBarIcon"
     case useQuadrants = "useQuadrants"
     case snapToWindows = "snapToWindows"
+    case resizeWithControlScroll = "resizeWithControlScroll"
     case requireMouseClick = "requireMouseClick"
     case moveWithBothMouseButtons = "moveWithBothMouseButtons"
     case fnShortcutWarningDismissed = "fnShortcutWarningDismissed"
