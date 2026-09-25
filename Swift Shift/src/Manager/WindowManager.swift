@@ -103,7 +103,31 @@ class WindowManager {
         }
         return getWindow(from: p as! AXUIElement)
     }
-    static func focus(window: AXUIElement) { AXUIElementPerformAction(window, kAXRaiseAction as CFString); getNSApplication(from: window)?.activate() }
+    static func focus(window: AXUIElement) {
+        activateApplicationOfWindow(window)
+        setFocusedWindowAttributeForApplicationElementToWindow(window)
+        setMainAndFocusedAttributesOnWindowToTrue(window)
+        raiseWindowViaRaiseAction(window)
+    }
+    private static func applicationElementOfWindow(_ window: AXUIElement) -> AXUIElement? {
+        var pid: pid_t = 0
+        guard AXUIElementGetPid(window, &pid) == .success, pid != 0 else { return nil }
+        return AXUIElementCreateApplication(pid)
+    }
+    private static func activateApplicationOfWindow(_ window: AXUIElement) {
+        _ = getNSApplication(from: window)?.activate(options: .activateIgnoringOtherApps)
+    }
+    private static func setFocusedWindowAttributeForApplicationElementToWindow(_ window: AXUIElement) {
+        guard let app = applicationElementOfWindow(window) else { return }
+        AXUIElementSetAttributeValue(app, kAXFocusedWindowAttribute as CFString, window)
+    }
+    private static func setMainAndFocusedAttributesOnWindowToTrue(_ window: AXUIElement) {
+        AXUIElementSetAttributeValue(window, kAXMainAttribute as CFString, kCFBooleanTrue)
+        AXUIElementSetAttributeValue(window, kAXFocusedAttribute as CFString, kCFBooleanTrue)
+    }
+    private static func raiseWindowViaRaiseAction(_ window: AXUIElement) {
+        AXUIElementPerformAction(window, kAXRaiseAction as CFString)
+    }
     static func getNSApplication(from element: AXUIElement) -> NSRunningApplication? {
         var pid: pid_t = 0; AXUIElementGetPid(element, &pid); return NSRunningApplication(processIdentifier: pid)
     }
