@@ -34,6 +34,7 @@ struct PreferenceToggle: View {
 struct PreferencesView: View {
   @AppStorage(PreferenceKey.showMenuBarIcon.rawValue) private var showMenuBarIcon = true
   @AppStorage(PreferenceKey.focusOnApp.rawValue) private var focusOnApp = true
+  @AppStorage(PreferenceKey.bringToFront.rawValue) private var bringToFront = false
   @AppStorage(PreferenceKey.useQuadrants.rawValue) private var useQuadrants = false
   @AppStorage(PreferenceKey.snapToWindows.rawValue) private var snapToWindows = true
 
@@ -66,6 +67,13 @@ struct PreferencesView: View {
         title: "Focus on window",
         subtitle: "Target window gains focus",
         icon: "macwindow"
+      )
+
+      PreferenceToggle(
+        isOn: $bringToFront,
+        title: "Bring window to front",
+        subtitle: "Raise it even without focus",
+        icon: "square.2.layers.3d.top.filled"
       )
 
       PreferenceToggle(

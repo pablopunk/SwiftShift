@@ -6,7 +6,7 @@ private enum MouseLocationCoordinateSpace { case appKit, coreGraphics }
 class MouseTracker {
     static let shared = MouseTracker()
     private var mouseEventMonitor: Any?, initialMouseLocation, initialWindowLocation: NSPoint?
-    private var trackedWindow: AXUIElement?, trackedWindowIsFocused = false, shouldFocusWindow = false
+    private var trackedWindow: AXUIElement?, trackedWindowIsFocused = false, shouldFocusWindow = false, shouldRaiseWindow = false
     private var currentAction: MouseAction = .none, trackingTimer: Timer?
     private let trackingTimeout: TimeInterval = 10
     private var shouldUseQuadrants = false, quadrant: Quadrant?, windowSize: CGSize?, isTracking = false
@@ -107,6 +107,7 @@ class MouseTracker {
         let currentWindow = coordinateSpace == .coreGraphics ? WindowManager.getCurrentWindow(at: mouseLocation) : WindowManager.getCurrentWindow()
         guard let currentWindow = currentWindow, !shouldIgnore(window: currentWindow) else { trackedWindow = nil; return }
         shouldFocusWindow = PreferencesManager.loadBool(for: .focusOnApp, defaultValue: true)
+        shouldRaiseWindow = PreferencesManager.loadBool(for: .bringToFront)
         shouldUseQuadrants = PreferencesManager.loadBool(for: .useQuadrants)
         trackedWindowIsFocused = false; currentAction = action; initialMouseLocation = mouseLocation
         trackedWindow = currentWindow; initialWindowLocation = WindowManager.getPosition(window: currentWindow)
@@ -202,7 +203,11 @@ class MouseTracker {
             pauseTracking()
             return
         }
-        if shouldFocusWindow && !trackedWindowIsFocused, let w = trackedWindow { WindowManager.focus(window: w); trackedWindowIsFocused = true }
+        if (shouldFocusWindow || shouldRaiseWindow) && !trackedWindowIsFocused, let w = trackedWindow {
+            // Focusing already raises the window; raise alone leaves keyboard focus where it is.
+            if shouldFocusWindow { WindowManager.focus(window: w) } else { WindowManager.raise(window: w) }
+            trackedWindowIsFocused = true
+        }
         pendingMouseLocation = mouseLocation
         // No throttling here: the math below is trivial and AXWindowWriter
         // self-paces (latest-wins), so every event improves temporal resolution.

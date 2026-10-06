@@ -109,6 +109,9 @@ class WindowManager {
         setMainAndFocusedAttributesOnWindowToTrue(window)
         raiseWindowViaRaiseAction(window)
     }
+    static func raise(window: AXUIElement) {
+        raiseWindowViaRaiseAction(window)
+    }
     private static func applicationElementOfWindow(_ window: AXUIElement) -> AXUIElement? {
         var pid: pid_t = 0
         guard AXUIElementGetPid(window, &pid) == .success, pid != 0 else { return nil }
