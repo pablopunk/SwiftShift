@@ -26,6 +26,7 @@ There are several ways:
 * Launch at login
 * Hide menubar icon
 * Focus on window
+* Bring window to front (without focusing it)
 * Smart resizing with quadrants
 * Ignore custom apps
 

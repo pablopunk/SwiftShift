@@ -2,6 +2,7 @@ import Foundation
 
 enum PreferenceKey: String {
     case focusOnApp = "focusOnApp"
+    case bringToFront = "bringToFront"
     case showMenuBarIcon = "showMenuBarIcon"
     case useQuadrants = "useQuadrants"
     case snapToWindows = "snapToWindows"
