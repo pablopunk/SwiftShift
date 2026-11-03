@@ -414,32 +414,23 @@ struct ShortcutView: View {
     LazyVGrid(
       columns: [
         GridItem(.flexible(), spacing: 4),
+        GridItem(.flexible(), spacing: 4),
         GridItem(.flexible(), spacing: 4)
       ],
       spacing: 4
     ) {
-      ForEach([MouseButton.left, .right], id: \.self) { mouseButton in
+      ForEach([MouseButton.left, .right, .middle], id: \.self) { mouseButton in
         let selected = isMouseButtonSelected(mouseButton)
         Button {
-          var leftSelected = isMouseButtonSelected(.left)
-          var rightSelected = isMouseButtonSelected(.right)
-
-          switch mouseButton {
-          case .left:
-            leftSelected.toggle()
-          case .right:
-            rightSelected.toggle()
-          case .both, .none:
-            break
-          }
-
-          setMouseButtonSelection(left: leftSelected, right: rightSelected)
+          setMouseButton(nextMouseButton(tapping: mouseButton))
         } label: {
           HStack(spacing: 3) {
             Image(systemName: clickIcon(mouseButton))
               .font(.system(size: 9))
             Text(mouseButton.rawValue)
               .font(.system(size: 10, weight: selected ? .semibold : .regular))
+              .lineLimit(1)
+              .minimumScaleFactor(0.75)
           }
           .frame(maxWidth: .infinity)
           .padding(.vertical, 4)
@@ -461,57 +452,43 @@ struct ShortcutView: View {
   }
 
   private func isMouseButtonSelected(_ mouseButton: MouseButton) -> Bool {
-    if !shortcut.keyboardEnabled && shortcut.mouseEnabled {
-      return mouseButton == .left || mouseButton == .right || mouseButton == .both
-    }
-
-    switch mouseButton {
-    case .left:
-      return shortcut.mouseButton == .left || shortcut.mouseButton == .both
-    case .right:
-      return shortcut.mouseButton == .right || shortcut.mouseButton == .both
-    case .both:
-      return shortcut.mouseButton == .both
-    case .none:
-      return shortcut.mouseButton == .none
-    }
+    shortcut.mouseButton.buttons.contains(mouseButton)
   }
 
-  private func setMouseButtonSelection(left: Bool, right: Bool) {
+  private func nextMouseButton(tapping tapped: MouseButton) -> MouseButton {
+    var buttons = shortcut.mouseButton.buttons
+    if buttons.contains(tapped) { buttons.remove(tapped) } else { buttons.insert(tapped) }
+    // Combinations without a trigger (e.g. left + middle) collapse to the tapped button alone.
+    return MouseButton(buttons: buttons) ?? tapped
+  }
+
+  private func setMouseButton(_ next: MouseButton) {
     if !shortcut.keyboardEnabled {
-      guard left && right else {
-        showTriggerError("Mouse-only shortcuts require both mouse buttons", on: .mouse)
+      guard next.canTriggerWithoutKeyboard else {
+        showTriggerError("Mouse-only shortcuts need the middle button or a two-button combination", on: .mouse)
+        return
+      }
+      guard !hasOtherMouseOnlyAction(using: next) else {
+        showTriggerConflict(on: .mouse)
         return
       }
 
       shortcut.mouseEnabled = true
-      shortcut.mouseButton = .both
+      shortcut.mouseButton = next
       saveShortcut()
       return
     }
 
-    switch (left, right) {
-    case (true, true):
-      shortcut.mouseEnabled = true
-      shortcut.mouseButton = .both
-    case (true, false):
-      shortcut.mouseEnabled = true
-      shortcut.mouseButton = .left
-    case (false, true):
-      shortcut.mouseEnabled = true
-      shortcut.mouseButton = .right
-    case (false, false):
-      shortcut.mouseEnabled = false
-      shortcut.mouseButton = .none
-    }
-
+    shortcut.mouseEnabled = (next != .none)
+    shortcut.mouseButton = next
     saveShortcut()
   }
 
   private func setKeyboardEnabled(_ enabled: Bool) {
     guard enabled || shortcut.mouseEnabled else { return }
 
-    if !enabled && shortcut.mouseEnabled && hasOtherMouseOnlyAction() {
+    let mouseOnlyButton: MouseButton = shortcut.mouseButton.canTriggerWithoutKeyboard ? shortcut.mouseButton : .both
+    if !enabled && shortcut.mouseEnabled && hasOtherMouseOnlyAction(using: mouseOnlyButton) {
       showTriggerConflict(on: .keyboard)
       return
     }
@@ -519,7 +496,7 @@ struct ShortcutView: View {
     shortcut.keyboardEnabled = enabled
     if !enabled {
       shortcut.mouseEnabled = true
-      shortcut.mouseButton = .both
+      shortcut.mouseButton = mouseOnlyButton
     } else if shortcut.mouseEnabled && shortcut.mouseButton == .none {
       shortcut.mouseButton = .left
     }
@@ -530,7 +507,8 @@ struct ShortcutView: View {
   private func setMouseEnabled(_ enabled: Bool) {
     guard enabled || shortcut.keyboardEnabled else { return }
 
-    if enabled && !shortcut.keyboardEnabled && hasOtherMouseOnlyAction() {
+    let mouseOnlyButton: MouseButton = shortcut.mouseButton.canTriggerWithoutKeyboard ? shortcut.mouseButton : .both
+    if enabled && !shortcut.keyboardEnabled && hasOtherMouseOnlyAction(using: mouseOnlyButton) {
       showTriggerConflict(on: .mouse)
       return
     }
@@ -542,7 +520,7 @@ struct ShortcutView: View {
           shortcut.mouseButton = .left
         }
       } else {
-        shortcut.mouseButton = .both
+        shortcut.mouseButton = mouseOnlyButton
       }
     } else {
       shortcut.mouseButton = .none
@@ -582,10 +560,10 @@ struct ShortcutView: View {
     }
   }
 
-  private func hasOtherMouseOnlyAction() -> Bool {
+  private func hasOtherMouseOnlyAction(using button: MouseButton) -> Bool {
     ShortcutType.allCases.contains { type in
       guard type != shortcut.type, let other = ShortcutsManager.shared.load(for: type) else { return false }
-      return !other.keyboardEnabled && other.mouseEnabled
+      return !other.keyboardEnabled && other.mouseEnabled && other.mouseButton == button
     }
   }
 
@@ -611,6 +589,8 @@ struct ShortcutView: View {
     case .left: return "capsule.lefthalf.filled"
     case .right: return "capsule.righthalf.filled"
     case .both: return "capsule.fill"
+    case .middle: return "circle.fill"
+    case .middleRight: return "circle.fill"
     case .none: return ""
     }
   }

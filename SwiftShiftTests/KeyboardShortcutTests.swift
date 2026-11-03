@@ -1,4 +1,5 @@
 import XCTest
+import CoreGraphics
 @testable import Swift_Shift_Dev
 
 final class KeyboardShortcutTests: XCTestCase {
@@ -281,5 +282,49 @@ final class KeyboardShortcutTests: XCTestCase {
         XCTAssertTrue(mask.contains(.shift))
         XCTAssertTrue(mask.contains(.control))
         XCTAssertTrue(mask.contains(.function))
+    }
+
+    // MARK: - MouseButton
+
+    func testMouseButtonParse() {
+        XCTAssertEqual(MouseButton.parse(rawValue: "Middle"), .middle)
+        XCTAssertEqual(MouseButton.parse(rawValue: "MiddleRight"), .middleRight)
+        XCTAssertEqual(MouseButton.parse(rawValue: "Both"), .both)
+        XCTAssertEqual(MouseButton.parse(rawValue: "Bogus"), .none)
+        XCTAssertEqual(MouseButton.parse(rawValue: nil), .none)
+    }
+
+    func testMouseButtonButtonsRoundTrip() {
+        for c in MouseButton.allCases {
+            XCTAssertEqual(MouseButton(buttons: c.buttons), c)
+        }
+        XCTAssertNil(MouseButton(buttons: [.left, .middle]))
+        XCTAssertEqual(MouseButton.both.buttons, [.left, .right])
+        XCTAssertEqual(MouseButton.middleRight.buttons, [.middle, .right])
+        XCTAssertFalse(MouseButton.middle.isChord)
+        XCTAssertTrue(MouseButton.middleRight.isChord)
+    }
+
+    func testCanTriggerWithoutKeyboard() {
+        XCTAssertTrue(MouseButton.middle.canTriggerWithoutKeyboard)
+        XCTAssertTrue(MouseButton.both.canTriggerWithoutKeyboard)
+        XCTAssertTrue(MouseButton.middleRight.canTriggerWithoutKeyboard)
+        XCTAssertFalse(MouseButton.none.canTriggerWithoutKeyboard)
+        XCTAssertFalse(MouseButton.left.canTriggerWithoutKeyboard)
+        XCTAssertFalse(MouseButton.right.canTriggerWithoutKeyboard)
+    }
+
+    func testPhysicalButtonOfEvent() throws {
+        let left = try XCTUnwrap(CGEvent(mouseEventSource: nil, mouseType: .leftMouseDown, mouseCursorPosition: .zero, mouseButton: .left))
+        XCTAssertEqual(MouseButton.physicalButton(of: left), .left)
+        let right = try XCTUnwrap(CGEvent(mouseEventSource: nil, mouseType: .rightMouseUp, mouseCursorPosition: .zero, mouseButton: .right))
+        XCTAssertEqual(MouseButton.physicalButton(of: right), .right)
+        let middle = try XCTUnwrap(CGEvent(mouseEventSource: nil, mouseType: .otherMouseDown, mouseCursorPosition: .zero, mouseButton: .center))
+        XCTAssertEqual(MouseButton.physicalButton(of: middle), .middle)
+        XCTAssertTrue(MouseButton.middleRight.matches(middle))
+        XCTAssertFalse(MouseButton.both.matches(middle))
+        middle.setIntegerValueField(.mouseEventButtonNumber, value: 3)
+        XCTAssertNil(MouseButton.physicalButton(of: middle))
+        XCTAssertFalse(MouseButton.middle.matches(middle))
     }
 }
