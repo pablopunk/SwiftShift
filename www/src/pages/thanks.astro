@@ -1,0 +1,29 @@
+---
+import GradientText from "@/components/GradientText.astro"
+import Layout from "@/layouts/Layout.astro"
+
+const latestReleaseZipUrl = "https://github.com/pablopunk/SwiftShift/releases/latest/download/SwiftShift.zip"
+---
+
+<Layout>
+	<section class="mx-auto flex max-w-screen-sm flex-col items-center gap-6 px-4 py-16 text-center">
+		<GradientText>
+			<h1 class="text-4xl font-bold">Thank you! 🩵</h1>
+		</GradientText>
+		<p class="text-lg">Your download should start automatically. If it doesn't, use the button below.</p>
+		<a
+			id="download"
+			href={latestReleaseZipUrl}
+			class="flex items-center justify-center gap-2 rounded-md bg-gradient-to-r from-accent-11 to-accent2-11 px-4 py-2 text-lg font-bold text-neutral-3 shadow-md shadow-accent-5 transition-all hover:scale-105 hover:to-accent-11"
+		>
+			Download Swift Shift
+		</a>
+		<p class="text-sm text-neutral-11">Unzip it and move Swift Shift to your Applications folder.</p>
+	</section>
+</Layout>
+
+<script>
+	const downloadLink = document.getElementById("download") as HTMLAnchorElement | null
+	if (downloadLink) window.location.href = downloadLink.href
+	;(window as any).goatcounter?.count({ path: "/thanks" })
+</script>
