@@ -1,20 +1,23 @@
-  {
-    "rewrites": [
-      {
-        "source": "/count.js",
-        "destination": "https://gc.zgo.at/count.js"
-      },
-      {
-        "source": "/goat",
-        "destination": "https://swiftshift.goatcounter.com/count"
-      },
-      {
-        "source": "/buy",
-        "destination": "https://pablopunk.lemonsqueezy.com/checkout/buy/3f0a94d5-c49d-4d40-b847-dae2388f60f4"
-      },
-      {
-        "source": "/github",
-        "destination": "https://github.com/pablopunk/SwiftShift"
-      }
-    ]
-  }
+{
+  "redirects": [
+    {
+      "source": "/buy",
+      "destination": "https://buy.stripe.com/7sYaEXbBq9znfkG42nfMA00",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/count.js",
+      "destination": "https://gc.zgo.at/count.js"
+    },
+    {
+      "source": "/goat",
+      "destination": "https://swiftshift.goatcounter.com/count"
+    },
+    {
+      "source": "/github",
+      "destination": "https://github.com/pablopunk/SwiftShift"
+    }
+  ]
+}
