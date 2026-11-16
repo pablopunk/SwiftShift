@@ -2,7 +2,7 @@
   "redirects": [
     {
       "source": "/buy",
-      "destination": "https://pablopunk.lemonsqueezy.com/checkout/buy/3f0a94d5-c49d-4d40-b847-dae2388f60f4",
+      "destination": "https://buy.stripe.com/7sYaEXbBq9znfkG42nfMA00",
       "permanent": false
     }
   ],
