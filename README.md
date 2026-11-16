@@ -28,6 +28,7 @@ There are several ways:
 * Focus on window
 * Smart resizing with quadrants
 * Ignore custom apps
+* Mouse-button triggers, including a modifier-free middle-button drag and two-button combinations (left + right, middle + right)
 
 ### Quadrants
 

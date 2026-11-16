@@ -23,6 +23,8 @@ enum MouseButton: String, CaseIterable {
   case left = "Left"
   case right = "Right"
   case both = "Both"
+  case middle = "Middle"
+  case middleRight = "MiddleRight"
 
   static func parse(rawValue: String?) -> MouseButton {
     guard let rawValue = rawValue else { return .none }
@@ -31,6 +33,93 @@ enum MouseButton: String, CaseIterable {
     } else {
       return .none
     }
+  }
+
+  /// Physical buttons that must be held for this trigger. Chords list both.
+  var buttons: Set<MouseButton> {
+    switch self {
+    case .none: return []
+    case .left: return [.left]
+    case .right: return [.right]
+    case .middle: return [.middle]
+    case .both: return [.left, .right]
+    case .middleRight: return [.middle, .right]
+    }
+  }
+
+  /// The trigger whose physical buttons are exactly `buttons`, if one exists.
+  init?(buttons: Set<MouseButton>) {
+    guard let match = MouseButton.allCases.first(where: { $0.buttons == buttons }) else { return nil }
+    self = match
+  }
+
+  var isChord: Bool { buttons.count == 2 }
+
+  /// Only triggers that cannot be confused with an ordinary click may run without a keyboard shortcut.
+  var canTriggerWithoutKeyboard: Bool { self == .middle || isChord }
+
+  // Physical-button helpers (nil for none/both/middleRight).
+  var cgMouseButton: CGMouseButton? {
+    switch self {
+    case .left: return .left
+    case .right: return .right
+    case .middle: return .center
+    case .none, .both, .middleRight: return nil
+    }
+  }
+
+  var downEventType: CGEventType? {
+    switch self {
+    case .left: return .leftMouseDown
+    case .right: return .rightMouseDown
+    case .middle: return .otherMouseDown
+    case .none, .both, .middleRight: return nil
+    }
+  }
+
+  var upEventType: CGEventType? {
+    switch self {
+    case .left: return .leftMouseUp
+    case .right: return .rightMouseUp
+    case .middle: return .otherMouseUp
+    case .none, .both, .middleRight: return nil
+    }
+  }
+
+  var dragEventType: CGEventType? {
+    switch self {
+    case .left: return .leftMouseDragged
+    case .right: return .rightMouseDragged
+    case .middle: return .otherMouseDragged
+    case .none, .both, .middleRight: return nil
+    }
+  }
+
+  var dragEventMask: NSEvent.EventTypeMask? {
+    switch self {
+    case .left: return .leftMouseDragged
+    case .right: return .rightMouseDragged
+    case .middle: return .otherMouseDragged
+    case .none, .both, .middleRight: return nil
+    }
+  }
+
+  /// The physical button a mouse CGEvent belongs to. otherMouse* events also fire for side
+  /// buttons (button numbers 3+), which map to nil so callers leave them untouched.
+  static func physicalButton(of event: CGEvent) -> MouseButton? {
+    switch event.type {
+    case .leftMouseDown, .leftMouseUp, .leftMouseDragged: return .left
+    case .rightMouseDown, .rightMouseUp, .rightMouseDragged: return .right
+    case .otherMouseDown, .otherMouseUp, .otherMouseDragged:
+      return event.getIntegerValueField(.mouseEventButtonNumber) == 2 ? .middle : nil
+    default: return nil
+    }
+  }
+
+  /// True when the event comes from one of this trigger's physical buttons.
+  func matches(_ event: CGEvent) -> Bool {
+    guard let button = MouseButton.physicalButton(of: event) else { return false }
+    return buttons.contains(button)
   }
 }
 
@@ -283,7 +372,7 @@ class ShortcutsManager {
 
     CGEventSupervisor.shared.cancelAll()
     updateGlobalShortcuts()
-    MouseChordActionManager.shared.forceRebuild()
+    MouseOnlyActionManager.shared.forceRebuild()
   }
 
   private func handleSpaceChange() {
@@ -340,7 +429,7 @@ class ShortcutsManager {
     UserDefaults.standard.set(userShortcut.mouseEnabled, forKey: mouseEnabledKey(for: userShortcut.type))
 
     updateGlobalShortcuts()
-    MouseChordActionManager.shared.updateSubscriptions()
+    MouseOnlyActionManager.shared.updateSubscriptions()
     NotificationCenter.default.post(name: .shortcutsDidChange, object: userShortcut.type)
   }
 
@@ -390,7 +479,7 @@ class ShortcutsManager {
     UserDefaults.standard.removeObject(forKey: keyboardEnabledKey(for: type))
     UserDefaults.standard.removeObject(forKey: mouseEnabledKey(for: type))
     updateGlobalShortcuts()
-    MouseChordActionManager.shared.updateSubscriptions()
+    MouseOnlyActionManager.shared.updateSubscriptions()
     NotificationCenter.default.post(name: .shortcutsDidChange, object: type)
   }
 
@@ -639,6 +728,7 @@ class ShortcutsManager {
         }
       }
     }
+
   }
 
   private func startTracking(_ userShortcut: UserShortcut, _ action: MouseAction) {
@@ -647,14 +737,15 @@ class ShortcutsManager {
       return
     }
 
-    if userShortcut.mouseButton == .both {
-      startTrackingWithBothMouseButtons(userShortcut, action)
+    if userShortcut.mouseButton.isChord {
+      startTrackingWithChord(userShortcut, action)
       return
     }
 
-    let downEvent: CGEventType = userShortcut.mouseButton == .left ? .leftMouseDown : .rightMouseDown
-    let dragEvent: CGEventType = userShortcut.mouseButton == .left ? .leftMouseDragged : .rightMouseDragged
-    let upEvent: CGEventType = userShortcut.mouseButton == .left ? .leftMouseUp : .rightMouseUp
+    guard let downEvent = userShortcut.mouseButton.downEventType,
+          let dragEvent = userShortcut.mouseButton.dragEventType,
+          let upEvent = userShortcut.mouseButton.upEventType
+    else { return }
     let downKey = "\(action.rawValue)_mouseDown"
     let dragKey = "\(action.rawValue)_mouseDrag"
     let upKey = "\(action.rawValue)_mouseUp"
@@ -671,6 +762,7 @@ class ShortcutsManager {
       to: .cgEvents(downEvent),
       using: { [weak self] event in
         guard let self = self, self.activeShortcuts[userShortcut.type] == true else { return }
+        guard userShortcut.mouseButton.matches(event) else { return }
         if isSwiftShiftReplay(event) { return }
         guard self.isShortcutStillPressed(userShortcut) else {
           self.stopTracking(userShortcut, action)
@@ -688,6 +780,7 @@ class ShortcutsManager {
       to: .cgEvents(dragEvent),
       using: { [weak self] event in
         guard let self = self, self.activeShortcuts[userShortcut.type] == true else { return }
+        guard userShortcut.mouseButton.matches(event) else { return }
         if isSwiftShiftReplay(event) { return }
         guard self.isShortcutStillPressed(userShortcut) else { return }
         guard pendingDown != nil, !didStartTracking else { return }
@@ -708,6 +801,7 @@ class ShortcutsManager {
       to: .cgEvents(upEvent),
       using: { [weak self] event in
         guard let self = self, self.activeShortcuts[userShortcut.type] == true else { return }
+        guard userShortcut.mouseButton.matches(event) else { return }
         if isSwiftShiftReplay(event) { return }
         guard self.isShortcutStillPressed(userShortcut) else {
           self.stopTracking(userShortcut, action)
@@ -730,22 +824,27 @@ class ShortcutsManager {
     mouseSubscriptions.insert(upKey)
   }
 
-  private func startTrackingWithBothMouseButtons(_ userShortcut: UserShortcut, _ action: MouseAction) {
+  private func startTrackingWithChord(_ userShortcut: UserShortcut, _ action: MouseAction) {
+    let chord = userShortcut.mouseButton.buttons
+    let pair = chord.sorted { $0.rawValue < $1.rawValue }
+    guard pair.count == 2,
+          let downA = pair[0].downEventType, let downB = pair[1].downEventType,
+          let upA = pair[0].upEventType, let upB = pair[1].upEventType
+    else { return }
     let downKey = "\(action.rawValue)_mouseDown"
     let upKey = "\(action.rawValue)_mouseUp"
-    var leftButtonIsDown = false
-    var rightButtonIsDown = false
-    var leftDownEvent: CGEvent?
-    var rightDownEvent: CGEvent?
+    var isDown: [MouseButton: Bool] = [:]
+    var downEvents: [MouseButton: CGEvent] = [:]
     var isMouseTracking = false
 
     cleanupMouseSubscriptions(action: action)
 
     CGEventSupervisor.shared.subscribe(
       as: downKey,
-      to: .cgEvents(.leftMouseDown, .rightMouseDown),
+      to: .cgEvents(downA, downB),
       using: { [weak self] event in
         guard let self = self, self.activeShortcuts[userShortcut.type] == true else { return }
+        guard let button = MouseButton.physicalButton(of: event), chord.contains(button) else { return }
         if isSwiftShiftReplay(event) { return }
         guard self.isShortcutStillPressed(userShortcut) else {
           self.stopTracking(userShortcut, action)
@@ -754,44 +853,35 @@ class ShortcutsManager {
 
         if WindowManager.isIgnoredApp(at: event.location) { return }
 
-        if event.type == .leftMouseDown {
-          leftButtonIsDown = true
-          leftDownEvent = event.copy()
-        } else if event.type == .rightMouseDown {
-          rightButtonIsDown = true
-          rightDownEvent = event.copy()
-        }
+        isDown[button] = true
+        downEvents[button] = event.copy()
 
         event.cancel()
 
-        if leftButtonIsDown && rightButtonIsDown && !isMouseTracking {
+        if chord.allSatisfy({ isDown[$0] == true }) && !isMouseTracking {
           isMouseTracking = true
-          MouseTracker.shared.startTracking(for: action, button: .both)
+          MouseTracker.shared.startTracking(for: action, button: userShortcut.mouseButton)
         }
       })
 
     CGEventSupervisor.shared.subscribe(
       as: upKey,
-      to: .cgEvents(.leftMouseUp, .rightMouseUp),
+      to: .cgEvents(upA, upB),
       using: { [weak self] event in
         guard let self = self, self.activeShortcuts[userShortcut.type] == true else { return }
+        guard let button = MouseButton.physicalButton(of: event), chord.contains(button) else { return }
         if isSwiftShiftReplay(event) { return }
         guard self.isShortcutStillPressed(userShortcut) else {
           self.stopTracking(userShortcut, action)
           return
         }
 
-        let wasIntercepted = (event.type == .leftMouseUp && leftButtonIsDown) || (event.type == .rightMouseUp && rightButtonIsDown)
+        let wasIntercepted = isDown[button] == true
         guard wasIntercepted else { return }
 
-        let pendingDown: CGEvent? = event.type == .leftMouseUp ? leftDownEvent : rightDownEvent
-        if event.type == .leftMouseUp {
-          leftButtonIsDown = false
-          leftDownEvent = nil
-        } else if event.type == .rightMouseUp {
-          rightButtonIsDown = false
-          rightDownEvent = nil
-        }
+        let pendingDown: CGEvent? = downEvents[button]
+        isDown[button] = false
+        downEvents[button] = nil
 
         event.cancel()
 
@@ -834,23 +924,19 @@ class ShortcutsManager {
   }
 }
 
-class MouseChordActionManager {
-  static let shared = MouseChordActionManager()
+class MouseOnlyActionManager {
+  static let shared = MouseOnlyActionManager()
 
-  private struct PendingMouseDown {
-    let event: CGEvent
-  }
-
-  private let subscriberKey = "mouseOnlyBothButtonsChord"
-  private var replayedMouseEventMarker: Int64 { swiftShiftReplayMarker }
+  private let subscriberKey = "mouseOnlyTriggers"
   private var isSubscribed = false
+  private var triggers: [Set<MouseButton>: MouseAction] = [:]
+  private var watched: Set<MouseButton> = []
+  private var buttonsDown: Set<MouseButton> = []
+  private var pendingDowns: [(button: MouseButton, event: CGEvent)] = []
   private var activeAction: MouseAction?
-  private var cachedMouseOnlyAction: MouseAction?
-  private var isChordSuppressed = false
-  private var isPassingThroughMouseGesture = false
-  private var pendingInitialMouseDown: PendingMouseDown?
-  private var leftButtonIsDown = false
-  private var rightButtonIsDown = false
+  private var activeButtons: Set<MouseButton> = []   // the buttons the running gesture was started with
+  private var suppressUntilAllUp = false
+  private var isPassingThrough = false
   private var workspaceNotificationObserver: Any?
   private var healthCheckTimer: Timer?
 
@@ -864,23 +950,32 @@ class MouseChordActionManager {
   }
 
   func updateSubscriptions() {
-    cachedMouseOnlyAction = configuredMouseOnlyAction()
+    let newTriggers = configuredTriggers()
+    let newWatched = newTriggers.keys.reduce(into: Set<MouseButton>()) { $0.formUnion($1) }
 
-    if cachedMouseOnlyAction != nil {
-      subscribeIfNeeded()
-    } else {
-      stopChordAction(resetButtons: true)
+    if newTriggers != triggers || newWatched != watched {
+      reset()
       unsubscribe()
+    }
+    triggers = newTriggers
+    watched = newWatched
+
+    if triggers.isEmpty {
+      reset()
+      unsubscribe()
+    } else {
+      subscribeIfNeeded()
     }
   }
 
-  /// Force teardown and rebuild of mouse-only chord subscriptions.
+  /// Force teardown and rebuild of mouse-only subscriptions.
   /// Use after system events (sleep, display change, session lock)
   /// that may have disabled the CGEventTap without our knowledge.
   func forceRebuild() {
-    stopChordAction(resetButtons: true)
+    reset()
     unsubscribe()
-    cachedMouseOnlyAction = nil
+    triggers = [:]
+    watched = []
     updateSubscriptions()
   }
 
@@ -892,9 +987,7 @@ class MouseChordActionManager {
     healthCheckTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
       guard let self = self, self.isSubscribed else { return }
       // Don't rebuild mid-gesture — would drop pending mouse events
-      // activeAction is set during an active chord drag;
-      // pendingInitialMouseDown is set between the first and second button press
-      guard self.activeAction == nil, self.pendingInitialMouseDown == nil else { return }
+      guard self.activeAction == nil, self.pendingDowns.isEmpty else { return }
       self.forceRebuild()
     }
   }
@@ -902,7 +995,7 @@ class MouseChordActionManager {
   func cleanup() {
     healthCheckTimer?.invalidate()
     healthCheckTimer = nil
-    stopChordAction(resetButtons: true)
+    reset()
     unsubscribe()
     unregisterForWorkspaceNotifications()
   }
@@ -913,7 +1006,7 @@ class MouseChordActionManager {
       forName: NSWorkspace.activeSpaceDidChangeNotification,
       object: nil,
       queue: .main) { [weak self] _ in
-        self?.stopChordAction(resetButtons: true)
+        self?.reset()
       }
   }
 
@@ -925,13 +1018,14 @@ class MouseChordActionManager {
   }
 
   private func subscribeIfNeeded() {
-    guard !isSubscribed else {
-      return
-    }
+    guard !isSubscribed else { return }
+
+    let types = watched.flatMap { [$0.downEventType, $0.upEventType, $0.dragEventType] }.compactMap { $0 }
+    guard !types.isEmpty else { return }
 
     CGEventSupervisor.shared.subscribe(
       as: subscriberKey,
-      to: .cgEvents(.leftMouseDown, .leftMouseUp, .rightMouseDown, .rightMouseUp, .leftMouseDragged, .rightMouseDragged),
+      to: CGEventSupervisor.EventDescriptor<CGEventType>(rawValue: types),
       using: { [weak self] event in
         self?.handle(event)
       })
@@ -940,244 +1034,176 @@ class MouseChordActionManager {
   }
 
   private func unsubscribe() {
-    guard isSubscribed else {
-      return
-    }
+    guard isSubscribed else { return }
     CGEventSupervisor.shared.cancel(subscriber: subscriberKey)
     isSubscribed = false
   }
 
-  private func handle(_ event: CGEvent) {
-    guard !isReplayedMouseEvent(event) else {
-      return
+  private func configuredTriggers() -> [Set<MouseButton>: MouseAction] {
+    var result: [Set<MouseButton>: MouseAction] = [:]
+    for type in ShortcutType.allCases {
+      guard let shortcut = ShortcutsManager.shared.load(for: type),
+            !shortcut.keyboardEnabled, shortcut.mouseEnabled, shortcut.mouseButton.canTriggerWithoutKeyboard
+      else { continue }
+      result[shortcut.mouseButton.buttons] = type == .move ? .move : .resize
     }
+    return result
+  }
+
+  private func handle(_ event: CGEvent) {
+    if isSwiftShiftReplay(event) { return }
+    guard let button = MouseButton.physicalButton(of: event), watched.contains(button) else { return }
 
     syncButtonStateFromSystem()
-
-    guard cachedMouseOnlyAction != nil else {
-      stopChordAction(resetButtons: true)
-      unsubscribe()
-      return
+    switch event.type {
+    case .leftMouseDown, .rightMouseDown, .otherMouseDown:
+      buttonsDown.insert(button)
+    case .leftMouseUp, .rightMouseUp, .otherMouseUp:
+      buttonsDown.remove(button)
+    default:
+      break
     }
 
     switch event.type {
-    case .leftMouseDown:
-      leftButtonIsDown = true
-      handleButtonDown(event)
-    case .rightMouseDown:
-      rightButtonIsDown = true
-      handleButtonDown(event)
-    case .leftMouseUp:
-      leftButtonIsDown = false
-      handleButtonUp(event)
-    case .rightMouseUp:
-      rightButtonIsDown = false
-      handleButtonUp(event)
-    case .leftMouseDragged, .rightMouseDragged:
+    case .leftMouseDown, .rightMouseDown, .otherMouseDown:
+      handleDown(button, event)
+    case .leftMouseUp, .rightMouseUp, .otherMouseUp:
+      handleUp(button, event)
+    case .leftMouseDragged, .rightMouseDragged, .otherMouseDragged:
       handleDrag(event)
     default:
       break
     }
 
-    recoverIfGestureEnded()
+    if buttonsDown.isEmpty { reset() }
   }
 
-  private func handleButtonDown(_ event: CGEvent) {
-    if activeAction != nil || isChordSuppressed {
+  private func handleDown(_ button: MouseButton, _ event: CGEvent) {
+    if activeAction != nil || suppressUntilAllUp {
       event.cancel()
       return
     }
 
-    if isPassingThroughMouseGesture {
-      return
-    }
+    if isPassingThrough { return }
 
+    // A keyboard-held shortcut owns the mouse.
     if ShortcutsManager.shared.hasActiveShortcut { return }
 
-    if pendingInitialMouseDown == nil, WindowManager.isIgnoredApp(at: event.location) {
-      isPassingThroughMouseGesture = true
+    if pendingDowns.isEmpty, WindowManager.isIgnoredApp(at: event.location) {
+      isPassingThrough = true
       return
     }
 
-    guard pendingInitialMouseDown != nil else {
-      if capturePendingInitialMouseDown(event) {
-        event.cancel()
-      }
-      return
-    }
+    guard let copy = event.copy() else { return }
+    pendingDowns.append((button, copy))
+    event.cancel()
 
-    if startChordActionIfReady(eventToCancelOnSuccess: event) {
-      pendingInitialMouseDown = nil
-      return
+    if let action = triggers[buttonsDown], buttonsDown.count == 2 {
+      startAction(action, at: event.location, cancelling: event)
+    } else if triggers[buttonsDown] != nil {
+      // Single-button trigger: starts once the pointer moves past the click threshold.
+    } else if !triggers.keys.contains(where: { buttonsDown.isStrictSubset(of: $0) }) {
+      // Nothing we watch can still be reached: hand the presses back to the app.
+      replayPendingDowns()
+      isPassingThrough = true
     }
-
-    replayPendingInitialMouseDown()
-    isPassingThroughMouseGesture = true
-  }
-
-  private func handleButtonUp(_ event: CGEvent) {
-    if activeAction != nil || isChordSuppressed {
-      event.cancel()
-      stopActiveChordAction()
-      clearSuppressionIfChordEnded()
-      return
-    }
-
-    if pendingInitialMouseDown != nil {
-      replayPendingInitialMouseDown()
-      replayMouseEvent(event)
-      event.cancel()
-      clearPassThroughIfGestureEnded()
-      return
-    }
-
-    if isPassingThroughMouseGesture {
-      clearPassThroughIfGestureEnded()
-    }
+    // Otherwise a partial chord: keep holding the pending down.
   }
 
   private func handleDrag(_ event: CGEvent) {
-    if activeAction != nil || isChordSuppressed {
-      if leftButtonIsDown && rightButtonIsDown && !ShortcutsManager.shared.hasActiveShortcut, activeAction != nil {
-        MouseTracker.shared.queueExternalMouseUpdate(withMouseLocation: event.location, timestamp: ProcessInfo.processInfo.systemUptime)
+    if activeAction != nil {
+      MouseTracker.shared.queueExternalMouseUpdate(withMouseLocation: event.location, timestamp: ProcessInfo.processInfo.systemUptime)
+      event.cancel()
+      return
+    }
+
+    if suppressUntilAllUp {
+      event.cancel()
+      return
+    }
+
+    if isPassingThrough || pendingDowns.isEmpty { return }
+
+    if let action = triggers[buttonsDown] {
+      if buttonsDown.count == 2 {
+        startAction(action, at: event.location, cancelling: event)
       } else {
-        stopActiveChordAction()
-        clearSuppressionIfChordEnded()
+        let origin = pendingDowns[0].event.location
+        if hypot(event.location.x - origin.x, event.location.y - origin.y) > swiftShiftClickDragThreshold {
+          startAction(action, at: origin, cancelling: event)
+        } else {
+          event.cancel()
+        }
       }
-
-      event.cancel()
-      return
-    }
-
-    if isPassingThroughMouseGesture {
-      return
-    }
-
-    if pendingInitialMouseDown != nil {
-      if startChordActionIfReady(eventToCancelOnSuccess: event) {
-        pendingInitialMouseDown = nil
-        return
-      }
-
-      replayPendingInitialMouseDown()
-      replayMouseEvent(event)
-      event.cancel()
-      isPassingThroughMouseGesture = true
-      return
-    }
-
-    _ = startChordActionIfReady(eventToCancelOnSuccess: event)
-  }
-
-  @discardableResult
-  private func startChordActionIfReady(eventToCancelOnSuccess event: CGEvent) -> Bool {
-    guard leftButtonIsDown && rightButtonIsDown else {
-      return false
-    }
-
-    guard !ShortcutsManager.shared.hasActiveShortcut, let action = cachedMouseOnlyAction else {
-      return false
-    }
-
-    let initialMouseLocation = pendingInitialMouseDown?.event.location ?? event.location
-
-    if MouseTracker.shared.startTrackingForExternalMouseUpdates(for: action, initialMouseLocation: initialMouseLocation) {
-      activeAction = action
-      isChordSuppressed = true
-      event.cancel()
-      return true
-    }
-
-    return false
-  }
-
-  private func capturePendingInitialMouseDown(_ event: CGEvent) -> Bool {
-    guard let copiedEvent = event.copy() else {
-      return false
-    }
-
-    pendingInitialMouseDown = PendingMouseDown(event: copiedEvent)
-    return true
-  }
-
-  private func replayPendingInitialMouseDown() {
-    guard let pendingInitialMouseDown else {
-      return
-    }
-
-    replayMouseEvent(pendingInitialMouseDown.event)
-    self.pendingInitialMouseDown = nil
-  }
-
-  private func replayMouseEvent(_ event: CGEvent) {
-    guard let copiedEvent = event.copy() else {
-      return
-    }
-
-    copiedEvent.setIntegerValueField(.eventSourceUserData, value: replayedMouseEventMarker)
-    copiedEvent.post(tap: .cghidEventTap)
-  }
-
-  private func isReplayedMouseEvent(_ event: CGEvent) -> Bool {
-    event.getIntegerValueField(.eventSourceUserData) == replayedMouseEventMarker
-  }
-
-  private func stopChordAction(resetButtons: Bool) {
-    stopActiveChordAction()
-    pendingInitialMouseDown = nil
-    isPassingThroughMouseGesture = false
-
-    if resetButtons {
-      leftButtonIsDown = false
-      rightButtonIsDown = false
-      isChordSuppressed = false
     } else {
-      clearSuppressionIfChordEnded()
+      replayPendingDowns()
+      postSwiftShiftReplay(event)
+      event.cancel()
+      isPassingThrough = true
     }
   }
 
-  private func stopActiveChordAction() {
+  private func handleUp(_ button: MouseButton, _ event: CGEvent) {
+    if activeAction != nil {
+      // Releasing one of the gesture's own buttons ends it. An extra button that was
+      // swallowed mid-gesture is swallowed again on the way up and changes nothing.
+      if activeButtons.contains(button) {
+        stopActiveAction()
+        suppressUntilAllUp = true
+      }
+      event.cancel()
+      return
+    }
+
+    if suppressUntilAllUp {
+      event.cancel()
+      return
+    }
+
+    if !pendingDowns.isEmpty {
+      replayPendingDowns()
+      postSwiftShiftReplay(event)
+      event.cancel()
+    }
+  }
+
+  private func startAction(_ action: MouseAction, at location: CGPoint, cancelling event: CGEvent) {
+    if MouseTracker.shared.startTrackingForExternalMouseUpdates(for: action, initialMouseLocation: location) {
+      activeAction = action
+      activeButtons = buttonsDown
+      pendingDowns.removeAll()
+      event.cancel()
+    } else {
+      replayPendingDowns()
+      isPassingThrough = true
+    }
+  }
+
+  private func replayPendingDowns() {
+    for pending in pendingDowns { postSwiftShiftReplay(pending.event) }
+    pendingDowns.removeAll()
+  }
+
+  private func stopActiveAction() {
     if let activeAction {
       MouseTracker.shared.stopTracking(for: activeAction)
       self.activeAction = nil
     }
+    activeButtons = []
   }
 
-  private func clearSuppressionIfChordEnded() {
-    if !leftButtonIsDown && !rightButtonIsDown {
-      isChordSuppressed = false
-    }
-  }
-
-  private func clearPassThroughIfGestureEnded() {
-    if !leftButtonIsDown && !rightButtonIsDown {
-      isPassingThroughMouseGesture = false
-    }
+  private func reset() {
+    stopActiveAction()
+    pendingDowns.removeAll()
+    suppressUntilAllUp = false
+    isPassingThrough = false
+    buttonsDown = []
   }
 
   private func syncButtonStateFromSystem() {
-    let leftIsPressed = CGEventSource.buttonState(.hidSystemState, button: .left)
-    let rightIsPressed = CGEventSource.buttonState(.hidSystemState, button: .right)
-    leftButtonIsDown = leftIsPressed
-    rightButtonIsDown = rightIsPressed
-  }
-
-  private func recoverIfGestureEnded() {
-    syncButtonStateFromSystem()
-
-    if !leftButtonIsDown && !rightButtonIsDown {
-      stopChordAction(resetButtons: true)
+    buttonsDown = watched.filter { button in
+      guard let cgButton = button.cgMouseButton else { return false }
+      return CGEventSource.buttonState(.hidSystemState, button: cgButton)
     }
-  }
-
-  private func configuredMouseOnlyAction() -> MouseAction? {
-    for type in ShortcutType.allCases {
-      guard let shortcut = ShortcutsManager.shared.load(for: type), !shortcut.keyboardEnabled, shortcut.mouseEnabled else {
-        continue
-      }
-      return type == .move ? .move : .resize
-    }
-
-    return nil
   }
 }
