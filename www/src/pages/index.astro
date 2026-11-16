@@ -45,8 +45,8 @@ import site from "@/site"
 				</p>
 				<div class="flex flex-col gap-3 lg:flex-row">
 					<a
-						href="https://pablopunk.lemonsqueezy.com/checkout/buy/3f0a94d5-c49d-4d40-b847-dae2388f60f4"
-						class="lemonsqueezy-button flex items-center justify-center gap-2 rounded-md bg-gradient-to-r from-accent-11 to-accent2-11 px-4 py-2 text-lg font-bold text-neutral-3 shadow-md shadow-accent-5 transition-all hover:scale-105 hover:to-accent-11"
+						href="/buy"
+						class="buy-button flex items-center justify-center gap-2 rounded-md bg-gradient-to-r from-accent-11 to-accent2-11 px-4 py-2 text-lg font-bold text-neutral-3 shadow-md shadow-accent-5 transition-all hover:scale-105 hover:to-accent-11"
 					>
 						<svg
 							stroke="currentColor"
@@ -180,7 +180,7 @@ import site from "@/site"
 </Layout>
 
 <script>
-	document.querySelectorAll(".lemonsqueezy-button").forEach((button) => {
+	document.querySelectorAll(".buy-button").forEach((button) => {
 		button.addEventListener("click", () => {
 			;(window as any).goatcounter?.count({
 				path: "/buy",
