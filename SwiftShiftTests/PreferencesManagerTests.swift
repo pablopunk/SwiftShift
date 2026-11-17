@@ -9,6 +9,7 @@ final class PreferencesManagerTests: XCTestCase {
         let defaults = UserDefaults.standard
         defaults.removeObject(forKey: PreferenceKey.ignoredApps.rawValue)
         defaults.removeObject(forKey: PreferenceKey.focusOnApp.rawValue)
+        defaults.removeObject(forKey: PreferenceKey.bringToFront.rawValue)
         defaults.removeObject(forKey: PreferenceKey.showMenuBarIcon.rawValue)
         defaults.removeObject(forKey: PreferenceKey.useQuadrants.rawValue)
         defaults.removeObject(forKey: PreferenceKey.snapToWindows.rawValue)
@@ -24,6 +25,7 @@ final class PreferencesManagerTests: XCTestCase {
         defaults.removeObject(forKey: PreferenceKey.ignoredApps.rawValue)
         defaults.removeObject(forKey: PreferenceKey.didMigrateDefaultIgnoredApps.rawValue)
         defaults.removeObject(forKey: PreferenceKey.focusOnApp.rawValue)
+        defaults.removeObject(forKey: PreferenceKey.bringToFront.rawValue)
         defaults.removeObject(forKey: PreferenceKey.showMenuBarIcon.rawValue)
         defaults.removeObject(forKey: PreferenceKey.useQuadrants.rawValue)
         defaults.removeObject(forKey: PreferenceKey.snapToWindows.rawValue)
@@ -53,6 +55,13 @@ final class PreferencesManagerTests: XCTestCase {
 
         UserDefaults.standard.set(false, forKey: PreferenceKey.focusOnApp.rawValue)
         XCTAssertFalse(PreferencesManager.loadBool(for: .focusOnApp))
+    }
+
+    func testLoadBool_bringToFrontIsOffByDefault() {
+        XCTAssertFalse(PreferencesManager.loadBool(for: .bringToFront))
+
+        UserDefaults.standard.set(true, forKey: PreferenceKey.bringToFront.rawValue)
+        XCTAssertTrue(PreferencesManager.loadBool(for: .bringToFront))
     }
 
     // MARK: - Ignored Apps
